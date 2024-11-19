@@ -14,7 +14,7 @@ interface ChatMessage {
 export async function chatWithLLM(messages: ChatMessage[], temperature = 0.7) {
 	try {
 		const response = await openai.chat.completions.create({
-			model: 'gpt-4-turbo-preview',
+			model: 'gpt-4o',
 			messages,
 			temperature
 		});
@@ -38,7 +38,7 @@ export async function summarizeChat(chatHistory: ChatMessage[]) {
 		const prompt = CHAT_SUMMARY_PROMPT.replace('{chatHistory}', formattedHistory);
 
 		const response = await openai.chat.completions.create({
-			model: 'gpt-4-turbo-preview',
+			model: 'gpt-4o',
 			messages: [{ role: 'user', content: prompt }],
 			temperature: 0.5
 		});
@@ -61,7 +61,7 @@ export async function summarizeParagraph(text: string) {
 		const prompt = PARAGRAPH_SUMMARY_PROMPT.replace('{text}', text);
 
 		const response = await openai.chat.completions.create({
-			model: 'gpt-4-turbo-preview',
+			model: 'gpt-4o',
 			messages: [{ role: 'user', content: prompt }],
 			temperature: 0.3
 		});
