@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import OpenAI from 'openai';
-import { CHAT_SUMMARY_PROMPT, PARAGRAPH_SUMMARY_PROMPT } from './prompt';
+import { CHAT_SUMMARY_PROMPT, DOCS_CONTEXT_SYSTEM_PROMPT } from './prompt';
 
 const openai = new OpenAI({
 	apiKey: env.OPENAI_API_KEY
@@ -11,23 +11,61 @@ interface ChatMessage {
 	content: string;
 }
 
-export async function chatWithLLM(messages: ChatMessage[], temperature = 0.7) {
+interface Document {
+	content: string;
+	title?: string;
+}
+
+export async function chatWithLLMByDocs(
+	messages: ChatMessage[],
+	mainQuestion: string,
+	secondaryGoal: string[],
+	documents: Document[],
+	temperature = 0.7
+) {
 	try {
+		// 準備文件上下文
+		const formattedDocs = documents
+			.map((doc, index) => {
+				const title = doc.title || `Document ${index + 1}`;
+				return `[${title}]:\n${doc.content}`;
+			})
+			.join('\n\n');
+
+		// 創建系統提示詞
+		const systemPrompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{mainQuestion}', mainQuestion)
+			.replace('{secondaryGoal}', secondaryGoal.join('\n'))
+			.replace('{documents}', formattedDocs);
+
+		// 組合完整的消息數組
+		const fullMessages: ChatMessage[] = [
+			{
+				role: 'system',
+				content: systemPrompt
+			},
+			...messages
+		];
+
 		const response = await openai.chat.completions.create({
-			model: 'gpt-4o',
-			messages,
-			temperature
+			model: 'gpt-4o-mini',
+			messages: fullMessages,
+			temperature,
+			max_tokens: 1000
 		});
 
 		return {
 			success: true,
-			message: response.choices[0].message.content
+			message: response.choices[0].message.content,
+			metadata: {
+				documentsUsed: documents.length,
+				totalDocumentLength: formattedDocs.length
+			}
 		};
 	} catch (error) {
-		console.error('Error in chatWithLLM:', error);
+		console.error('Error in chatWithLLMByDocs:', error);
 		return {
 			success: false,
-			error: 'Failed to get response from LLM'
+			error: 'Failed to process documents and generate response'
 		};
 	}
 }
@@ -38,7 +76,7 @@ export async function summarizeChat(chatHistory: ChatMessage[]) {
 		const prompt = CHAT_SUMMARY_PROMPT.replace('{chatHistory}', formattedHistory);
 
 		const response = await openai.chat.completions.create({
-			model: 'gpt-4o',
+			model: 'gpt-4o-mini',
 			messages: [{ role: 'user', content: prompt }],
 			temperature: 0.5
 		});
@@ -54,35 +92,4 @@ export async function summarizeChat(chatHistory: ChatMessage[]) {
 			error: 'Failed to summarize chat'
 		};
 	}
-}
-
-export async function summarizeParagraph(text: string) {
-	try {
-		const prompt = PARAGRAPH_SUMMARY_PROMPT.replace('{text}', text);
-
-		const response = await openai.chat.completions.create({
-			model: 'gpt-4o',
-			messages: [{ role: 'user', content: prompt }],
-			temperature: 0.3
-		});
-
-		return {
-			success: true,
-			summary: response.choices[0].message.content
-		};
-	} catch (error) {
-		console.error('Error in summarizeParagraph:', error);
-		return {
-			success: false,
-			error: 'Failed to summarize paragraph'
-		};
-	}
-}
-
-// Helper function to validate environment variables
-export function validateLLMConfig() {
-	if (!env.OPENAI_API_KEY) {
-		throw new Error('OPENAI_API_KEY is not set in environment variables');
-	}
-	return true;
 }
