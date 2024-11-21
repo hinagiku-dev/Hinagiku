@@ -52,6 +52,9 @@ export async function generateWordCloud(documents: string[]): Promise<{
 		});
 
 		const result = completion.choices[0].message.parsed;
+		if (!result) {
+			throw new Error('Failed to parse response');
+		}
 
 		// 轉換為 WordCloudData 格式
 		const cleanedData: WordCloudData = Object.fromEntries(
@@ -67,12 +70,12 @@ export async function generateWordCloud(documents: string[]): Promise<{
 		if (error instanceof z.ZodError) {
 			return {
 				success: false,
-				error: '數據格式驗證失敗：' + error.errors.map((e) => e.message).join(', ')
+				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
 			};
 		}
 		return {
 			success: false,
-			error: '生成文字雲數據失敗'
+			error: 'Failed to generate word cloud data'
 		};
 	}
 }
