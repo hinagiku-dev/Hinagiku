@@ -8,8 +8,11 @@ importers:
   .:
     dependencies:
       openai:
-        specifier: ^4.71.1
-        version: 4.71.1
+        specifier: ^4.73.0
+        version: 4.73.0(zod@3.23.8)
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: ^3.3.1
@@ -3067,10 +3070,10 @@ packages:
       }
     engines: { node: '>=18' }
 
-  openai@4.71.1:
+  openai@4.73.0:
     resolution:
       {
-        integrity: sha512-C6JNMaQ1eijM0lrjiRUL3MgThVP5RdwNAghpbJFdW0t11LzmyqON8Eh8MuUuEZ+CeD6bgYl2Fkn2BoptVxv9Ug==
+        integrity: sha512-NZstV77w3CEol9KQTRBRQ15+Sw6nxVTicAULSjYO4wn9E5gw72Mtp3fAVaBFXyyVPws4241YmFG6ya4L8v03tA==
       }
     hasBin: true
     peerDependencies:
@@ -4165,6 +4168,12 @@ packages:
     resolution:
       {
         integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==
+      }
+
+  zod@3.23.8:
+    resolution:
+      {
+        integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==
       }
 
 snapshots:
@@ -6090,7 +6099,7 @@ snapshots:
     dependencies:
       mimic-function: 5.0.1
 
-  openai@4.71.1:
+  openai@4.73.0(zod@3.23.8):
     dependencies:
       '@types/node': 18.19.64
       '@types/node-fetch': 2.6.11
@@ -6099,6 +6108,8 @@ snapshots:
       form-data-encoder: 1.7.2
       formdata-node: 4.4.1
       node-fetch: 2.7.0
+    optionalDependencies:
+      zod: 3.23.8
     transitivePeerDependencies:
       - encoding
 
@@ -6725,3 +6736,5 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   zimmerframe@1.1.2: {}
+
+  zod@3.23.8: {}
