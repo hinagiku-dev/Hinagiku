@@ -4,7 +4,8 @@ import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
 
 const openai = new OpenAI({
-	apiKey: env.OPENAI_API_KEY
+	apiKey: env.OPENAI_API_KEY,
+	baseURL: env.OPENAI_BASE_URL
 });
 
 // 定義 Zod Schema
