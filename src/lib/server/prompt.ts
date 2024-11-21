@@ -23,3 +23,12 @@ export const CHAT_SUMMARY_PROMPT = `請總結以下對話，重點關注學生�
 1. 學生觀點：
 2. 學生想法：
 3. 學生結論：`;
+
+export const GROUP_OPINION_SUMMARY_PROMPT = `請總結以下學生們的觀點、想法和結論：
+
+{groupOpinions}
+
+請按照以下格式提供摘要：
+1. 學生觀點：
+2. 學生想法：
+3. 學生結論：`;

@@ -1,6 +1,10 @@
 import { env } from '$env/dynamic/private';
 import OpenAI from 'openai';
-import { CHAT_SUMMARY_PROMPT, DOCS_CONTEXT_SYSTEM_PROMPT } from './prompt';
+import {
+	CHAT_SUMMARY_PROMPT,
+	DOCS_CONTEXT_SYSTEM_PROMPT,
+	GROUP_OPINION_SUMMARY_PROMPT
+} from './prompt';
 
 const openai = new OpenAI({
 	apiKey: env.OPENAI_API_KEY
@@ -14,6 +18,10 @@ interface ChatMessage {
 interface Document {
 	content: string;
 	title?: string;
+}
+interface GroupOpinion {
+	role: string;
+	content: string;
 }
 
 export async function chatWithLLMByDocs(
@@ -90,6 +98,32 @@ export async function summarizeChat(chatHistory: ChatMessage[]) {
 		return {
 			success: false,
 			error: 'Failed to summarize chat'
+		};
+	}
+}
+
+export async function summarizeGroupOpinions(groupOpinions: GroupOpinion[]) {
+	try {
+		const formattedOpinions = groupOpinions
+			.map((opinion) => `${opinion.role}: ${opinion.content}`)
+			.join('\n');
+		const prompt = GROUP_OPINION_SUMMARY_PROMPT.replace('{groupOpinions}', formattedOpinions);
+
+		const response = await openai.chat.completions.create({
+			model: 'gpt-4o-mini',
+			messages: [{ role: 'user', content: prompt }],
+			temperature: 0.5
+		});
+
+		return {
+			success: true,
+			summary: response.choices[0].message.content
+		};
+	} catch (error) {
+		console.error('Error in summarizeGroupOpinions:', error);
+		return {
+			success: false,
+			error: 'Failed to summarize group opinions'
 		};
 	}
 }
