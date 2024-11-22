@@ -2,13 +2,13 @@ import { env } from '$env/dynamic/private';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
+import { WORDCLOUD_PROMPT } from './prompt';
 
 const openai = new OpenAI({
 	apiKey: env.OPENAI_API_KEY,
 	baseURL: env.OPENAI_BASE_URL
 });
 
-// 定義 Zod Schema
 const KeywordSchema = z.object({
 	word: z.string().min(1),
 	weight: z.number().min(1).max(100)
@@ -26,7 +26,6 @@ export async function generateWordCloud(documents: string[]): Promise<{
 	error?: string;
 }> {
 	try {
-		// 合併所有文件內容
 		const combinedText = documents.join('\n');
 
 		const completion = await openai.beta.chat.completions.parse({
@@ -34,15 +33,7 @@ export async function generateWordCloud(documents: string[]): Promise<{
 			messages: [
 				{
 					role: 'system',
-					content: `你是一個文本分析專家。請分析以下文本，提取關鍵字詞並給予權重。
-                    規則：
-                    1. 只提取有意義的詞彙（避免虛詞、語助詞）
-                    2. 權重範圍為 1-100，數字越大代表詞彙越重要
-                    3. 最多返回 30 個關鍵詞
-                    4. 權重的分配要考慮：
-                       - 詞彙在文本中的出現頻率
-                       - 詞彙的重要性和相關性
-                       - 詞彙的獨特性`
+					content: WORDCLOUD_PROMPT
 				},
 				{
 					role: 'user',
