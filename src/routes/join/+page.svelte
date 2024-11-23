@@ -33,7 +33,7 @@
 			<div>
 				<label for="tempId" class="mb-2 block font-medium">Session Code</label>
 				<input
-					type="text"
+					type="number"
 					id="tempId"
 					name="tempId"
 					bind:value={tempIdInput}
