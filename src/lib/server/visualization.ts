@@ -9,13 +9,13 @@ const openai = new OpenAI({
 	baseURL: env.OPENAI_BASE_URL
 });
 
-const KeywordSchema = z.object({
-	word: z.string().min(1),
-	weight: z.number().min(1).max(100)
-});
-
 const WordCloudSchema = z.object({
-	keywords: z.array(KeywordSchema)
+	keywords: z.array(
+		z.object({
+			word: z.string().min(1),
+			weight: z.number().min(1).max(100)
+		})
+	)
 });
 
 type WordCloudData = Record<string, number>;
@@ -71,23 +71,3 @@ export async function generateWordCloud(documents: string[]): Promise<{
 		};
 	}
 }
-
-// 使用範例：
-/*
-const documents = [
-    "這是一篇關於人工智能的文章...",
-    "探討深度學習在教育領域的應用..."
-];
-
-const wordCloudResult = await generateWordCloud(documents);
-if (wordCloudResult.success) {
-    console.log(wordCloudResult.data);
-    // 輸出範例：
-    // {
-    //     "人工智能": 95,
-    //     "深度學習": 90,
-    //     "教育": 85,
-    //     "應用": 75
-    // }
-}
-*/

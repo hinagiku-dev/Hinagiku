@@ -1,5 +1,7 @@
 import { env } from '$env/dynamic/private';
-import OpenAI from 'openai';
+import { OpenAI } from 'openai';
+import { zodResponseFormat } from 'openai/helpers/zod';
+import { z } from 'zod';
 import {
 	CHAT_SUMMARY_PROMPT,
 	DOCS_CONTEXT_SYSTEM_PROMPT,
@@ -12,17 +14,41 @@ const openai = new OpenAI({
 });
 
 interface ChatMessage {
-	role: 'user' | 'assistant' | 'system';
+	role: string;
 	content: string;
 }
 
 interface Document {
-	content: string;
 	title?: string;
-}
-interface GroupOpinion {
-	role: string;
 	content: string;
+}
+
+interface Student_opinion {
+	student_id: string;
+	student_conclusions: string;
+}
+
+const SummaryStudentOpinionSchema = z.object({
+	student_viewpoints: z.string(),
+	student_thoughts: z.string(),
+	student_conclusions: z.string(),
+	key_points: z.array(z.string())
+});
+
+const SummaryGroupOpinionSchema = z.object({
+	group_viewpoints: z.string(),
+	group_thoughts: z.string(),
+	group_conclusions: z.string(),
+	key_points: z.array(z.string())
+});
+
+export async function isHarmfulContent(message: string) {
+	const moderation = await openai.moderations.create({
+		model: 'omni-moderation-latest',
+		input: message
+	});
+
+	return moderation.results[0].flagged;
 }
 
 export async function chatWithLLMByDocs(
@@ -33,7 +59,12 @@ export async function chatWithLLMByDocs(
 	temperature = 0.7
 ) {
 	try {
-		// 準備文件上下文
+		if (await isHarmfulContent(messages[messages.length - 1].content)) {
+			return {
+				success: false,
+				error: 'Harmful content detected'
+			};
+		}
 		const formattedDocs = documents
 			.map((doc, index) => {
 				const title = doc.title || `Document ${index + 1}`;
@@ -41,37 +72,42 @@ export async function chatWithLLMByDocs(
 			})
 			.join('\n\n');
 
-		// 創建系統提示詞
 		const systemPrompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{mainQuestion}', mainQuestion)
 			.replace('{secondaryGoal}', secondaryGoal.join('\n'))
 			.replace('{documents}', formattedDocs);
 
-		// 組合完整的消息數組
-		const fullMessages: ChatMessage[] = [
-			{
-				role: 'system',
-				content: systemPrompt
-			},
-			...messages
-		];
-
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',
-			messages: fullMessages,
-			temperature,
-			max_tokens: 1000
+			messages: [
+				{
+					role: 'system',
+					content: systemPrompt
+				},
+				...messages.map((msg) => ({
+					role: msg.role as 'user' | 'assistant' | 'system',
+					content: msg.content
+				}))
+			],
+			temperature
 		});
+
+		const result = response.choices[0].message;
+		if (!result) {
+			throw new Error('Failed to parse response');
+		}
 
 		return {
 			success: true,
-			message: response.choices[0].message.content,
-			metadata: {
-				documentsUsed: documents.length,
-				totalDocumentLength: formattedDocs.length
-			}
+			message: result
 		};
 	} catch (error) {
 		console.error('Error in chatWithLLMByDocs:', error);
+		if (error instanceof z.ZodError) {
+			return {
+				success: false,
+				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
+			};
+		}
 		return {
 			success: false,
 			error: 'Failed to process documents and generate response'
@@ -79,23 +115,35 @@ export async function chatWithLLMByDocs(
 	}
 }
 
-export async function summarizeChat(chatHistory: ChatMessage[]) {
+export async function summarizeStudentChat(chatHistory: ChatMessage[]) {
 	try {
 		const formattedHistory = chatHistory.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
 		const prompt = CHAT_SUMMARY_PROMPT.replace('{chatHistory}', formattedHistory);
 
-		const response = await openai.chat.completions.create({
+		const completion = await openai.beta.chat.completions.parse({
 			model: 'gpt-4o-mini',
 			messages: [{ role: 'user', content: prompt }],
-			temperature: 0.5
+			temperature: 0.5,
+			response_format: zodResponseFormat(SummaryStudentOpinionSchema, 'chat_summary')
 		});
+
+		const result = completion.choices[0].message.parsed;
+		if (!result) {
+			throw new Error('Failed to parse response');
+		}
 
 		return {
 			success: true,
-			summary: response.choices[0].message.content
+			summary: result
 		};
 	} catch (error) {
 		console.error('Error in summarizeChat:', error);
+		if (error instanceof z.ZodError) {
+			return {
+				success: false,
+				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
+			};
+		}
 		return {
 			success: false,
 			error: 'Failed to summarize chat'
@@ -103,25 +151,40 @@ export async function summarizeChat(chatHistory: ChatMessage[]) {
 	}
 }
 
-export async function summarizeGroupOpinions(groupOpinions: GroupOpinion[]) {
+export async function summarizeGroupOpinions(groupOpinions: Student_opinion[]) {
 	try {
 		const formattedOpinions = groupOpinions
-			.map((opinion) => `${opinion.role}: ${opinion.content}`)
-			.join('\n');
+			.map((opinion) => {
+				return `Student ID: ${opinion.student_id}\nViewpoints: ${opinion.student_conclusions}`;
+			})
+			.join('\n\n');
+
 		const prompt = GROUP_OPINION_SUMMARY_PROMPT.replace('{groupOpinions}', formattedOpinions);
 
-		const response = await openai.chat.completions.create({
+		const completion = await openai.beta.chat.completions.parse({
 			model: 'gpt-4o-mini',
 			messages: [{ role: 'user', content: prompt }],
-			temperature: 0.5
+			temperature: 0.5,
+			response_format: zodResponseFormat(SummaryGroupOpinionSchema, 'group_opinion_summary')
 		});
+
+		const result = completion.choices[0].message.parsed;
+		if (!result) {
+			throw new Error('Failed to parse response');
+		}
 
 		return {
 			success: true,
-			summary: response.choices[0].message.content
+			summary: result
 		};
 	} catch (error) {
 		console.error('Error in summarizeGroupOpinions:', error);
+		if (error instanceof z.ZodError) {
+			return {
+				success: false,
+				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
+			};
+		}
 		return {
 			success: false,
 			error: 'Failed to summarize group opinions'
