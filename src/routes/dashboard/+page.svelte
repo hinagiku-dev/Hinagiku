@@ -48,8 +48,8 @@
 	<div class="mt-12">
 		<h2 class="mb-4 text-2xl font-semibold">Recent Sessions</h2>
 		<div class="space-y-2 rounded-lg border">
-			{#if data.sessions}
-				{#each data.sessions as session}
+			{#if data.createdSessions}
+				{#each data.createdSessions as session}
 					<a
 						class="block w-auto rounded-lg bg-blue-500 px-4 py-1 text-left text-lg text-white no-underline shadow-md hover:bg-blue-600"
 						href="/session/{session.id}"
