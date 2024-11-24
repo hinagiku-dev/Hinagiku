@@ -1,7 +1,7 @@
 export async function transcribe(
-    data: Buffer,
-    token: string,
-    model = 'JacobLinCool/whisper-large-v3-turbo-common_voice_19_0-zh-TW',
+	data: Buffer,
+	token: string,
+	model = 'JacobLinCool/whisper-large-v3-turbo-common_voice_19_0-zh-TW'
 ): Promise<string> {
 	const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
 		headers: {
