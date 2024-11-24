@@ -6,6 +6,7 @@
 	let { form } = $props();
 	let showScanner = $state(false);
 	let tempIdInput = $state('');
+	let groupIdInput = $state('');
 
 	function handleScan(code: string) {
 		if (validateTempId(code)) {
@@ -38,10 +39,23 @@
 					name="tempId"
 					bind:value={tempIdInput}
 					required
-					pattern="\d{6}"
+					pattern="\d\{6}"
 					class="w-full rounded-lg border p-2"
 					placeholder="Enter 6-digit code"
 				/>
+
+				<label for="groupId" class="mb-2 block pt-3 font-medium">Group number</label>
+				<input
+					type="text"
+					id="groupId"
+					name="groupId"
+					bind:value={groupIdInput}
+					required
+					pattern="\d\{1}"
+					class="w-full rounded-lg border p-2"
+					placeholder="Enter group number"
+				/>
+
 				{#if form?.invalid}
 					<p class="mt-1 text-sm text-red-600">Please enter a valid 6-digit code</p>
 				{/if}

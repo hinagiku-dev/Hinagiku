@@ -1,15 +1,21 @@
 <script lang="ts">
 	import { signInWithGoogle, signOut, user } from '$lib/stores/auth';
-	import { LogIn } from 'lucide-svelte';
 </script>
 
 {#if $user}
 	<div>
-		<p>Welcome, {$user.displayName}!</p>
-		<button on:click={signOut}>Sign Out</button>
+		<p class="inline-block">Welcome, {$user.displayName}!</p>
+		<button class="rounded-lg" on:click={signOut}>Sign Out</button>
 	</div>
 {:else}
-	<button on:click={signInWithGoogle}>
-		<LogIn /> Sign in with Google
+	<button
+		class="inline-flex h-10 w-auto cursor-pointer items-center space-x-2"
+		on:click={signInWithGoogle}
+	>
+		<img class="max-h-8" src="/Google.png" alt="Sign in With Google" />
+		<div class="w-auto text-lg">Sign in</div>
 	</button>
 {/if}
+
+<style>
+</style>

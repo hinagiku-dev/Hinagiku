@@ -3,11 +3,54 @@
 	import { db } from '$lib/firebase';
 	import type { FirestoreSession } from '$lib/types/session';
 	import { convertFirestoreSession } from '$lib/types/session';
-	import { Play, Users, Link, FileText, Clock } from 'lucide-svelte';
+	import {
+		Check,
+		Trash2,
+		Play,
+		Users,
+		Link,
+		FileText,
+		Clock,
+		Pencil,
+		CircleX,
+		Plus
+	} from 'lucide-svelte';
 	import { onSnapshot, doc } from 'firebase/firestore';
+
+	let resources = $state([{ type: 'text', content: '' }]);
+
+	function addResource() {
+		resources = [...resources, { type: 'text', content: '' }];
+	}
+
+	function removeResource(index: number) {
+		resources = resources.filter((_, i) => i !== index);
+	}
+
+	removeResource(0);
+
+	function applyChanges(newtitle: string, resources: Array<{ type: string; content: string }>) {
+		newtitle = 'Do somthing';
+		console.log('Fxck you eslint', resources.length);
+		// Apply changes to Firestore
+	}
+
+	function confirmTitleChanges() {
+		editingTitle = false;
+		applyChanges(newtitle, resources);
+	}
+
+	function confirmResourcesChanges() {
+		applyChanges(newtitle, resources);
+		resources = [];
+	}
 
 	let { data } = $props();
 	let { session, isHost } = $state(data);
+
+	let editingTitle = $state(false);
+	// svelte-ignore state_referenced_locally
+	let newtitle = $state(session.title);
 
 	async function startSession() {
 		const response = await fetch(`/api/session/${session.id}/start`, {
@@ -41,8 +84,24 @@
 
 <main class="mx-auto max-w-4xl px-4 py-16">
 	<div class="mb-8 flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold">{session.title}</h1>
+		<div class="items-center">
+			{#if editingTitle}
+				<div class="inline-block text-3xl font-bold">
+					<input
+						type="text"
+						id="inputTitle"
+						bind:value={newtitle}
+						class="inline-block rounded-lg border text-3xl"
+					/>
+					<button onclick={confirmTitleChanges} class="h-1/2"><Check size={28} /></button>
+				</div>
+			{:else}
+				<h1 class="inline-block text-3xl font-bold">{session.title}</h1>
+				{#if isHost}
+					<button onclick={() => (editingTitle = true)} class="h-1/2"><Pencil size={20} /></button>
+				{/if}
+				<br />
+			{/if}
 			<p class="mt-2 text-gray-600">Hosted by {session.hostName}</p>
 		</div>
 
@@ -103,6 +162,51 @@
 			{#if isHost}
 				<div class="rounded-lg border p-6">
 					<h2 class="mb-4 text-xl font-semibold">Resources</h2>
+					<button
+						type="button"
+						class="inline-flex items-center gap-2 rounded-lg border px-3 py-1 hover:bg-gray-50"
+						onclick={addResource}
+					>
+						<Plus size={16} />
+						Add Resource
+					</button>
+					{#each resources as resource, i}
+						<div class="flex gap-2">
+							<select
+								name={`resourceType${i}`}
+								class="rounded-lg border p-2"
+								bind:value={resource.type}
+							>
+								<option value="text">Text</option>
+								<option value="link">Link</option>
+							</select>
+							<input
+								type="text"
+								name={`resourceContent${i}`}
+								class="flex-1 rounded-lg border p-2"
+								placeholder={resource.type === 'link' ? 'Enter URL' : 'Enter text content'}
+								bind:value={resource.content}
+							/>
+							<button
+								type="button"
+								class="rounded-lg border p-2 hover:bg-gray-50"
+								onclick={() => removeResource(i)}
+							>
+								<Trash2 size={20} />
+							</button>
+						</div>
+					{/each}
+
+					{#if resources.length != 0}
+						<button
+							type="button"
+							class="rounded-lg border p-2 hover:bg-gray-50"
+							onclick={confirmResourcesChanges}
+						>
+							Apply Changes
+						</button>
+					{/if}
+
 					{#if Object.keys(session.resources).length === 0}
 						<p class="text-gray-600">No resources added yet</p>
 					{:else}
@@ -151,7 +255,10 @@
 						{#each Object.entries(session.participants) as [userId, participant]}
 							<div class="flex items-center justify-between rounded-lg border p-3">
 								<div>
-									<p class="font-medium">
+									{#if !(userId === session.hostId) && isHost}
+										<button class="h-6"><CircleX size={20} /></button>
+									{/if}
+									<p class="inline-block font-medium">
 										{participant.name}
 										{#if userId === session.hostId}
 											<span class="ml-2 text-sm text-blue-600">(Host)</span>

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { user, signOut } from '$lib/stores/auth';
-	import { MessageSquarePlus, UserPlus, UserCog, LogOut } from 'lucide-svelte';
+	import { user } from '$lib/stores/auth';
+	import { MessageSquarePlus, UserPlus, UserCog } from 'lucide-svelte';
+	let { data } = $props();
 </script>
 
 <main class="mx-auto max-w-6xl px-4 py-16">
@@ -9,14 +10,6 @@
 			<h1 class="text-3xl font-bold">Dashboard</h1>
 			<p class="mt-2 text-gray-600">Welcome back, {$user?.displayName}</p>
 		</div>
-
-		<button
-			on:click={signOut}
-			class="inline-flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-100"
-		>
-			<LogOut size={20} />
-			<span>Sign Out</span>
-		</button>
 	</div>
 
 	<div class="grid gap-6 md:grid-cols-3">
@@ -54,10 +47,20 @@
 	<!-- Recent Sessions -->
 	<div class="mt-12">
 		<h2 class="mb-4 text-2xl font-semibold">Recent Sessions</h2>
-		<div class="rounded-lg border">
-			{#if false}
-				<!-- Replace with actual sessions data -->
-				<!-- Session list here -->
+		<div class="space-y-2 rounded-lg border">
+			{#if data.sessions}
+				{#each data.sessions as session}
+					<a
+						class="block w-auto rounded-lg bg-blue-500 px-4 py-1 text-left text-lg text-white no-underline shadow-md hover:bg-blue-600"
+						href="/session/{session.id}"
+					>
+						<span class="text-2xl">{session.title}</span>
+						<div class="flex items-center justify-between">
+							<span class="text-lg">Host by: {session.hostName}</span>
+							<span class="text-right text-lg">{session.tempId}</span>
+						</div>
+					</a>
+				{/each}
 			{:else}
 				<div class="p-8 text-center text-gray-600">
 					<p>No recent sessions found</p>

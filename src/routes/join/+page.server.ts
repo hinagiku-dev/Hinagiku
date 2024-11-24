@@ -11,9 +11,14 @@ export const actions = {
 
 		const data = await request.formData();
 		const tempId = data.get('tempId')?.toString();
+		const groupId = data.get('groupId')?.toString();
 
 		if (!tempId || !validateTempId(tempId)) {
 			return fail(400, { tempId, invalid: true });
+		}
+
+		if (!groupId) {
+			return fail(400, { groupId, invalid: true });
 		}
 
 		// Find session by tempId
