@@ -6,6 +6,7 @@
 	let { form } = $props();
 	let showScanner = $state(false);
 	let tempIdInput = $state('');
+	let tempGroupInput = $state('');
 
 	function handleScan(code: string) {
 		if (validateTempId(code)) {
@@ -33,7 +34,7 @@
 			<div>
 				<label for="tempId" class="mb-2 block font-medium">Session Code</label>
 				<input
-					type="text"
+					type="number"
 					id="tempId"
 					name="tempId"
 					bind:value={tempIdInput}
@@ -42,11 +43,27 @@
 					class="w-full rounded-lg border p-2"
 					placeholder="Enter 6-digit code"
 				/>
-				{#if form?.invalid}
+				{#if form?.idInvalid}
 					<p class="mt-1 text-sm text-red-600">Please enter a valid 6-digit code</p>
 				{/if}
 				{#if form?.notFound}
 					<p class="mt-1 text-sm text-red-600">Session not found or already started</p>
+				{/if}
+			</div>
+			<div>
+				<label for="groupNumber" class="mb-2 block font-medium">Group Number</label>
+				<input
+					type="number"
+					id="groupNumber"
+					name="groupNumber"
+					bind:value={tempGroupInput}
+					required
+					pattern="^(?:[1-9]|[1-4][0-9]|50)$"
+					class="w-full rounded-lg border p-2"
+					placeholder="輸入組別"
+				/>
+				{#if form?.groupNumberInvalid}
+					<p class="mt-1 text-sm text-red-600">請輸入有效的組別</p>
 				{/if}
 			</div>
 
