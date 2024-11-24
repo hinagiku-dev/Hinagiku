@@ -1,8 +1,5 @@
-import { db } from '$lib/firebase';
-import type { FirestoreSession, Session } from '$lib/types/session';
-import { convertFirestoreSession } from '$lib/types/session';
+import { adminDb } from '$lib/server/firebase';
 import { redirect } from '@sveltejs/kit';
-import { collection, getDocs } from 'firebase/firestore';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -10,25 +7,52 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(303, '/login');
 	}
 
-	const sessions: Session[] = [];
-	const query = await getDocs(collection(db, 'sessions'));
-	query.forEach((doc) => {
-		if (doc.get('hostId') === locals.user?.uid) {
-			sessions.push(convertFirestoreSession(doc.data() as FirestoreSession));
-			//console.log(`${doc.id} => ${doc.data()}`);
-		}
+	// find user's joined sessions
+	const joinedSessionsQuery = await adminDb
+		.collection('sessions')
+		.where(`participants.${locals.user.uid}`, '!=', null)
+		.get();
+
+	const joinedSessions = joinedSessionsQuery.docs.map((doc) => {
+		const data = doc.data();
+		const id = doc.id;
+		return {
+			...convertTimestamps(data),
+			id
+		};
 	});
-	sessions.sort(function (a, b) {
-		const keyA = a.createdAt,
-			keyB = b.createdAt;
-		// Compare the 2 dates
-		if (keyA < keyB) return 1;
-		if (keyA > keyB) return -1;
-		return 0;
+
+	// find user's created sessions
+	const createdSessionsQuery = await adminDb
+		.collection('sessions')
+		.where('hostId', '==', locals.user.uid)
+		.get();
+
+	const createdSessions = createdSessionsQuery.docs.map((doc) => {
+		const data = doc.data();
+		const id = doc.id;
+		return {
+			...convertTimestamps(data),
+			id
+		};
 	});
 
 	return {
-		sessions: sessions,
-		user: locals.user
+		user: locals.user,
+		createdSessions: createdSessions,
+		joinedSessions: joinedSessions
 	};
 };
+
+function convertTimestamps(obj: FirebaseFirestore.DocumentData): FirebaseFirestore.DocumentData {
+	if (obj !== null && typeof obj === 'object') {
+		for (const key in obj) {
+			if (obj[key] && typeof obj[key].toDate === 'function') {
+				obj[key] = obj[key].toMillis();
+			} else if (obj[key] !== null && typeof obj[key] === 'object') {
+				obj[key] = convertTimestamps(obj[key]);
+			}
+		}
+	}
+	return obj;
+}
