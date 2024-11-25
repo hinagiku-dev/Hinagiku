@@ -1,4 +1,5 @@
 import typography from '@tailwindcss/typography';
+import flowbitePlugin from 'flowbite/plugin';
 import type { Config } from 'tailwindcss';
 
 export default {
@@ -9,5 +10,5 @@ export default {
 	corePlugins: {
 		preflight: false
 	},
-	plugins: [typography]
+	plugins: [typography, flowbitePlugin]
 } satisfies Config;
