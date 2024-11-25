@@ -10,49 +10,17 @@ export interface FirestoreSession {
 	createdAt: Timestamp;
 	status: 'draft' | 'waiting' | 'active' | 'ended';
 	tempIdExpiry: Timestamp | null;
-	resources: {
-		[id: string]: {
-			type: 'link' | 'text' | 'file';
-			content: string;
-			addedAt: Timestamp;
-		};
-	};
+	goal: string;
+	subQuestions: string[];
+	resourcesIds: string[];
 	participants: {
 		[userId: string]: {
 			name: string;
+			groupId: string | null;
 			joinedAt: Timestamp;
 		};
 	};
 	stage: 'grouping' | 'individual' | 'group' | 'ended';
-	groups: {
-		[groupId: string]: {
-			name: string;
-			leaderId: string;
-			members: {
-				[userId: string]: {
-					name: string;
-					joinedAt: Timestamp;
-				};
-			};
-			individualDiscussions?: {
-				[userId: string]: {
-					transcript: string;
-					analysis: {
-						keyPoints: string[];
-						sentiment: string;
-					};
-				};
-			};
-			groupDiscussion?: {
-				transcript: string;
-				analysis: {
-					keyPoints: string[];
-					commonThemes: string[];
-					disagreements: string[];
-				};
-			};
-		};
-	};
 }
 
 // Client-side data structure (serializable)
@@ -65,91 +33,43 @@ export interface Session {
 	createdAt: string;
 	status: 'draft' | 'waiting' | 'active' | 'ended';
 	tempIdExpiry: string | null;
-	resources: {
-		[id: string]: {
-			type: 'link' | 'text' | 'file';
-			content: string;
-			addedAt: string;
-		};
-	};
+	goal: string;
+	subQuestions: string[];
+	resourcesIds: string[];
 	participants: {
 		[userId: string]: {
 			name: string;
+			groupId: string | null;
 			joinedAt: string;
 		};
 	};
 	stage: 'grouping' | 'individual' | 'group' | 'ended';
-	groups: {
-		[groupId: string]: {
-			name: string;
-			leaderId: string;
-			members: {
-				[userId: string]: {
-					name: string;
-					joinedAt: string;
-				};
-			};
-			individualDiscussions?: {
-				[userId: string]: {
-					transcript: string;
-					analysis: {
-						keyPoints: string[];
-						sentiment: string;
-					};
-				};
-			};
-			groupDiscussion?: {
-				transcript: string;
-				analysis: {
-					keyPoints: string[];
-					commonThemes: string[];
-					disagreements: string[];
-				};
-			};
-		};
-	};
 }
 
-// Helper function to convert Firestore data to client data
+// convert Firestore data to client-side data
 export function convertFirestoreSession(data: FirestoreSession): Session {
 	return {
-		...data,
+		id: data.id,
+		tempId: data.tempId,
+		hostId: data.hostId,
+		hostName: data.hostName,
+		title: data.title,
 		createdAt: data.createdAt.toDate().toISOString(),
-		tempIdExpiry: data.tempIdExpiry?.toDate()?.toISOString() || null,
-		resources: Object.fromEntries(
-			Object.entries(data.resources || {}).map(([key, resource]) => [
-				key,
-				{
-					...resource,
-					addedAt: resource.addedAt.toDate().toISOString()
-				}
-			])
-		),
+		status: data.status,
+		tempIdExpiry: data.tempIdExpiry ? data.tempIdExpiry.toDate().toISOString() : null,
+		goal: data.goal,
+		subQuestions: data.subQuestions,
+		resourcesIds: data.resourcesIds,
 		participants: Object.fromEntries(
-			Object.entries(data.participants || {}).map(([key, participant]) => [
-				key,
+			Object.entries(data.participants).map(([userId, participant]) => [
+				userId,
 				{
-					...participant,
+					name: participant.name,
+					groupId: participant.groupId,
 					joinedAt: participant.joinedAt.toDate().toISOString()
 				}
 			])
 		),
-		groups: Object.fromEntries(
-			Object.entries(data.groups || {}).map(([groupId, group]) => [
-				groupId,
-				{
-					...group,
-					members: Object.fromEntries(
-						Object.entries(group.members).map(([userId, member]) => [
-							userId,
-							{
-								...member,
-								joinedAt: member.joinedAt.toDate().toISOString()
-							}
-						])
-					)
-				}
-			])
-		)
+		stage: data.stage
 	};
 }
