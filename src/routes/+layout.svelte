@@ -1,9 +1,13 @@
 <script lang="ts">
 	import '../app.css';
-	let { children } = $props();
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { sidebarOpen } from '$lib/stores/sidebar';
 	import Navbar from '$lib/components/Navbar.svelte';
+	import debug from 'debug';
+
+	debug.enable('app:*');
+
+	let { children } = $props();
 </script>
 
 <main class:sidebar-open={$sidebarOpen}>

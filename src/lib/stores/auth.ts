@@ -1,6 +1,10 @@
+import { goto } from '$app/navigation';
 import { auth } from '$lib/firebase';
+import debug from 'debug';
 import { GoogleAuthProvider, signInWithPopup, type User } from 'firebase/auth';
 import { writable } from 'svelte/store';
+
+const log = debug('app:auth');
 
 export const user = writable<User | null>(null);
 
@@ -32,10 +36,9 @@ export async function signInWithGoogle() {
 		}
 
 		// Redirect to dashboard after successful sign in
-		window.location.href = '/dashboard';
+		await goto('/dashboard');
 	} catch (error) {
-		console.error('Error signing in with Google:', error);
-		throw error;
+		log('Error signing in with Google:', error);
 	}
 }
 
@@ -46,9 +49,8 @@ export async function signOut() {
 		// Clear the session cookie
 		await fetch('/api/auth/signout', { method: 'POST' });
 		// Redirect to home page
-		window.location.href = '/';
+		await goto('/');
 	} catch (error) {
-		console.error('Error signing out:', error);
-		throw error;
+		log('Error signing out:', error);
 	}
 }

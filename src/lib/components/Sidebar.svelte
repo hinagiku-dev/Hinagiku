@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { sidebarOpen } from '$lib/stores/sidebar';
 	import Auth from '$lib/components/Auth.svelte';
-	import { user } from '$lib/stores/auth';
+	import { profile } from '$lib/stores/profile';
 	import { LayoutDashboard, UserCog } from 'lucide-svelte';
 </script>
 
 <div class="sidebar" class:open={$sidebarOpen}>
 	<nav>
-		{#if $user}
+		{#if $profile}
 			<a href="/profile" class="inline-flex items-center">
 				<UserCog size={30} class="inline-block text-blue-600" />
-				<div class="inline-block w-auto text-lg">{$user.displayName}</div>
+				<div class="inline-block w-auto text-lg">{$profile.displayName}</div>
 			</a>
 			<a class="inline-flex items-center" href="/dashboard">
 				<LayoutDashboard size={30} class="inline-block w-auto text-blue-600" />

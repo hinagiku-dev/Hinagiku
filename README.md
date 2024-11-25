@@ -52,3 +52,27 @@ Ensure your code adheres to the project's linting and formatting rules:
 pnpm lint
 pnpm format
 ```
+
+## Data Flow
+
+We have four main components in the system: the browser, the server, Firestore, and R2 (S3-compatible storage).
+
+- **Firestore and R2** are read-only for the browser. The difference is that Firestore is used on a push (subscribe) basis, while R2 is used on a pull (download) basis.
+- The **server** is the only component that can write to Firestore and R2. The browser must communicate through the server to perform any write operations.
+
+```mermaid
+graph TD
+    browser -->|api| server
+    server -->|reference| browser
+    server -->|upload| R2
+    R2 -->|download| browser
+    Firestore -->|subscribe| browser
+    Firestore -->|read| server
+    server -->|write| Firestore
+```
+
+This data flow allows us to control data updates centrally while still leveraging Firestore's security rules and real-time capabilities for read operations.
+
+## Data Model
+
+The front-end data model between the browser and Firestore is straightforward. We aim to map application routes directly to Firestore document paths. This approach allows us to easily subscribe to the appropriate documents and collections in Firestore, optimizing the number of read operations since the front-end views only one document or collection at a time.
