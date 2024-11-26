@@ -1,16 +1,17 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 import { env } from '$env/dynamic/private';
+import { upload_object } from '$lib/server/object-storage';
 import { transcribe } from '$lib/stt/core';
-import { R2_upload } from './utils';
 
+// curl -X POST http://localhost:5173/api/stt -H "Content-Type: multipart/form-data" -H "Origin: http://localhost:5173" -F "file=@test.wav"
 export const POST: RequestHandler = async ({ request }) => {
 	try {
 		// read audio buffer from request
-		const contentType = request.headers.get('content-type');
-		let audio_buffer: Buffer;
+		const content_type = request.headers.get('content-type');
+		let audio_buffer: Buffer | null = null;
 
-		if (contentType && contentType.includes('multipart/form-data')) {
+		if (content_type && content_type.includes('multipart/form-data')) {
 			const data = await request.formData();
 			const file = data.get('file') as File;
 			if (!file) {
@@ -21,10 +22,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			audio_buffer = Buffer.from(await request.arrayBuffer());
 		}
 
-		// transcribe and upload to R2 and return
 		const transcription = await transcribe(audio_buffer, env.HUGGINGFACE_TOKEN);
-		const transcription_file_url = await R2_upload(audio_buffer, transcription);
-		return json({ status: 'success', transcription, transcription_file_url });
+		const url = await upload_object(audio_buffer, 'audio/wav', { transcription });
+		return json({ status: 'success', transcription, url });
 	} catch (error) {
 		console.error('Error processing request:', error);
 		return json({ status: 'error', message: 'Internal Server Error' }, { status: 500 });
