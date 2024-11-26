@@ -1,22 +1,23 @@
 <script lang="ts">
-	import QRCode from '$lib/components/QRCode.svelte';
-	import { db } from '$lib/firebase';
-	import type { FirestoreSession } from '$lib/types/session';
-	import { convertFirestoreSession } from '$lib/types/session';
-	import { Trash2, Play, Users, FileText, Clock, CircleX, Plus } from 'lucide-svelte';
-	import { onSnapshot, doc } from 'firebase/firestore';
-	function debounce<T extends (...args: unknown[]) => void>(
-		func: T,
-		wait: number
-	): (...args: Parameters<T>) => void {
-		let timeout: ReturnType<typeof setTimeout>;
-		return function (this: unknown, ...args: Parameters<T>) {
-			clearTimeout(timeout);
-			timeout = setTimeout(() => func.apply(this, args), wait);
-		};
-	}
+	// disable eslint for this file
+	/* eslint-disable */
+	import { Play, Users } from 'lucide-svelte';
+	import { getContext } from 'svelte';
+	import { page } from '$app/stores';
+	import type { Session } from '$lib/schema/session';
+	import { goto } from '$app/navigation';
+	import type { Readable } from 'svelte/store';
 
-	let resources = $state([{ type: 'text', content: '' }]);
+	let { data } = $props();
+
+	let session = getContext<Readable<Session>>('session');
+
+	let isHost = $derived($session?.host === data.user.uid);
+
+	let goalInput = $state($session?.task || '');
+	let subQuestionsInput = $state($session?.subtasks || []);
+
+	let resources: { type: string; content: string; }[] = $state([]);
 
 	function addResource() {
 		resources = [...resources, { type: 'text', content: '' }];
@@ -25,8 +26,6 @@
 	function removeResource(index: number) {
 		resources = resources.filter((_, i) => i !== index);
 	}
-
-	removeResource(0);
 
 	function applyChanges(newtitle: string, resources: Array<{ type: string; content: string }>) {
 		newtitle = 'Do somthing';
@@ -39,12 +38,6 @@
 		resources = [];
 	}
 
-	let { data } = $props();
-	let { session, isHost } = $state(data);
-	let goalInput = $state(data.session.goal || '');
-	let subQuestionsInput = $state(data.session.subQuestions || []);
-	// value = session.goal = "";
-	// onchange = {debounce(handleAutoSave, 300)}
 	function addSubQuestion() {
 		subQuestionsInput.push('');
 	}
@@ -55,13 +48,13 @@
 	}
 
 	async function saveSession() {
-		const response = await fetch(`/api/session/${session.id}/save`, {
+		const response = await fetch(`/api/session/${$page.params.id}/save`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				sessionId: session.id,
+				sessionId: $page.params.id,
 				goal: goalInput,
 				subQuestions: subQuestionsInput
 			})
@@ -81,27 +74,28 @@
 	}
 
 	// svelte-ignore state_referenced_locally
-	let newtitle = $state(session.title);
+	let newtitle = $state($session?.title || '');
 
 	async function startSession() {
-		const response = await fetch(`/api/session/${session.id}/start`, {
+		const response = await fetch(`/api/session/${$page.params.id}/start`, {
 			method: 'POST'
 		});
 
 		if (response.ok) {
 			const result = await response.json();
-			session.tempId = result.tempId;
-			session.tempIdExpiry = result.tempIdExpiry;
-			session.status = 'waiting';
+			// $session?.tempId = result.tempId;
+			// $session?.tempIdExpiry = result.tempIdExpiry;
+			// $session?.status = 'waiting';
 		}
 	}
 
 	async function startIndividualStage() {
-		session.status = 'individual';
+		// $session?.status = 'active';
+		// ^ should use an api to do so
 		if (isHost) {
-			window.location.href = `/session/${session.id}/status`;
+			await goto(`/session/${$page.params.id}/status`);
 		} else {
-			window.location.href = `/session/${session.id}/participant`;
+			await goto(`/session/${$page.params.id}/participant`);
 		}
 	}
 
@@ -109,24 +103,12 @@
 		return new Date(dateString).toLocaleString();
 	}
 
-	$effect(() => {
-		// Subscribe to real-time updates using client-side Firebase
-		const unsubscribe = onSnapshot(doc(db, 'sessions', session.id), (doc) => {
-			if (doc.exists()) {
-				const data = doc.data() as FirestoreSession;
-				session = convertFirestoreSession(data);
-			}
-		});
-
-		return unsubscribe;
-	});
-
-	let { isEditing } = $state({ isEditing: false });
-	let { newTitle } = $state({ newTitle: '' });
+	let isEditing = $state(false);
+	let newTitle = $state('');
 
 	function startEditing() {
 		isEditing = true;
-		newTitle = session.title;
+		newTitle = $session?.title || '';
 	}
 
 	function stopEditing(event: Event) {
@@ -147,7 +129,7 @@
 			{#if isHost}
 				{#if isEditing}
 					<form method="POST" action="?/updateTitle" onsubmit={stopEditing}>
-						<input type="hidden" name="sessionId" value={session.id} />
+						<input type="hidden" name="sessionId" value={$page.params.id} />
 						<input
 							type="text"
 							name="title"
@@ -159,7 +141,7 @@
 					</form>
 				{:else}
 					<div class="flex items-center">
-						<h1 class="text-3xl font-bold">{session.title}</h1>
+						<h1 class="text-3xl font-bold">{$session?.title}</h1>
 						<button
 							onclick={startEditing}
 							class="ml-2 text-gray-600 hover:text-gray-800"
@@ -171,20 +153,20 @@
 				{/if}
 			{:else}
 				<div class="flex items-center">
-					<h1 class="text-3xl font-bold">{session.title}</h1>
+					<h1 class="text-3xl font-bold">{$session?.title}</h1>
 				</div>
 			{/if}
-			<p class="mt-2 text-gray-600">Hosted by {session.hostName}</p>
+			<p class="mt-2 text-gray-600">Hosted by {$session?.host}</p>
 		</div>
 
 		{#if isHost}
 			<div class="flex items-center gap-4">
 				<div class="flex items-center gap-2">
 					<Users size={20} />
-					<span>{Object.keys(session.participants).length} participants</span>
+					<span>{Object.keys($session?.participants).length} participants</span>
 				</div>
 
-				{#if session.status === 'draft'}
+				{#if $session?.status === 'draft'}
 					<button
 						class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
 						onclick={startSession}
@@ -192,7 +174,7 @@
 						<Play size={20} />
 						Start Session
 					</button>
-				{:else if session.status === 'waiting'}
+				{:else if $session?.status === 'waiting'}
 					<button
 						class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
 						onclick={startIndividualStage}
@@ -205,40 +187,37 @@
 		{/if}
 	</div>
 
-	<div class="grid gap-8 md:grid-cols-2">
-		<!-- Left Column -->
+	<!-- <div class="grid gap-8 md:grid-cols-2">
 		<div class="space-y-8">
-			<!-- Session Status -->
 			<div class="rounded-lg border p-6">
 				<h2 class="mb-4 text-xl font-semibold">Session Status</h2>
 				<div class="flex items-center gap-2">
 					<span
 						class={`inline-block h-3 w-3 rounded-full ${
-							session.status === 'draft'
+							$session?.status === 'draft'
 								? 'bg-gray-500'
-								: session.status === 'waiting'
+								: $session?.status === 'waiting'
 									? 'bg-yellow-500'
-									: session.status === 'active'
+									: $session?.status === 'active'
 										? 'bg-green-500'
 										: 'bg-red-500'
 						}`}
 					></span>
-					<span class="capitalize">{session.status}</span>
+					<span class="capitalize">{$session?.status}</span>
 				</div>
 
-				{#if session.tempId && session.tempIdExpiry}
+				{#if $session?.tempId && $session?.tempIdExpiry}
 					<div class="mt-4">
-						<p class="mb-2">Session Code: <strong>{session.tempId}</strong></p>
-						<QRCode value={session.tempId} />
+						<p class="mb-2">Session Code: <strong>{$session?.tempId}</strong></p>
+						<QRCode value={$session?.tempId} />
 						<p class="mt-2 text-sm text-gray-600">
 							<Clock size={16} class="mr-1 inline" />
-							Expires at {formatDate(session.tempIdExpiry)}
+							Expires at {formatDate($session?.tempIdExpiry)}
 						</p>
 					</div>
 				{/if}
 			</div>
 
-			<!-- Resources (Host Only) -->
 			{#if isHost}
 				<div class="rounded-lg border p-6">
 					<h2 class="mb-4 text-xl font-semibold">Resources</h2>
@@ -287,11 +266,11 @@
 						</button>
 					{/if}
 
-					{#if Object.keys(session.resources).length === 0}
+					{#if Object.keys($session?.resources).length === 0}
 						<p class="text-gray-600">No resources added yet</p>
 					{:else}
 						<div class="space-y-3">
-							{#each Object.entries(session.resources) as [, resource]}
+							{#each Object.entries($session?.resources) as [, resource]}
 								<div class="flex items-start gap-3 rounded-lg border p-3">
 									<FileText size={20} class="mt-1 text-gray-600" />
 									<div>
@@ -306,10 +285,9 @@
 					{/if}
 				</div>
 			{/if}
-		</div>
+		</div> -->
 
-		<!-- Right Column -->
-		<div class="space-y-8">
+		<!-- <div class="space-y-8">
 			{#if isHost}
 				<div class="rounded-lg border p-6">
 					<div class="flex items-center justify-between">
@@ -360,22 +338,21 @@
 					<p id="auto-save-message" class="text-sm text-red-500"></p>
 				</div>
 			{/if}
-			<!-- Participants -->
 			<div class="rounded-lg border p-6">
 				<h2 class="mb-4 text-xl font-semibold">Participants</h2>
-				{#if Object.keys(session.participants).length === 0}
+				{#if Object.keys($session?.participants).length === 0}
 					<p class="text-gray-600">No participants yet</p>
 				{:else}
 					<div class="space-y-3">
-						{#each Object.entries(session.participants) as [userId, participant]}
+						{#each Object.entries($session?.participants) as [userId, participant]}
 							<div class="flex items-center justify-between rounded-lg border p-3">
 								<div>
-									{#if !(userId === session.hostId) && isHost}
+									{#if !(userId === $session?.hostId) && isHost}
 										<button class="h-6"><CircleX size={20} /></button>
 									{/if}
 									<p class="inline-block font-medium">
 										{participant.name}
-										{#if userId === session.hostId}
+										{#if userId === $session?.hostId}
 											<span class="ml-2 text-sm text-blue-600">(Host)</span>
 										{/if}
 									</p>
@@ -386,7 +363,7 @@
 								{#if isHost}
 									<form method="POST" action="?/deleteParticipant">
 										<input type="hidden" name="participantId" value={userId} />
-										<input type="hidden" name="sessionId" value={session.id} />
+										<input type="hidden" name="sessionId" value={$page.params.id} />
 										<button type="submit" class="ml-4 text-red-600 hover:text-red-800">
 											Remove
 										</button>
@@ -398,5 +375,5 @@
 				{/if}
 			</div>
 		</div>
-	</div>
+	</div> -->
 </main>

@@ -4,20 +4,20 @@ import { writable, type Readable } from 'svelte/store';
 
 const log = debug('app:store');
 
-export interface DocumentStore<T> extends Readable<T> {
+export type DocumentStore<T> = [Readable<T | null>, {
 	unsubscribe: () => void;
-}
+}];
 
 export function subscribeAll<T = unknown>(
 	ref: Query,
-	store = writable<T[]>([])
-): DocumentStore<T[]> {
+	store = writable<[string, T][]>([])
+): DocumentStore<[string, T][]> {
 	log('subscribe', ref);
 
 	const unsubscribe = onSnapshot(
 		ref,
 		(snapshot) => {
-			const data = snapshot.docs.map((doc) => doc.data() as T);
+			const data = snapshot.docs.map((doc) => [doc.id, doc.data()] as [string, T]);
 			log('onSnapshot', ref, data);
 			store.set(data);
 		},
@@ -26,18 +26,18 @@ export function subscribeAll<T = unknown>(
 		}
 	);
 
-	return Object.assign(store, {
+	return [store, {
 		unsubscribe: () => {
 			log('unsubscribe', ref);
 			unsubscribe();
 		}
-	});
+	}];
 }
 
 export function subscribe<T = unknown>(
 	ref: DocumentReference,
 	store = writable<T | null>(null)
-): DocumentStore<T | null> {
+): DocumentStore<T> {
 	log('subscribe', ref.path);
 
 	const unsubscribe = onSnapshot(
@@ -52,10 +52,10 @@ export function subscribe<T = unknown>(
 		}
 	);
 
-	return Object.assign(store, {
+	return [store, {
 		unsubscribe: () => {
-			log('unsubscribe', ref.path);
+			log('unsubscribe', ref);
 			unsubscribe();
 		}
-	});
+	}];
 }

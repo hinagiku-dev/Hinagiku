@@ -57,10 +57,10 @@
 				/>
 
 				{#if form?.idInvalid}
-					<p class="mt-1 text-sm text-red-600">Please enter a valid 6-digit code</p>
+					<p class="mt-1 text-sm text-primary-600">Please enter a valid 6-digit code</p>
 				{/if}
 				{#if form?.notFound}
-					<p class="mt-1 text-sm text-red-600">Session not found or already started</p>
+					<p class="mt-1 text-sm text-primary-600">Session not found or already started</p>
 				{/if}
 			</div>
 			<div>
@@ -76,7 +76,7 @@
 					placeholder="輸入組別"
 				/>
 				{#if form?.groupNumberInvalid}
-					<p class="mt-1 text-sm text-red-600">請輸入有效的組別</p>
+					<p class="mt-1 text-sm text-primary-600">請輸入有效的組別</p>
 				{/if}
 			</div>
 
@@ -94,7 +94,7 @@
 
 			<button
 				type="submit"
-				class="w-full rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
+				class="w-full rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-primary-700"
 			>
 				Join Session
 			</button>

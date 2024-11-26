@@ -1,72 +1,122 @@
 <script lang="ts">
 	import { user } from '$lib/stores/auth';
+	import { profile } from '$lib/stores/profile';
 	import { MessageSquarePlus, UserPlus, UserCog } from 'lucide-svelte';
+	import { Card, Button } from 'flowbite-svelte';
+	import { db } from '$lib/firebase';
+	import { subscribeAll } from '$lib/firebase/store';
+	import { collection, orderBy, query, where } from 'firebase/firestore';
+	import type { Session } from '$lib/schema/session.js';
+	import { onDestroy } from 'svelte';
+
 	let { data } = $props();
+
+	let [created, { unsubscribe: unsubscribe1 }] = subscribeAll<Session>(
+		query(
+			collection(db, 'sessions'),
+			where('host', '==', data.user.uid),
+			orderBy('createdAt', 'desc')
+		)
+	);
+	let [joined, { unsubscribe: unsubscribe2 }] = subscribeAll<Session>(
+		query(
+			collection(db, 'sessions'),
+			where('participants', 'array-contains', data.user.uid),
+			orderBy('createdAt', 'desc')
+		)
+	);
+	onDestroy(() => {
+		unsubscribe1();
+		unsubscribe2();
+	});
+
+	let sessions = $derived([...($created || []), ...($joined || [])]);
 </script>
 
 <main class="mx-auto max-w-6xl px-4 py-16">
-	<div class="mb-12 flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold">Dashboard</h1>
-			<p class="mt-2 text-gray-600">Welcome back, {$user?.displayName}</p>
-		</div>
+	<div class="mb-12">
+		<h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+		<p class="mt-2 text-gray-600">Welcome back, {$profile?.displayName || $user?.displayName}</p>
 	</div>
 
 	<div class="grid gap-6 md:grid-cols-3">
-		<!-- Create Discussion Session -->
-		<a
-			href="/create"
-			class="flex flex-col items-center rounded-lg border p-8 transition-all hover:border-blue-500 hover:shadow-lg"
-		>
-			<MessageSquarePlus size={48} class="mb-4 text-blue-600" />
-			<h2 class="mb-2 text-xl font-semibold">Create Discussion Session</h2>
-			<p class="text-center text-gray-600">Start a new discussion session as a host</p>
-		</a>
+		<Card padding="xl" class="text-center transition-all hover:border-primary-500">
+			<a href="/create" class="flex flex-col items-center">
+				<div class="mb-4 rounded-full bg-primary-100 p-4">
+					<MessageSquarePlus size={32} class="text-primary-600" />
+				</div>
+				<h2 class="mb-2 text-xl font-semibold text-gray-900">Create Discussion Session</h2>
+				<p class="text-gray-600">Start a new discussion session as a host</p>
+			</a>
+		</Card>
 
-		<!-- Join Discussion Session -->
-		<a
-			href="/join"
-			class="flex flex-col items-center rounded-lg border p-8 transition-all hover:border-blue-500 hover:shadow-lg"
-		>
-			<UserPlus size={48} class="mb-4 text-blue-600" />
-			<h2 class="mb-2 text-xl font-semibold">Join Discussion Session</h2>
-			<p class="text-center text-gray-600">Join an existing discussion using a session code</p>
-		</a>
+		<Card padding="xl" class="text-center transition-all hover:border-primary-500">
+			<a href="/join" class="flex flex-col items-center">
+				<div class="mb-4 rounded-full bg-primary-100 p-4">
+					<UserPlus size={32} class="text-primary-600" />
+				</div>
+				<h2 class="mb-2 text-xl font-semibold text-gray-900">Join Discussion Session</h2>
+				<p class="text-gray-600">Join an existing discussion using a session code</p>
+			</a>
+		</Card>
 
-		<!-- Edit Profile -->
-		<a
-			href="/profile"
-			class="flex flex-col items-center rounded-lg border p-8 transition-all hover:border-blue-500 hover:shadow-lg"
-		>
-			<UserCog size={48} class="mb-4 text-blue-600" />
-			<h2 class="mb-2 text-xl font-semibold">Edit Profile</h2>
-			<p class="text-center text-gray-600">Update your profile settings and preferences</p>
-		</a>
+		<Card padding="xl" class="text-center transition-all hover:border-primary-500">
+			<a href="/profile" class="flex flex-col items-center">
+				<div class="mb-4 rounded-full bg-primary-100 p-4">
+					<UserCog size={32} class="text-primary-600" />
+				</div>
+				<h2 class="mb-2 text-xl font-semibold text-gray-900">Edit Profile</h2>
+				<p class="text-gray-600">Update your profile settings and preferences</p>
+			</a>
+		</Card>
 	</div>
 
 	<!-- Recent Sessions -->
 	<div class="mt-12">
-		<h2 class="mb-4 text-2xl font-semibold">Recent Sessions</h2>
-		<div class="space-y-2 rounded-lg border">
-			{#if data.createdSessions}
-				{#each data.createdSessions as session}
-					<a
-						class="block w-auto rounded-lg bg-blue-500 px-4 py-1 text-left text-lg text-white no-underline shadow-md hover:bg-blue-600"
-						href="/session/{session.id}"
-					>
-						<span class="text-2xl">{session.title}</span>
-						<div class="flex items-center justify-between">
-							<span class="text-lg">Host by: {session.hostName}</span>
-							<span class="text-right text-lg">{session.tempId}</span>
-						</div>
-					</a>
+		<h2 class="mb-4 text-2xl font-semibold text-gray-900">Recent Sessions</h2>
+		{#if sessions?.length}
+			<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+				{#each sessions as [id, session]}
+					<Card padding="lg" class="transition-all hover:border-primary-500">
+						<a href="/session/{id}" class="block">
+							<div class="mb-4 flex items-center justify-between">
+								<h3 class="line-clamp-1 text-xl font-semibold text-gray-900">{session.title}</h3>
+								<span
+									class="rounded-full px-3 py-1 text-sm font-medium {session.status === 'active'
+										? 'bg-green-100 text-green-600'
+										: session.status === 'waiting'
+											? 'bg-yellow-100 text-yellow-600'
+											: 'bg-gray-100 text-gray-600'}"
+								>
+									{session.status === 'active'
+										? 'Active'
+										: session.status === 'waiting'
+											? 'Waiting'
+											: session.status === 'draft'
+												? 'Draft'
+												: 'Ended'}
+								</span>
+							</div>
+							<div class="flex items-center justify-between">
+								<p class="text-gray-600">
+									Participants: {session.participants?.length || 0}
+								</p>
+							</div>
+						</a>
+					</Card>
 				{/each}
-			{:else}
-				<div class="p-8 text-center text-gray-600">
-					<p>No recent sessions found</p>
-					<p class="mt-2 text-sm">Create or join a session to get started</p>
+			</div>
+		{:else}
+			<Card>
+				<div class="p-8 text-center">
+					<div class="mb-4 inline-flex rounded-full bg-primary-100 p-4">
+						<MessageSquarePlus size={32} class="text-primary-600" />
+					</div>
+					<p class="mb-2 text-lg font-medium text-gray-900">No recent sessions found</p>
+					<p class="mb-4 text-gray-600">Create or join a session to get started</p>
+					<Button href="/create" color="primary">Create Your First Session</Button>
 				</div>
-			{/if}
-		</div>
+			</Card>
+		{/if}
 	</div>
 </main>

@@ -3,12 +3,10 @@ import { adminDb } from '$lib/server/firebase';
 import { chatWithLLMByDocs } from '$lib/server/llm';
 import { parsePdf2Text } from '$lib/server/parse';
 import { transcribe } from '$lib/stt/core';
-import {
-	convertFirestoreIndividualDiscussion,
-	type FirestoreIndividualDiscussion
+import type {
+	FirestoreIndividualDiscussion
 } from '$lib/types/IndividualDiscussion';
 import type { FirestoreSession } from '$lib/types/session';
-import { convertFirestoreSession } from '$lib/types/session';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -19,21 +17,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	const sessionRef = adminDb.collection('sessions').doc(params.id);
 	const sessionDoc = await sessionRef.get();
+	const session = sessionDoc.data();
 
-	if (!sessionDoc.exists) {
+	if (!session) {
 		throw error(404, 'Session not found');
 	}
 
-	const sessionData = sessionDoc.data() as FirestoreSession;
-	const session = convertFirestoreSession(sessionData);
-
-	// Check if user is a participant
 	if (!(locals.user.uid in session.participants)) {
 		throw error(403, 'Not a participant in this session');
 	}
 
 	return {
-		session,
 		user: locals.user
 	};
 };

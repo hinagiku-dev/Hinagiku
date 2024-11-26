@@ -3,12 +3,11 @@
 	import QrScanner from '$lib/components/QrScanner.svelte';
 	import { db } from '$lib/firebase';
 	import type { FirestoreSession } from '$lib/types/session';
-	import { convertFirestoreSession } from '$lib/types/session';
 	import { onSnapshot, doc } from 'firebase/firestore';
 	import { Users, Mic, MessageSquare } from 'lucide-svelte';
 
 	let { data } = $props();
-	let { session, user } = $state(data);
+	let { user } = $state(data);
 	let showScanner = $state(false);
 	let isRecording = $state(false);
 	let currentGroupId = $state<string | null>(null);
@@ -33,17 +32,6 @@
 		isRecording = false;
 		// Implement stop recording logic
 	}
-
-	$effect(() => {
-		const unsubscribe = onSnapshot(doc(db, 'sessions', session.id), (doc) => {
-			if (doc.exists()) {
-				const data = doc.data() as FirestoreSession;
-				session = convertFirestoreSession(data);
-			}
-		});
-
-		return unsubscribe;
-	});
 </script>
 
 <main class="mx-auto max-w-4xl px-4 py-8">

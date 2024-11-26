@@ -1,74 +1,84 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { profile } from '$lib/stores/profile';
+	import { Button, Label, Input, Textarea, Card, Alert } from 'flowbite-svelte';
+	import { CheckCircle } from 'lucide-svelte';
 
 	let { form, data } = $props();
-
 	let loading = $state(false);
 </script>
 
 <main class="mx-auto max-w-2xl px-4 py-16">
-	<h1 class="mb-8 text-3xl font-bold">Profile Settings</h1>
+	<div class="mb-8">
+		<h1 class="text-3xl font-bold text-gray-900">Profile Settings</h1>
+		<p class="mt-2 text-gray-600">Update your personal information and preferences</p>
+	</div>
 
 	{#if form?.success}
-		<div class="mb-6 rounded-lg bg-green-100 p-4 text-green-700">Profile updated successfully!</div>
+		<Alert color="green" class="mb-6">
+			<svelte:fragment slot="icon">
+				<CheckCircle class="h-4 w-4" />
+			</svelte:fragment>
+			Profile updated successfully!
+		</Alert>
 	{/if}
 
 	{#key $profile}
-		<form
-			method="POST"
-			use:enhance={() => {
-				loading = true;
-				return async ({ update }) => {
-					await update();
-					loading = false;
-				};
-			}}
-			class="space-y-6"
-		>
-			<div>
-				<label for="displayName" class="mb-2 block font-medium">Display Name</label>
-				<input
-					type="text"
-					id="displayName"
-					name="displayName"
-					value={$profile?.displayName ?? data.user.name}
-					required
-					class="w-full rounded-lg border p-2"
-				/>
-			</div>
-
-			<div>
-				<label for="title" class="mb-2 block font-medium">Title</label>
-				<input
-					type="text"
-					id="title"
-					name="title"
-					value={$profile?.title ?? ''}
-					placeholder="e.g. Professor, Student, Teaching Assistant"
-					class="w-full rounded-lg border p-2"
-				/>
-			</div>
-
-			<div>
-				<label for="bio" class="mb-2 block font-medium">Bio</label>
-				<textarea
-					id="bio"
-					name="bio"
-					value={$profile?.bio ?? ''}
-					rows="4"
-					class="w-full rounded-lg border p-2"
-					placeholder="Tell us about yourself"
-				></textarea>
-			</div>
-
-			<button
-				type="submit"
-				class="w-full rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-				disabled={loading}
+		<Card size="none" class="p-6">
+			<form
+				method="POST"
+				use:enhance={() => {
+					loading = true;
+					return async ({ update }) => {
+						await update();
+						loading = false;
+					};
+				}}
+				class="space-y-6"
 			>
-				{loading ? 'Saving...' : 'Save Profile'}
-			</button>
-		</form>
+				<div>
+					<Label for="displayName" class="mb-2">Display Name</Label>
+					<Input
+						type="text"
+						id="displayName"
+						name="displayName"
+						value={$profile?.displayName || data.user.name}
+						required
+					/>
+				</div>
+
+				<div>
+					<Label for="title" class="mb-2">Title</Label>
+					<Input
+						type="text"
+						id="title"
+						name="title"
+						value={$profile?.title ?? ''}
+						placeholder="e.g. Professor, Student, Teaching Assistant"
+					/>
+				</div>
+
+				<div>
+					<Label for="bio" class="mb-2">Bio</Label>
+					<Textarea
+						id="bio"
+						name="bio"
+						value={$profile?.bio ?? ''}
+						rows={4}
+						placeholder="Tell us about yourself"
+					/>
+					<p class="mt-2 text-sm text-gray-600">
+						Write a short bio to help others know more about you
+					</p>
+				</div>
+
+				<div class="flex justify-end gap-4">
+					<Button href="/dashboard" color="light">Cancel</Button>
+					<Button type="submit" disabled={loading}>
+						{loading ? 'Saving...' : 'Save Changes'}
+					</Button>
+				</div>
+			</form>
+		</Card>
 	{/key}
 </main>
