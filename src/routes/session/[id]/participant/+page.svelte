@@ -1,27 +1,20 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import QRCode from '$lib/components/QRCode.svelte';
 	import QrScanner from '$lib/components/QrScanner.svelte';
 	import { db } from '$lib/firebase';
 	import type { FirestoreSession } from '$lib/types/session';
-	import { convertFirestoreSession } from '$lib/types/session';
 	import { onSnapshot, doc } from 'firebase/firestore';
 	import { Users, Mic, MessageSquare } from 'lucide-svelte';
 
 	let { data } = $props();
-	let { session, user } = $state(data);
+	let { user } = $state(data);
 	let showScanner = $state(false);
 	let isRecording = $state(false);
 	let currentGroupId = $state<string | null>(null);
 
 	// Find user's current group
 	$effect(() => {
-		for (const [groupId, group] of Object.entries(session.groups || {})) {
-			if (user.uid in group.members) {
-				currentGroupId = groupId;
-				break;
-			}
-		}
+		currentGroupId = session.participants[user.uid]?.groupId || null;
 	});
 
 	function handleScanGroup(groupId: string) {
@@ -39,17 +32,6 @@
 		isRecording = false;
 		// Implement stop recording logic
 	}
-
-	$effect(() => {
-		const unsubscribe = onSnapshot(doc(db, 'sessions', session.id), (doc) => {
-			if (doc.exists()) {
-				const data = doc.data() as FirestoreSession;
-				session = convertFirestoreSession(data);
-			}
-		});
-
-		return unsubscribe;
-	});
 </script>
 
 <main class="mx-auto max-w-4xl px-4 py-8">
@@ -134,28 +116,23 @@
 			<div class="rounded-lg border p-6">
 				<h3 class="mb-4 text-lg font-semibold">Your Group</h3>
 				<div class="space-y-4">
-					<p>Group Name: {session.groups[currentGroupId].name}</p>
+					<p>Group Name: {session.groups[currentGroupId].groupName}</p>
 					<div>
 						<p class="mb-2 font-medium">Members:</p>
 						<ul class="space-y-2">
-							{#each Object.entries(session.groups[currentGroupId].members) as [memberId, member]}
+							{#each Object.values(session.groups[currentGroupId].members) as member}
 								<li class="flex items-center gap-2">
 									<span>{member.name}</span>
-									{#if memberId === session.groups[currentGroupId].leaderId}
-										<span class="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-600">
-											Leader
-										</span>
-									{/if}
 								</li>
 							{/each}
 						</ul>
 					</div>
-					{#if user.uid === session.groups[currentGroupId].leaderId}
+					<!-- {#if user.uid === session.groups[currentGroupId].leaderId}
 						<div>
 							<p class="mb-2">Group QR Code:</p>
 							<QRCode value={currentGroupId} />
 						</div>
-					{/if}
+					{/if} -->
 				</div>
 			</div>
 		{/if}

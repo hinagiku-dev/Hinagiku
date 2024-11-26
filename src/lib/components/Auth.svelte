@@ -5,7 +5,7 @@
 
 {#if $user}
 	<div>
-		<p class="inline-block">Welcome, {$profile?.displayName ?? $user.displayName}!</p>
+		<p class="inline-block">Welcome, {$profile?.displayName || $user.displayName}!</p>
 		<button class="rounded-lg" on:click={signOut}>Sign Out</button>
 	</div>
 {:else}
