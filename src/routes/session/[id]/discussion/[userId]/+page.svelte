@@ -3,6 +3,7 @@
 	let inputText = '';
 
 	function sendMessage() {
+		if (messages[messages.length - 1].sender === 'me') return;
 		if (inputText.trim() !== '') {
 			messages = [...messages, { sender: 'me', text: inputText }];
 			inputText = '';
@@ -10,7 +11,7 @@
 	}
 </script>
 
-<main class="mt-20 mt-auto">
+<main class="mt-20">
 	<div class="chat-container">
 		<div class="messages">
 			{#each messages as message}
@@ -21,24 +22,19 @@
 			{/each}
 		</div>
 		<div class="input-area">
-			{#if messages[messages.length - 1].sender === 'me'}
-				<input type="text" bind:value={inputText} placeholder="Type your message..." />
-			{:else}
-				<input
-					type="text"
-					bind:value={inputText}
-					placeholder="Type your message..."
-					on:keyup={(e) => e.key === 'Enter' && sendMessage()}
-				/>
-			{/if}
-
-			<button
-				class="block rounded-lg"
-				disabled={messages[messages.length - 1].sender === 'me'}
-				on:click={sendMessage}>Send</button
+			<input
+				class="inline-block"
+				type="text"
+				bind:value={inputText}
+				placeholder="Type your message..."
+				on:keyup={(e) => e.key === 'Enter' && sendMessage()}
+			/>
+			<button disabled={messages[messages.length - 1].sender === 'me'} on:click={sendMessage}
+				>Send</button
 			>
+			<div class="w-full"></div>
 			{#if messages[messages.length - 1].sender === 'me'}
-				<div class="block">Please wait for a response...</div>
+				<div>Please wait for a response...</div>
 			{/if}
 		</div>
 	</div>
@@ -65,11 +61,9 @@
 		text-align: left;
 	}
 	.input-area {
-		display: flex;
 		margin-top: 10px;
-	}
-	.input-area div {
-		display: block;
+		display: flex;
+		flex-wrap: wrap;
 	}
 	.input-area input {
 		flex: 1;
@@ -77,7 +71,6 @@
 	}
 	.input-area button {
 		padding: 10px;
-		display: block;
 	}
 	.input-area button:hover {
 		background-color: #f0f0f0;
