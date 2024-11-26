@@ -91,7 +91,7 @@ export async function chatWithLLMByDocs(
 			temperature
 		});
 
-		const result = response.choices[0].message;
+		const result = response.choices[0].message.content;
 		if (!result) {
 			throw new Error('Failed to parse response');
 		}
@@ -127,7 +127,7 @@ export async function summarizeStudentChat(chatHistory: ChatMessage[]) {
 			response_format: zodResponseFormat(SummaryStudentOpinionSchema, 'chat_summary')
 		});
 
-		const result = completion.choices[0].message.parsed;
+		const result = completion.choices[0].message.content;
 		if (!result) {
 			throw new Error('Failed to parse response');
 		}
@@ -168,7 +168,7 @@ export async function summarizeGroupOpinions(groupOpinions: Student_opinion[]) {
 			response_format: zodResponseFormat(SummaryGroupOpinionSchema, 'group_opinion_summary')
 		});
 
-		const result = completion.choices[0].message.parsed;
+		const result = completion.choices[0].message.content;
 		if (!result) {
 			throw new Error('Failed to parse response');
 		}
