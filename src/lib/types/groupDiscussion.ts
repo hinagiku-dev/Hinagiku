@@ -4,6 +4,7 @@ import type { Timestamp } from 'firebase-admin/firestore';
 export interface FirestoreGroupDiscussion {
 	sessionId: string;
 	groupId: string;
+	groupName: string;
 	history: {
 		name: string;
 		content: string;
@@ -20,6 +21,7 @@ export interface FirestoreGroupDiscussion {
 export interface GroupDiscussion {
 	sessionId: string;
 	groupId: string;
+	groupName: string;
 	history: {
 		name: string;
 		content: string;
@@ -37,6 +39,7 @@ export function convertFirestoreGroupDiscussion(data: FirestoreGroupDiscussion):
 	return {
 		sessionId: data.sessionId,
 		groupId: data.groupId,
+		groupName: data.groupName,
 		history: data.history.map((history) => ({
 			name: history.name,
 			content: history.content,

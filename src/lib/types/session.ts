@@ -9,18 +9,29 @@ export interface FirestoreSession {
 	title: string;
 	createdAt: Timestamp;
 	status: 'draft' | 'waiting' | 'active' | 'ended';
+	stage: 'grouping' | 'individual' | 'group' | 'ended';
 	tempIdExpiry: Timestamp | null;
 	goal: string;
 	subQuestions: string[];
-	resourcesIds: string[];
+	resourceIds: string[];
 	participants: {
 		[userId: string]: {
 			name: string;
 			groupId: string | null;
+			groupName: string | null;
 			joinedAt: Timestamp;
 		};
 	};
-	stage: 'grouping' | 'individual' | 'group' | 'ended';
+	groups: {
+		[groupId: string]: {
+			groupName: string;
+			members: {
+				[userId: string]: {
+					name: string;
+				};
+			};
+		};
+	};
 }
 
 // Client-side data structure (serializable)
@@ -32,10 +43,11 @@ export interface Session {
 	title: string;
 	createdAt: string;
 	status: 'draft' | 'waiting' | 'active' | 'ended';
+	stage: 'grouping' | 'individual' | 'group' | 'ended';
 	tempIdExpiry: string | null;
 	goal: string;
 	subQuestions: string[];
-	resourcesIds: string[];
+	resourceIds: string[];
 	participants: {
 		[userId: string]: {
 			name: string;
@@ -43,7 +55,16 @@ export interface Session {
 			joinedAt: string;
 		};
 	};
-	stage: 'grouping' | 'individual' | 'group' | 'ended';
+	groups: {
+		[groupId: string]: {
+			groupName: string;
+			members: {
+				[userId: string]: {
+					name: string;
+				};
+			};
+		};
+	};
 }
 
 // convert Firestore data to client-side data
@@ -56,20 +77,37 @@ export function convertFirestoreSession(data: FirestoreSession): Session {
 		title: data.title,
 		createdAt: data.createdAt.toDate().toISOString(),
 		status: data.status,
+		stage: data.stage,
 		tempIdExpiry: data.tempIdExpiry ? data.tempIdExpiry.toDate().toISOString() : null,
 		goal: data.goal,
 		subQuestions: data.subQuestions,
-		resourcesIds: data.resourcesIds,
+		resourceIds: data.resourceIds,
 		participants: Object.fromEntries(
 			Object.entries(data.participants).map(([userId, participant]) => [
 				userId,
 				{
 					name: participant.name,
 					groupId: participant.groupId,
+					groupName: participant.groupName,
 					joinedAt: participant.joinedAt.toDate().toISOString()
 				}
 			])
 		),
-		stage: data.stage
+		groups: Object.fromEntries(
+			Object.entries(data.groups).map(([groupId, group]) => [
+				groupId,
+				{
+					groupName: group.groupName,
+					members: Object.fromEntries(
+						Object.entries(group.members).map(([userId, member]) => [
+							userId,
+							{
+								name: member.name
+							}
+						])
+					)
+				}
+			])
+		)
 	};
 }

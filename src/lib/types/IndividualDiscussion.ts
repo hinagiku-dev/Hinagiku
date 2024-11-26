@@ -5,10 +5,16 @@ export interface FirestoreIndividualDiscussion {
 	userId: string;
 	sessionId: string;
 	groupId: string;
+	goal: string;
+	subQuestions: string[];
+	resourcesTexts: {
+		name: string;
+		text: string;
+	}[];
 	history: {
 		role: 'system' | 'assistant' | 'user';
+		fileId: string | null;
 		content: string;
-		speechId: string | null;
 		timestamp: Timestamp;
 	}[];
 	summary: string;
@@ -19,10 +25,16 @@ export interface IndividualDiscussion {
 	userId: string;
 	sessionId: string;
 	groupId: string;
+	goal: string;
+	subQuestions: string[];
+	resourcesTexts: {
+		name: string;
+		text: string;
+	}[];
 	history: {
 		role: 'system' | 'assistant' | 'user';
+		fileId: string | null;
 		content: string;
-		speechId: string | null;
 		timestamp: string;
 	}[];
 	summary: string;
@@ -36,10 +48,13 @@ export function convertFirestoreIndividualDiscussion(
 		userId: data.userId,
 		sessionId: data.sessionId,
 		groupId: data.groupId,
+		goal: data.goal,
+		subQuestions: data.subQuestions,
+		resourcesTexts: data.resourcesTexts,
 		history: data.history.map((history) => ({
 			role: history.role,
+			fileId: history.fileId,
 			content: history.content,
-			speechId: history.speechId,
 			timestamp: history.timestamp.toDate().toISOString()
 		})),
 		summary: data.summary

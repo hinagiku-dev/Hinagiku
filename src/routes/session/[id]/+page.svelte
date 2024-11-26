@@ -8,7 +8,6 @@
 		Trash2,
 		Play,
 		Users,
-		Link,
 		FileText,
 		Clock,
 		Pencil,
@@ -213,24 +212,9 @@
 						<div class="space-y-3">
 							{#each Object.entries(session.resources) as [, resource]}
 								<div class="flex items-start gap-3 rounded-lg border p-3">
-									{#if resource.type === 'link'}
-										<Link size={20} class="mt-1 text-blue-600" />
-									{:else}
-										<FileText size={20} class="mt-1 text-gray-600" />
-									{/if}
+									<FileText size={20} class="mt-1 text-gray-600" />
 									<div>
-										{#if resource.type === 'link'}
-											<a
-												href={resource.content}
-												target="_blank"
-												rel="noopener noreferrer"
-												class="text-blue-600 hover:underline"
-											>
-												{resource.content}
-											</a>
-										{:else}
-											<p>{resource.content}</p>
-										{/if}
+										<p>{resource.text}</p>
 										<p class="mt-1 text-sm text-gray-500">
 											Added {formatDate(resource.addedAt)}
 										</p>
