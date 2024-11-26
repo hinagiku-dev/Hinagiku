@@ -42,11 +42,10 @@ export interface Session {
 	hostName: string;
 	title: string;
 	createdAt: string;
-	status: 'draft' | 'waiting' | 'active' | 'ended';
-	stage: 'grouping' | 'individual' | 'group' | 'ended';
-	tempIdExpiry: string | null;
 	goal: string;
 	subQuestions: string[];
+	status: 'draft' | 'waiting' | 'active' | 'ended' | 'individual' | 'group';
+	tempIdExpiry: string | null;
 	resourceIds: string[];
 	participants: {
 		[userId: string]: {
@@ -77,7 +76,6 @@ export function convertFirestoreSession(data: FirestoreSession): Session {
 		title: data.title,
 		createdAt: data.createdAt.toDate().toISOString(),
 		status: data.status,
-		stage: data.stage,
 		tempIdExpiry: data.tempIdExpiry ? data.tempIdExpiry.toDate().toISOString() : null,
 		goal: data.goal,
 		subQuestions: data.subQuestions,
