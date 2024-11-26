@@ -436,6 +436,13 @@ packages:
       }
     engines: { node: '>=16.0.0' }
 
+  '@babel/runtime-corejs3@7.24.7':
+    resolution:
+      {
+        integrity: sha512-eytSX6JLBY6PVAeQa2bFlDx/7Mmln/gaEpsit5a3WEvjGfiIytEsgAwuIXCPM0xvw0v0cJn3ilq0/TvXrW0kgA==
+      }
+    engines: { node: '>=6.9.0' }
+
   '@esbuild/aix-ppc64@0.21.5':
     resolution:
       {
@@ -3551,6 +3558,12 @@ packages:
         integrity: sha512-LQ4GtDkFagYaac8u4rE73zWu7h0OUUmR0qVBOgzLyFSoJhoDG2xV9PZJWWyVVcYha/9/RZzQHUinFMbNKiOoAA==
       }
     engines: { node: '>=0.8.0' }
+
+  idb-keyval@6.2.1:
+    resolution:
+      {
+        integrity: sha512-8Sb3veuYCyrZL+VBt9LJfZjLUPWVvqn8tG28VqYNFCo43KHcKuq+b4EiXGeuaLAQWL2YmyDgMp2aSpH9JHsEQg==
+      }
 
   idb@7.1.1:
     resolution:
@@ -8090,6 +8103,8 @@ snapshots:
   husky@9.1.7: {}
 
   iconv-lite@0.4.5: {}
+
+  idb-keyval@6.2.1: {}
 
   idb@7.1.1: {}
 
