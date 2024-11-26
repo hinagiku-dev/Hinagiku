@@ -20,21 +20,26 @@
 		"@sveltejs/kit": "^2.8.2",
 		"@sveltejs/vite-plugin-svelte": "^4.0.1",
 		"@tailwindcss/typography": "^0.5.15",
+		"@types/debug": "^4.1.12",
 		"@types/eslint": "^9.6.1",
 		"@types/qrcode": "^1.5.5",
 		"autoprefixer": "^10.4.20",
+		"debug": "^4.3.7",
 		"dotenv": "^16.4.5",
 		"eslint": "^9.15.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-svelte": "^2.46.0",
 		"firebase": "^11.0.2",
 		"firebase-admin": "^12.7.0",
+		"flowbite": "^2.5.2",
+		"flowbite-svelte": "^0.47.3",
 		"globals": "^15.12.0",
 		"html5-qrcode": "^2.3.8",
 		"husky": "^9.1.7",
 		"lint-staged": "^15.2.10",
 		"lucide-svelte": "^0.454.0",
 		"mdsvex": "^0.11.2",
+		"openai": "^4.73.0",
 		"prettier": "^3.3.3",
 		"prettier-plugin-organize-imports": "^4.1.0",
 		"prettier-plugin-svelte": "^3.3.2",
@@ -45,7 +50,6 @@
 		"tailwindcss": "^3.4.15",
 		"typescript": "^5.7.2",
 		"typescript-eslint": "^8.15.0",
-		"uuid": "^11.0.3",
 		"vite": "^5.4.11"
 	},
 	"lint-staged": {
@@ -54,9 +58,5 @@
 			"eslint --fix"
 		]
 	},
-	"packageManager": "pnpm@9.12.3",
-	"dependencies": {
-		"openai": "^4.73.0",
-		"zod": "^3.23.8"
-	}
+	"packageManager": "pnpm@9.12.3"
 }
