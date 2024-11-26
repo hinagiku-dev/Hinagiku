@@ -112,15 +112,9 @@ importers:
       typescript-eslint:
         specifier: ^8.15.0
         version: 8.15.0(eslint@9.15.0(jiti@1.21.6))(typescript@5.7.2)
-      uuid:
-        specifier: ^11.0.3
-        version: 11.0.3
       vite:
         specifier: ^5.4.11
         version: 5.4.11(@types/node@22.9.3)
-      zod:
-        specifier: ^3.23.8
-        version: 3.23.8
 
 packages:
   '@alloc/quick-lru@5.2.0':
@@ -4820,13 +4814,6 @@ packages:
       }
     hasBin: true
 
-  uuid@11.0.3:
-    resolution:
-      {
-        integrity: sha512-d0z310fCWv5dJwnX1Y/MncBAqGMKEzlBb1AOf7z9K8ALnd0utBX/msg/fA0+sbyN1ihbMsLhrBlnl1ak7Wa0rg==
-      }
-    hasBin: true
-
   uuid@8.3.2:
     resolution:
       {
@@ -8475,8 +8462,6 @@ snapshots:
 
   uuid@10.0.0: {}
 
-  uuid@11.0.3: {}
-
   uuid@8.3.2:
     optional: true
 
@@ -8599,4 +8584,5 @@ snapshots:
 
   zimmerframe@1.1.2: {}
 
-  zod@3.23.8: {}
+  zod@3.23.8:
+    optional: true
