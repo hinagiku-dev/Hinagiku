@@ -53,6 +53,8 @@ export interface FirestoreSession {
 			};
 		};
 	};
+	goal: string;
+	subQuestions: string[];
 }
 
 // Client-side data structure (serializable)
@@ -63,7 +65,9 @@ export interface Session {
 	hostName: string;
 	title: string;
 	createdAt: string;
-	status: 'draft' | 'waiting' | 'active' | 'ended';
+	goal: string;
+	subQuestions: string[];
+	status: 'draft' | 'waiting' | 'active' | 'ended' | 'individual' | 'group';
 	tempIdExpiry: string | null;
 	resources: {
 		[id: string]: {
@@ -116,6 +120,8 @@ export function convertFirestoreSession(data: FirestoreSession): Session {
 		...data,
 		createdAt: data.createdAt.toDate().toISOString(),
 		tempIdExpiry: data.tempIdExpiry?.toDate()?.toISOString() || null,
+		goal: data.goal,
+		subQuestions: data.subQuestions,
 		resources: Object.fromEntries(
 			Object.entries(data.resources || {}).map(([key, resource]) => [
 				key,
