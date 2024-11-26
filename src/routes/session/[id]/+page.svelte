@@ -27,6 +27,11 @@
 		resources = resources.filter((_, i) => i !== index);
 	}
 
+	function generateNewTask() {
+		// Generate new task
+		console.log('New task generated');
+	}
+
 	removeResource(0);
 
 	function applyChanges(newtitle: string, resources: Array<{ type: string; content: string }>) {
@@ -87,19 +92,19 @@
 		<div class="items-center">
 			{#if editingTitle}
 				<div class="inline-block text-3xl font-bold">
+					<button onclick={confirmTitleChanges} class="h-1/2"><Check size={28} /></button>
 					<input
 						type="text"
 						id="inputTitle"
 						bind:value={newtitle}
 						class="inline-block rounded-lg border text-3xl"
 					/>
-					<button onclick={confirmTitleChanges} class="h-1/2"><Check size={28} /></button>
 				</div>
 			{:else}
-				<h1 class="inline-block text-3xl font-bold">{session.title}</h1>
 				{#if isHost}
 					<button onclick={() => (editingTitle = true)} class="h-1/2"><Pencil size={20} /></button>
 				{/if}
+				<h1 class="inline-block text-3xl font-bold">{session.title}</h1>
 				<br />
 			{/if}
 			<p class="mt-2 text-gray-600">Hosted by {session.hostName}</p>
@@ -253,7 +258,7 @@
 				{:else}
 					<div class="space-y-3">
 						{#each Object.entries(session.participants) as [userId, participant]}
-							<div class="flex items-center justify-between rounded-lg border p-3">
+							<div class="flex items-center justify-between rounded-lg border pl-3">
 								<div>
 									{#if !(userId === session.hostId) && isHost}
 										<button class="h-6"><CircleX size={20} /></button>
@@ -285,9 +290,29 @@
 					{:else if session.status === 'ended'}
 						This session has ended.
 					{:else}
-						Discussion in progress...
+						Now discussing...
 					{/if}
 				</p>
+				{#if session.status === 'active'}
+					<h1>Topic</h1>
+					<p class="rounded-lg bg-white p-4 shadow-lg">session.topic</p>
+					<div class="mt-4">
+						<button
+							class="mt-2 inline-block rounded-lg bg-blue-600 px-4 py-2 text-white"
+							onclick={generateNewTask}
+						>
+							generate new subtask
+						</button>
+					</div>
+					<!--
+					{#each session.topic.subtask as task}
+						<div class="mt-4">
+							<h2>Task</h2>
+							<p class="p-4 bg-white shadow-lg rounded-lg">{task}</p>
+						</div>
+					{/each}
+					-->
+				{/if}
 			</div>
 		</div>
 	</div>

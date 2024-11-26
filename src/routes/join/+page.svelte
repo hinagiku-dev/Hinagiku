@@ -40,22 +40,9 @@
 					bind:value={tempIdInput}
 					required
 					pattern="\d\{6}"
-					class="w-full rounded-lg border p-2"
+					class="w-full rounded-lg border p-2 font-bold"
 					placeholder="Enter 6-digit code"
 				/>
-
-				<label for="groupId" class="mb-2 block pt-3 font-medium">Group number</label>
-				<input
-					type="text"
-					id="groupId"
-					name="groupId"
-					bind:value={tempGroupInput}
-					required
-					pattern="\d\{1}"
-					class="w-full rounded-lg border p-2"
-					placeholder="Enter group number"
-				/>
-
 				{#if form?.idInvalid}
 					<p class="mt-1 text-sm text-red-600">Please enter a valid 6-digit code</p>
 				{/if}
@@ -73,10 +60,10 @@
 					required
 					pattern="^(?:[1-9]|[1-4][0-9]|50)$"
 					class="w-full rounded-lg border p-2"
-					placeholder="輸入組別"
+					placeholder="Please enter your group number"
 				/>
 				{#if form?.groupNumberInvalid}
-					<p class="mt-1 text-sm text-red-600">請輸入有效的組別</p>
+					<p class="mt-1 text-sm text-red-600">Please enter a valid group number</p>
 				{/if}
 			</div>
 

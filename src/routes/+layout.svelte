@@ -19,6 +19,6 @@
 	}
 
 	main.sidebar-open {
-		margin-left: 12.5rem; /* 側邊欄的寬度 */
+		margin-left: 12.5rem;
 	}
 </style>
