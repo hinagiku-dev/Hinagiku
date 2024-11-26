@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { pdf2Text } from '../src/lib/server/parsePdf';
+import { pdf2Text } from '../src/lib/server/pdf';
 
 const help_message = `
 Usage: tsx <script> [options] <pdf_filepath>
