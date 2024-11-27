@@ -1,6 +1,7 @@
 <script>
-	let messages = [{ sender: 'other', text: 'Hello! How can I assist you today?' }];
+	let messages = [{ sender: 'Support', text: 'Hello! How can I assist you today?' }];
 	let inputText = '';
+	//import { User } from 'lucide-svelte'
 
 	function sendMessage() {
 		if (messages[messages.length - 1].sender === 'me') return;
@@ -15,9 +16,16 @@
 	<div class="chat-container">
 		<div class="messages">
 			{#each messages as message}
-				<div class="message {message.sender}">
-					<strong>{message.sender === 'me' ? 'You' : 'Support'}:</strong>
+				<div class="message" class:me={message.sender === 'me'}>
+					<!--<User class="inline-block"/>-->
+					{#if message.sender !== 'me'}
+						<img src={message.avatar} alt="Avatar" class="avatar left" />
+					{/if}
+					<p class="font-bold">{message.sender === 'me' ? 'You' : message.sender}:</p>
 					{message.text}
+					{#if message.sender === 'me'}
+						<img src={message.avatar} alt="Avatar" class="avatar right" />
+					{/if}
 				</div>
 			{/each}
 		</div>
@@ -53,12 +61,10 @@
 	}
 	.message {
 		margin: 10px 0;
+		text-align: left;
 	}
 	.message.me {
 		text-align: right;
-	}
-	.message.other {
-		text-align: left;
 	}
 	.input-area {
 		margin-top: 10px;
@@ -80,5 +86,17 @@
 	}
 	.input-area button:disabled {
 		pointer-events: none;
+	}
+	.avatar {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		margin: 0 10px;
+	}
+	.avatar.left {
+		order: -1;
+	}
+	.avatar.right {
+		order: 1;
 	}
 </style>
