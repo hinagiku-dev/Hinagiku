@@ -1,7 +1,7 @@
 import { SessionSchema, type Session } from '$lib/schema/session';
 import { adminDb } from '$lib/server/firebase';
 import { fail, redirect } from '@sveltejs/kit';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 import type { Actions } from './$types';
 
 export const actions = {
