@@ -8,6 +8,10 @@
 	let loading = $state(false);
 </script>
 
+<svelte:head>
+	<title>Profile Settings | Hinagiku</title>
+</svelte:head>
+
 <main class="mx-auto max-w-2xl px-4 py-16">
 	<div class="mb-8">
 		<h1 class="text-3xl font-bold text-gray-900">Profile Settings</h1>

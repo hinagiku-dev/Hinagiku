@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const route = (session: string, group: string) => `/sessions/${session}/groups/${group}`;
 
 export const GroupSchema = z.object({
+	number: z.number(),
 	participants: z.array(z.string()),
 	concept: z.string().min(1).nullable(), // lock on stage 1 -> stage 2 transaction
 	discussions: z.array(

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { user } from '$lib/stores/auth';
 	import { Button, Card } from 'flowbite-svelte';
-	import { ArrowRight, Mic, Brain, GraduationCap } from 'lucide-svelte';
+	import { ArrowRight, Mic, Brain, GraduationCap, Github } from 'lucide-svelte';
 </script>
 
 <main class="min-h-screen">
@@ -91,6 +91,97 @@
 		</div>
 	</div>
 
+	<!-- Workflow Section -->
+	<div class="bg-gradient-to-b from-white via-primary-50/30 to-white py-24">
+		<div class="mx-auto max-w-6xl px-4">
+			<div class="mb-16 text-center">
+				<h2 class="mb-4 text-3xl font-bold text-gray-900">How It Works</h2>
+				<p class="mx-auto max-w-2xl text-xl text-gray-600">
+					Hinagiku enhances the Think-Pair-Share learning technique with AI assistance throughout
+					the entire process.
+				</p>
+			</div>
+
+			<div class="grid gap-8 md:grid-cols-4">
+				<Card class="text-center">
+					<h3 class="mb-3 text-xl font-semibold">1. Preparation</h3>
+					<p class="text-gray-600">
+						Teachers create discussion templates and set up dynamic timelines for structured
+						learning sessions.
+					</p>
+				</Card>
+
+				<Card class="text-center">
+					<h3 class="mb-3 text-xl font-semibold">2. Join Session</h3>
+					<p class="text-gray-600">
+						Students easily join discussions by scanning a session QR code, then form or join
+						groups.
+					</p>
+				</Card>
+
+				<Card class="text-center">
+					<h3 class="mb-3 text-xl font-semibold">3. Discussion</h3>
+					<p class="text-gray-600">
+						AI assists in guiding individual reflection, group discussions, and helps maintain focus
+						on the topic.
+					</p>
+				</Card>
+
+				<Card class="text-center">
+					<h3 class="mb-3 text-xl font-semibold">4. Analysis</h3>
+					<p class="text-gray-600">
+						Get visual summaries and insights from discussions to understand class perspectives and
+						engagement.
+					</p>
+				</Card>
+			</div>
+
+			<div class="mt-12 text-center">
+				<p class="mx-auto max-w-2xl text-gray-600">
+					Our AI-powered system emphasizes student-led discussions while providing structured
+					guidance, making it easier for teachers to direct learning and analyze outcomes.
+				</p>
+			</div>
+		</div>
+	</div>
+
+	<!-- Template Community Section -->
+	<div class="bg-white py-24">
+		<div class="mx-auto max-w-6xl px-4">
+			<div class="grid items-center gap-12 lg:grid-cols-2">
+				<div>
+					<h2 class="mb-6 text-3xl font-bold text-gray-900">Community-Driven Templates</h2>
+					<div class="space-y-4 text-gray-600">
+						<p class="text-xl">
+							Access and share discussion templates with educators worldwide. Build upon proven
+							discussion frameworks or contribute your own.
+						</p>
+						<ul class="ml-6 list-disc space-y-3">
+							<li>Browse public templates from experienced educators</li>
+							<li>Fork and customize existing templates for your needs</li>
+							<li>Share your successful discussion formats with the community</li>
+							<li>Collaborate with other educators to improve templates</li>
+						</ul>
+						<div class="mt-8">
+							<Button size="xl" class="gap-2" href="/templates/public">
+								Explore Templates
+								<ArrowRight size={20} />
+							</Button>
+						</div>
+					</div>
+				</div>
+				<div class="hidden lg:block">
+					<img
+						src="/templates-preview.webp"
+						alt="Discussion Templates"
+						class="w-full rounded-lg shadow-lg"
+					/>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Story Behind Our Name section -->
 	<div class="bg-gradient-to-b from-white via-primary-50/30 to-white py-24">
 		<div class="mx-auto max-w-6xl px-4">
 			<div class="grid items-center gap-12 lg:grid-cols-2">
@@ -125,6 +216,29 @@
 						</p>
 					</div>
 				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- GitHub Section -->
+	<div class="bg-white py-24">
+		<div class="mx-auto max-w-6xl px-4">
+			<div class="text-center">
+				<h2 class="mb-4 text-3xl font-bold text-gray-900">Open Source</h2>
+				<p class="mx-auto mb-8 max-w-2xl text-xl text-gray-600">
+					Hinagiku is open source and available on GitHub. We welcome contributions from the
+					community!
+				</p>
+				<Button
+					size="xl"
+					class="gap-2"
+					href="https://github.com/hinagiku-dev/Hinagiku"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					<Github />
+					View on GitHub
+				</Button>
 			</div>
 		</div>
 	</div>

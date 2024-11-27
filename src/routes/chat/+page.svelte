@@ -10,6 +10,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Chat | Hinagiku</title>
+</svelte:head>
+
 <div class="chat-container">
 	<div class="messages">
 		{#each messages as message}

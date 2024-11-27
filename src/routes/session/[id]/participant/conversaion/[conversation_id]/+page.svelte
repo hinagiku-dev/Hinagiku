@@ -1,6 +1,10 @@
 <script lang="ts">
 </script>
 
+<svelte:head>
+	<title>Conversation | Hinagiku</title>
+</svelte:head>
+
 <main class="mx-auto max-w-4xl px-4 py-8">
 	<!-- 簡易對話介面 -->
 	<div class="flex items-center justify-between">

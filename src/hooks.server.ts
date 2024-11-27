@@ -20,5 +20,18 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
+	if (
+		event.url.pathname.startsWith('/api') &&
+		!event.url.pathname.startsWith('/api/auth/signin') &&
+		!event.locals.user
+	) {
+		return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+			status: 401,
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+	}
+
 	return resolve(event);
 };

@@ -1,5 +1,5 @@
-import { Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
+import { Timestamp } from './utils';
 
 export const route = {
 	session: (code: string) => `/code/namespace/session/${code}`,
@@ -8,7 +8,7 @@ export const route = {
 
 export const CodeSchema = z.object({
 	target: z.string().min(1),
-	exp: z.instanceof(Timestamp)
+	exp: Timestamp
 });
 
 export type Code = z.infer<typeof CodeSchema>;

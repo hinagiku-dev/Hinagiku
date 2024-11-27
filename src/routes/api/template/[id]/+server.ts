@@ -1,4 +1,4 @@
-import { TemplateSchema } from '$lib/schema/template';
+import { TemplateSchema, type Template } from '$lib/schema/template';
 import { adminDb } from '$lib/server/firebase';
 import { json } from '@sveltejs/kit';
 import { Timestamp } from 'firebase-admin/firestore';
@@ -18,13 +18,15 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 			return json({ error: 'Template not found' }, { status: 404 });
 		}
 
-		if (template.data()?.owner !== locals.user.uid) {
+		const templateData = template.data() as Template;
+
+		if (templateData.owner !== locals.user.uid) {
 			return json({ error: 'Unauthorized' }, { status: 403 });
 		}
 
 		const updates = await request.json();
-		const updatedTemplate = {
-			...template.data(),
+		const updatedTemplate: Template = {
+			...templateData,
 			...updates,
 			updatedAt: Timestamp.now()
 		};
@@ -64,6 +66,35 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		return json({ success: true });
 	} catch (error) {
 		console.error('Error deleting template:', error);
+		return json({ error: 'Internal server error' }, { status: 500 });
+	}
+};
+
+// Add this to the existing file, before the PATCH handler
+
+export const GET: RequestHandler = async ({ params, locals }) => {
+	if (!locals.user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	try {
+		const templateRef = adminDb.collection('templates').doc(params.id);
+		const template = await templateRef.get();
+
+		if (!template.exists) {
+			return json({ error: 'Template not found' }, { status: 404 });
+		}
+
+		const templateData = template.data() as Template;
+
+		// Check if the user is authorized to view this template
+		if (!templateData.public && templateData.owner !== locals.user.uid) {
+			return json({ error: 'Unauthorized' }, { status: 403 });
+		}
+
+		return json({ ...templateData, id: template.id });
+	} catch (error) {
+		console.error('Error fetching template:', error);
 		return json({ error: 'Internal server error' }, { status: 500 });
 	}
 };

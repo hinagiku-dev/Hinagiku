@@ -1,4 +1,4 @@
-import { SessionSchema } from '$lib/schema/session';
+import { SessionSchema, type Session } from '$lib/schema/session';
 import type { Template } from '$lib/schema/template';
 import { adminDb } from '$lib/server/firebase';
 import { json } from '@sveltejs/kit';
@@ -24,7 +24,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const templateData = template.data() as Template;
 
 		// Create new session from template
-		const sessionData = {
+		const sessionData: Session = {
 			title: templateData.title,
 			host: locals.user.uid,
 			resources: templateData.resources,
@@ -32,9 +32,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			subtasks: templateData.subtasks,
 			createdAt: Timestamp.now(),
 			status: 'preparing',
-			end: {
-				self: null,
-				group: null
+			timing: {
+				individual: {
+					start: null,
+					end: null
+				},
+				group: {
+					start: null,
+					end: null
+				}
 			}
 		};
 

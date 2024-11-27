@@ -1,4 +1,4 @@
-import { TemplateSchema } from '$lib/schema/template';
+import { TemplateSchema, type Template } from '$lib/schema/template';
 import { adminDb } from '$lib/server/firebase';
 import { json } from '@sveltejs/kit';
 import { Timestamp } from 'firebase-admin/firestore';
@@ -11,8 +11,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	try {
 		const data = await request.json();
-		const template = {
-			...data,
+		const template: Template = {
+			title: 'New Discussion Template',
+			task: 'Discuss about the origin of the universe.',
+			subtasks: [
+				'Explain your understanding of the Big Bang theory',
+				'Share your thoughts on alternative theories',
+				'Discuss the role of scientific evidence',
+				'Consider philosophical implications'
+			],
+			public: data.public ?? false,
 			owner: locals.user.uid,
 			resources: [],
 			createdAt: Timestamp.now(),
