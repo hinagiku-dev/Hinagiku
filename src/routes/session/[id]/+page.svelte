@@ -136,7 +136,7 @@
 							class="text-3xl font-bold"
 							onblur={stopEditing}
 						/>
-						<button type="submit" class="ml-2 text-blue-600 hover:text-blue-800">Save</button>
+						<button type="submit" class="ml-2 text-primary-600 hover:text-primary-800">Save</button>
 					</form>
 				{:else}
 					<div class="flex items-center">
@@ -167,7 +167,7 @@
 
 				{#if $session?.status === 'draft'}
 					<button
-						class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+						class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
 						onclick={startSession}
 					>
 						<Play size={20} />
@@ -178,7 +178,7 @@
 						<form method="POST" action="?/startIndividualStage">
 							<button
 								type="submit"
-								class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+								class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
 								onclick={startIndividualStage}
 							>
 								<Play size={20} />
@@ -189,7 +189,7 @@
 						<QRCode value={$page.params.id} />
 					{:else if $session.stage === 'individual'}
 						<button
-							class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+							class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
 							onclick={startIndividualStage}
 						>
 							<Play size={20} />
@@ -311,7 +311,7 @@
 						<form method="POST" action="?/generateSubQuestions">
 							<button
 								type="submit"
-								class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+								class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
 								>自動生成子問題</button
 							>
 						</form>
@@ -323,7 +323,7 @@
 								type="text"
 								id="goal"
 								bind:value={goalInput}
-								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+								class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50"
 								onchange={debounce(saveSession, 1000)}
 							/>
 						</div>
@@ -337,7 +337,7 @@
 										type="text"
 										id={`subQuestion-${index}`}
 										bind:value={subQuestionsInput[index]}
-										class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+										class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50"
 										onchange={debounce(saveSession, 1000)}
 									/>
 									<button
@@ -347,7 +347,7 @@
 								</div>
 							</div>
 						{/each}
-						<button onclick={addSubQuestion} class="mt-2 text-blue-600 hover:text-blue-800"
+						<button onclick={addSubQuestion} class="mt-2 text-primary-600 hover:text-primary-800"
 							>新增子問題</button
 						>
 					</div>
@@ -369,7 +369,7 @@
 									<p class="inline-block font-medium">
 										{participant.name}
 										{#if userId === $session?.hostId}
-											<span class="ml-2 text-sm text-blue-600">(Host)</span>
+											<span class="ml-2 text-sm text-primary-600">(Host)</span>
 										{/if}
 									</p>
 									<p class="text-sm text-gray-500">

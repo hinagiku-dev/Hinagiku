@@ -24,7 +24,7 @@
 			<p class="mb-4 text-xl">Successfully joined the session!</p>
 			<a
 				href={`/session/${form.sessionId}`}
-				class="inline-block rounded-lg bg-blue-600 px-6 py-2 text-white"
+				class="inline-block rounded-lg bg-primary-600 px-6 py-2 text-white"
 			>
 				Enter Session
 			</a>
@@ -94,7 +94,7 @@
 
 			<button
 				type="submit"
-				class="w-full rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-primary-700"
+				class="w-full rounded-lg bg-primary-600 px-6 py-2 text-white hover:bg-primary-700"
 			>
 				Join Session
 			</button>
