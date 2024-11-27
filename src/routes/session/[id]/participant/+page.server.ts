@@ -3,9 +3,7 @@ import { adminDb } from '$lib/server/firebase';
 import { chatWithLLMByDocs } from '$lib/server/llm';
 import { parsePdf2Text } from '$lib/server/parse';
 import { transcribe } from '$lib/stt/core';
-import type {
-	FirestoreIndividualDiscussion
-} from '$lib/types/IndividualDiscussion';
+import type { FirestoreIndividualDiscussion } from '$lib/types/IndividualDiscussion';
 import type { FirestoreSession } from '$lib/types/session';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';

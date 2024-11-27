@@ -1,10 +1,10 @@
 import { db } from '$lib/firebase';
 import { subscribe } from '$lib/firebase/store';
+import type { ProfileSchema } from '$lib/schema/profile';
 import { collection, doc } from 'firebase/firestore';
 import { writable } from 'svelte/store';
 import { z } from 'zod';
 import { user } from './auth';
-import type { ProfileSchema } from '$lib/schema/profile';
 
 export const profile = writable<z.infer<typeof ProfileSchema> | null>(null);
 let unsubscribe: () => void | undefined;
