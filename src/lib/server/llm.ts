@@ -18,11 +18,6 @@ interface ChatMessage {
 	content: string;
 }
 
-interface Document {
-	title?: string;
-	content: string;
-}
-
 interface Student_opinion {
 	student_id: string;
 	student_conclusions: string;
@@ -55,20 +50,24 @@ export async function chatWithLLMByDocs(
 	messages: ChatMessage[],
 	mainQuestion: string,
 	secondaryGoal: string[],
-	documents: Document[],
+	documents: {
+		name: string;
+		text: string;
+	}[],
 	temperature = 0.7
 ) {
 	try {
 		if (await isHarmfulContent(messages[messages.length - 1].content)) {
 			return {
 				success: false,
+				message: '',
 				error: 'Harmful content detected'
 			};
 		}
 		const formattedDocs = documents
 			.map((doc, index) => {
-				const title = doc.title || `Document ${index + 1}`;
-				return `[${title}]:\n${doc.content}`;
+				const title = doc.name || `Document ${index + 1}`;
+				return `[${title}]:\n${doc.text}`;
 			})
 			.join('\n\n');
 
@@ -91,7 +90,7 @@ export async function chatWithLLMByDocs(
 			temperature
 		});
 
-		const result = response.choices[0].message;
+		const result = response.choices[0].message.content;
 		if (!result) {
 			throw new Error('Failed to parse response');
 		}
@@ -105,11 +104,13 @@ export async function chatWithLLMByDocs(
 		if (error instanceof z.ZodError) {
 			return {
 				success: false,
+				message: '',
 				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
 			};
 		}
 		return {
 			success: false,
+			message: '',
 			error: 'Failed to process documents and generate response'
 		};
 	}
@@ -127,7 +128,7 @@ export async function summarizeStudentChat(chatHistory: ChatMessage[]) {
 			response_format: zodResponseFormat(SummaryStudentOpinionSchema, 'chat_summary')
 		});
 
-		const result = completion.choices[0].message.parsed;
+		const result = completion.choices[0].message.content;
 		if (!result) {
 			throw new Error('Failed to parse response');
 		}
@@ -168,7 +169,7 @@ export async function summarizeGroupOpinions(groupOpinions: Student_opinion[]) {
 			response_format: zodResponseFormat(SummaryGroupOpinionSchema, 'group_opinion_summary')
 		});
 
-		const result = completion.choices[0].message.parsed;
+		const result = completion.choices[0].message.content;
 		if (!result) {
 			throw new Error('Failed to parse response');
 		}

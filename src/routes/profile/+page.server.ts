@@ -7,13 +7,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(303, '/login');
 	}
 
-	// Fetch user profile from Firestore
-	const profileDoc = await adminDb.collection('profiles').doc(locals.user.uid).get();
-	const profile = profileDoc.exists ? profileDoc.data() : null;
-
 	return {
-		user: locals.user,
-		profile
+		user: locals.user
 	};
 };
 

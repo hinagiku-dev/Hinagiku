@@ -16,7 +16,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		return json({ error: 'Session not found' }, { status: 404 });
 	}
 
-	if (session.data()?.hostId !== locals.user.uid) {
+	if (session.data()?.host !== locals.user.uid) {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 

@@ -24,7 +24,7 @@
 			<p class="mb-4 text-xl">Successfully joined the session!</p>
 			<a
 				href={`/session/${form.sessionId}`}
-				class="inline-block rounded-lg bg-blue-600 px-6 py-2 text-white"
+				class="inline-block rounded-lg bg-primary-600 px-6 py-2 text-white"
 			>
 				Enter Session
 			</a>
@@ -44,10 +44,10 @@
 					placeholder="Enter 6-digit code"
 				/>
 				{#if form?.idInvalid}
-					<p class="mt-1 text-sm text-red-600">Please enter a valid 6-digit code</p>
+					<p class="mt-1 text-sm text-primary-600">Please enter a valid 6-digit code</p>
 				{/if}
 				{#if form?.notFound}
-					<p class="mt-1 text-sm text-red-600">Session not found or already started</p>
+					<p class="mt-1 text-sm text-primary-600">Session not found or already started</p>
 				{/if}
 			</div>
 			<div>
@@ -81,7 +81,7 @@
 
 			<button
 				type="submit"
-				class="w-full rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
+				class="w-full rounded-lg bg-primary-600 px-6 py-2 text-white hover:bg-primary-700"
 			>
 				Join Session
 			</button>

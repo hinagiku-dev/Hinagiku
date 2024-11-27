@@ -1,5 +1,7 @@
+import { SessionSchema, type Session } from '$lib/schema/session';
 import { adminDb } from '$lib/server/firebase';
 import { fail, redirect } from '@sveltejs/kit';
+import { Timestamp } from 'firebase-admin/firestore';
 import type { Actions } from './$types';
 
 export const actions = {
@@ -9,44 +11,34 @@ export const actions = {
 		}
 
 		const data = await request.formData();
-		const title = data.get('title')?.toString();
 
-		if (!title) {
-			return fail(400, { title, missing: true });
-		}
+		const formData: Session = {
+			title: data.get('title')?.toString() || '',
+			host: locals.user.uid,
+			status: 'draft',
+			stage: 'preparing',
+			resources: [],
+			timing: {
+				self: Number(data.get('selfTime')) || 5,
+				group: Number(data.get('groupTime')) || 10
+			},
+			task: data.get('task')?.toString() || '',
+			subtasks: [],
+			createdAt: Timestamp.now()
+		};
 
-		// Process resources
-		const resources: Record<string, { type: string; content: string; addedAt: Date }> = {};
-		let i = 0;
-		while (data.has(`resourceType${i}`)) {
-			const type = data.get(`resourceType${i}`)?.toString();
-			const content = data.get(`resourceContent${i}`)?.toString();
+		const result = SessionSchema.safeParse(formData);
 
-			if (type && content) {
-				resources[`resource${i}`] = {
-					type: type as 'text' | 'link',
-					content,
-					addedAt: new Date()
-				};
-			}
-			i++;
+		if (!result.success) {
+			return fail(400, {
+				data: formData,
+				errors: result.error.flatten().fieldErrors
+			});
 		}
 
 		const sessionRef = adminDb.collection('sessions').doc();
+		await sessionRef.set(result.data);
 
-		await sessionRef.set({
-			id: sessionRef.id,
-			tempId: null,
-			tempIdExpiry: null,
-			hostId: locals.user.uid,
-			hostName: locals.user.name,
-			title,
-			createdAt: new Date(),
-			status: 'draft',
-			resources,
-			participants: {}
-		});
-
-		return { success: true, sessionId: sessionRef.id };
+		throw redirect(303, `/session/${sessionRef.id}`);
 	}
 } satisfies Actions;
