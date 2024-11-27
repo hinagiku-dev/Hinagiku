@@ -1,5 +1,10 @@
 import debug from 'debug';
-import { onSnapshot, type DocumentReference, type Query } from 'firebase/firestore';
+import {
+	onSnapshot,
+	type DocumentReference,
+	type Query,
+	type QueryDocumentSnapshot
+} from 'firebase/firestore';
 import { writable, type Readable } from 'svelte/store';
 
 const log = debug('app:store');
@@ -13,14 +18,14 @@ export type DocumentStore<T> = [
 
 export function subscribeAll<T = unknown>(
 	ref: Query,
-	store = writable<[string, T][]>([])
-): DocumentStore<[string, T][]> {
+	store = writable<[QueryDocumentSnapshot, T][]>([])
+): DocumentStore<[QueryDocumentSnapshot, T][]> {
 	log('subscribe', ref);
 
 	const unsubscribe = onSnapshot(
 		ref,
 		(snapshot) => {
-			const data = snapshot.docs.map((doc) => [doc.id, doc.data()] as [string, T]);
+			const data = snapshot.docs.map((doc) => [doc, doc.data()] as [QueryDocumentSnapshot, T]);
 			log('onSnapshot', ref, data);
 			store.set(data);
 		},

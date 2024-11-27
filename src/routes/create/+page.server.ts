@@ -17,8 +17,6 @@ export const actions = {
 			host: locals.user.uid,
 			status: 'draft',
 			stage: 'preparing',
-			participants: [],
-			group: {},
 			resources: [],
 			timing: {
 				self: Number(data.get('selfTime')) || 5,
