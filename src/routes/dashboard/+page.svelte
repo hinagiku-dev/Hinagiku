@@ -146,17 +146,11 @@
 									<span
 										class="rounded-full px-3 py-1 text-sm font-medium {session.status === 'active'
 											? 'bg-green-100 text-green-600'
-											: session.status === 'waiting'
+											: session.status === 'preparing'
 												? 'bg-yellow-100 text-yellow-600'
 												: 'bg-gray-100 text-gray-600'}"
 									>
-										{session.status === 'active'
-											? 'Active'
-											: session.status === 'waiting'
-												? 'Waiting'
-												: session.status === 'draft'
-													? 'Draft'
-													: 'Ended'}
+										{session.status}
 									</span>
 								</div>
 								<div class="flex items-center justify-between">

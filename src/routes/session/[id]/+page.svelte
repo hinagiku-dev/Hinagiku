@@ -165,7 +165,7 @@
 					<span>{Object.keys($session?.participants).length} participants</span>
 				</div>
 
-				{#if $session?.status === 'draft'}
+				{#if $session?.status === 'preparing'}
 					<button
 						class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
 						onclick={startSession}
@@ -173,7 +173,7 @@
 						<Play size={20} />
 						Start Session
 					</button>
-				{:else if $session?.status === 'waiting'}
+				{:else if $session?.status === 'preparing'}
 					{#if isHost}
 						<form method="POST" action="?/startIndividualStage">
 							<button
@@ -187,7 +187,7 @@
 						</form>
 						<!-- show QRcode by page id -->
 						<QRCode value={$page.params.id} />
-					{:else if $session.stage === 'individual'}
+					{:else if $session.status === 'individual'}
 						<button
 							class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
 							onclick={startIndividualStage}

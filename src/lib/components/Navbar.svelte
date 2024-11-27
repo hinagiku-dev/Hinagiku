@@ -30,7 +30,7 @@
 		justify-content: left;
 		gap: 1rem;
 		align-items: center;
-		padding: 1rem;
+		padding: 0.5rem;
 		background-color: #333;
 		color: white;
 		z-index: 1000;
@@ -38,7 +38,7 @@
 		top: 0;
 		left: 0;
 		width: 100%;
-		height: 2.5rem;
+		height: 3.5rem;
 	}
 
 	.menu {
@@ -55,6 +55,6 @@
 		z-index: 1000;
 		display: flex;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1.5rem;
 	}
 </style>
