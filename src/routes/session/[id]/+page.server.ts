@@ -108,8 +108,6 @@ export const actions = {
 				status: 'active',
 				stage: 'individual'
 			});
-
-			throw redirect(303, `/session/${sessionId}/status`);
 		} catch (error) {
 			console.error('Error starting individual stage:', error);
 			return fail(500, { error: true });

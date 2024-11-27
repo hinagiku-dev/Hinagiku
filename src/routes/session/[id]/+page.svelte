@@ -8,8 +8,7 @@
 	import { goto } from '$app/navigation';
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
-	import { create } from 'qrcode';
-	import { on } from 'svelte/events';
+	import QRCode from '$lib/components/QRCode.svelte';
 
 	let { data } = $props();
 	let session = $state(getContext<Readable<Session>>('session'));
@@ -180,11 +179,14 @@
 							<button
 								type="submit"
 								class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+								onclick={startIndividualStage}
 							>
 								<Play size={20} />
 								開始討論
 							</button>
 						</form>
+						<!-- show QRcode by page id -->
+						<QRCode value={$page.params.id} />
 					{:else if $session.stage === 'individual'}
 						<button
 							class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
