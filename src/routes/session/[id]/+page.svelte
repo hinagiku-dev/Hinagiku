@@ -1,7 +1,7 @@
 <script lang="ts">
 	// disable eslint for this file
 	/* eslint-disable */
-	import { Play, Users } from 'lucide-svelte';
+	import { Play, Users, Pencil } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { page } from '$app/stores';
 
@@ -11,7 +11,7 @@
 	import QRCode from '$lib/components/QRCode.svelte';
 
 	let { data } = $props();
-	let session = $state(getContext<Readable<Session>>('session'));
+	let session = getContext<Readable<Session>>('session');
 	let isHost = $derived($session?.host === data.user.uid);
 
 	let goalInput = $state($session?.task || '');
@@ -146,7 +146,7 @@
 							class="ml-2 text-gray-600 hover:text-gray-800"
 							aria-label="Edit title"
 						>
-							編輯(要換成圖標)
+							<Pencil size={20} />
 						</button>
 					</div>
 				{/if}
