@@ -4,19 +4,19 @@
 	import { Play, Users } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { page } from '$app/stores';
-	import type { Session } from '$lib/schema/session';
+
 	import { goto } from '$app/navigation';
+	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
+	import { create } from 'qrcode';
+	import { on } from 'svelte/events';
 
 	let { data } = $props();
-
-	let session = getContext<Readable<Session>>('session');
-
+	let session = $state(getContext<Readable<Session>>('session'));
 	let isHost = $derived($session?.host === data.user.uid);
 
 	let goalInput = $state($session?.task || '');
 	let subQuestionsInput = $state($session?.subtasks || []);
-
 	let resources: { type: string; content: string }[] = $state([]);
 
 	function addResource() {
@@ -175,13 +175,27 @@
 						Start Session
 					</button>
 				{:else if $session?.status === 'waiting'}
-					<button
-						class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-						onclick={startIndividualStage}
-					>
-						<Play size={20} />
-						開始討論
-					</button>
+					{#if isHost}
+						<form method="POST" action="?/startIndividualStage">
+							<button
+								type="submit"
+								class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+							>
+								<Play size={20} />
+								開始討論
+							</button>
+						</form>
+					{:else if $session.stage === 'individual'}
+						<button
+							class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+							onclick={startIndividualStage}
+						>
+							<Play size={20} />
+							進入討論
+						</button>
+					{:else}
+						<p>等待老師開始</p>
+					{/if}
 				{/if}
 			</div>
 		{/if}

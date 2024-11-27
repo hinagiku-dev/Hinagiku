@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const SessionSchema = z.object({
 	title: z.string().min(1).max(200),
 	status: z.enum(['draft', 'waiting', 'active', 'ended']),
+	stage: z.enum(['preparing', 'individual', 'group', 'ended']),
 	host: z.string(),
 	participants: z.array(z.string()),
 	group: z.record(z.string(), z.string()),

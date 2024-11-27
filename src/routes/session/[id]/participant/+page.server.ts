@@ -1,12 +1,12 @@
 import { env } from '$env/dynamic/private';
+import { SessionSchema } from '$lib/schema/session';
 import { adminDb } from '$lib/server/firebase';
 import { chatWithLLMByDocs } from '$lib/server/llm';
 import { parsePdf2Text } from '$lib/server/parse';
 import { transcribe } from '$lib/stt/core';
-import type { FirestoreIndividualDiscussion } from '$lib/types/IndividualDiscussion';
-import type { FirestoreSession } from '$lib/types/session';
-import { error, fail, redirect } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import { error, redirect } from '@sveltejs/kit';
+import type { z } from 'zod';
+import type { Actions, PageServerLoad } from './[conversation_id]/$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!locals.user) {
@@ -14,12 +14,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	const sessionRef = adminDb.collection('sessions').doc(params.id);
-	const sessionDoc = await sessionRef.get();
-	const session = sessionDoc.data();
-
-	if (!session) {
-		throw error(404, 'Session not found');
-	}
+	const session = (await sessionRef.get()).data() as z.infer<typeof SessionSchema>;
+	if (session.stage == '')
+		if (!session) {
+			throw error(404, 'Session not found');
+		}
 
 	if (!(locals.user.uid in session.participants)) {
 		throw error(403, 'Not a participant in this session');
@@ -31,36 +30,36 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 };
 
 export const actions = {
-	createGroup: async ({ request, locals, params }) => {
-		if (!locals.user) {
-			throw error(401, 'Unauthorized');
-		}
+	// createGroup: async ({ request, locals, params }) => {
+	// 	if (!locals.user) {
+	// 		throw error(401, 'Unauthorized');
+	// 	}
 
-		const data = await request.formData();
-		const groupName = data.get('groupName')?.toString();
+	// 	const data = await request.formData();
+	// 	const groupName = data.get('groupName')?.toString();
 
-		if (!groupName) {
-			return fail(400, { missing: true });
-		}
+	// 	if (!groupName) {
+	// 		return fail(400, { missing: true });
+	// 	}
 
-		const sessionRef = adminDb.collection('sessions').doc(params.id);
-		const groupId = crypto.randomUUID();
+	// 	const sessionRef = adminDb.collection('sessions').doc(params.id);
+	// 	const groupId = crypto.randomUUID();
 
-		await sessionRef.update({
-			[`groups.${groupId}`]: {
-				name: groupName,
-				leaderId: locals.user.uid,
-				members: {
-					[locals.user.uid]: {
-						name: locals.user.name,
-						joinedAt: new Date()
-					}
-				}
-			}
-		});
+	// 	await sessionRef.update({
+	// 		[`groups.${groupId}`]: {
+	// 			name: groupName,
+	// 			leaderId: locals.user.uid,
+	// 			members: {
+	// 				[locals.user.uid]: {
+	// 					name: locals.user.name,
+	// 					joinedAt: new Date()
+	// 				}
+	// 			}
+	// 		}
+	// 	});
 
-		return { success: true, groupId };
-	},
+	// 	return { success: true, groupId };
+	// },
 
 	startIndividualStage: async ({ locals, params }) => {
 		const sessionId = params.id;

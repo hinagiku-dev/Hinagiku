@@ -10,6 +10,7 @@
 
 	const ref = doc(db, 'sessions', $page.params.id);
 	const [session, { unsubscribe }] = subscribe<Session>(ref);
+	setContext('session', session);
 	onMount(() => {
 		setContext('session', session);
 	});
