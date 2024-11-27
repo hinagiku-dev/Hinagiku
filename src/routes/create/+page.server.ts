@@ -16,6 +16,7 @@ export const actions = {
 			title: data.get('title')?.toString() || '',
 			host: locals.user.uid,
 			status: 'draft',
+			stage: 'preparing',
 			participants: [],
 			group: {},
 			resources: [],
