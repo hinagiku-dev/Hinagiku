@@ -1,7 +1,8 @@
 <script>
-	let messages = [{ sender: 'Support', text: 'Hello! How can I assist you today?' }];
-	let inputText = '';
-	//import { User } from 'lucide-svelte'
+	let messages = $state([{ sender: 'Support', text: 'Hello! How can I assist you today?' }]);
+	let inputText = $state('');
+	import { Mic } from 'lucide-svelte';
+	let recording = $state(false);
 
 	function sendMessage() {
 		if (messages[messages.length - 1].sender === 'me') return;
@@ -9,6 +10,22 @@
 			messages = [...messages, { sender: 'me', text: inputText }];
 			inputText = '';
 		}
+	}
+	function Recording() {
+		if (recording) {
+			console.log('Recording stopped');
+			recording = false;
+			sendAudio();
+		} else {
+			console.log('Recording started');
+			recording = true;
+		}
+	}
+
+	function sendAudio() {
+		console.log('Audio sent');
+		if (messages[messages.length - 1].sender === 'me') return;
+		messages = [...messages, { sender: 'me', text: 'SomeAudio' }];
 	}
 </script>
 
@@ -19,25 +36,34 @@
 				<div class="message" class:me={message.sender === 'me'}>
 					<!--<User class="inline-block"/>-->
 					{#if message.sender !== 'me'}
-						<img src={message.avatar} alt="Avatar" class="avatar left" />
+						<!--<img src={message.avatar} alt="Avatar" class="avatar left" />-->
 					{/if}
 					<p class="font-bold">{message.sender === 'me' ? 'You' : message.sender}:</p>
 					{message.text}
 					{#if message.sender === 'me'}
-						<img src={message.avatar} alt="Avatar" class="avatar right" />
+						<!--<img src={message.avatar} alt="Avatar" class="avatar right" />-->
 					{/if}
 				</div>
 			{/each}
 		</div>
+
 		<div class="input-area">
+			<button
+				disabled={messages[messages.length - 1].sender === 'me'}
+				onmousedown={Recording}
+				onmouseup={Recording}
+				class="recordbtn"
+			>
+				<Mic size={24} />
+			</button>
 			<input
 				class="inline-block"
 				type="text"
 				bind:value={inputText}
 				placeholder="Type your message..."
-				on:keyup={(e) => e.key === 'Enter' && sendMessage()}
+				onkeyup={(e) => e.key === 'Enter' && sendMessage()}
 			/>
-			<button disabled={messages[messages.length - 1].sender === 'me'} on:click={sendMessage}
+			<button disabled={messages[messages.length - 1].sender === 'me'} onclick={sendMessage}
 				>Send</button
 			>
 			<div class="w-full"></div>
@@ -82,21 +108,19 @@
 		background-color: #f0f0f0;
 	}
 	.input-area button:active {
-		background-color: #e0e0e0;
+		background-color: #e0e0e0 !important;
 	}
 	.input-area button:disabled {
 		pointer-events: none;
 	}
-	.avatar {
-		width: 40px;
-		height: 40px;
+	.recordbtn {
+		background-color: #f0f0f0;
+		border: none;
 		border-radius: 50%;
-		margin: 0 10px;
+		padding: 10px;
+		margin-right: 10px;
 	}
-	.avatar.left {
-		order: -1;
-	}
-	.avatar.right {
-		order: 1;
+	.recordbtn:active {
+		background-color: red;
 	}
 </style>

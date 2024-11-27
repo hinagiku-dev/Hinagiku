@@ -20,6 +20,7 @@
 	main {
 		margin-left: 0;
 		transition: margin-left 0.3s ease;
+		margin-top: 3.5rem;
 	}
 
 	main.sidebar-open {
