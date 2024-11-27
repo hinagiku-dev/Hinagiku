@@ -3,6 +3,7 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import { sidebarOpen } from '$lib/stores/sidebar';
 	import Navbar from '$lib/components/Navbar.svelte';
+	import Notifications from '$lib/components/Notifications.svelte';
 	import debug from 'debug';
 
 	debug.enable('app:*');
@@ -14,6 +15,7 @@
 	<Sidebar />
 	<Navbar />
 	{@render children()}
+	<Notifications />
 </main>
 
 <style>

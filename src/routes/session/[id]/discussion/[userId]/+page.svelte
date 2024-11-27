@@ -1,33 +1,18 @@
-<script>
+<script lang="ts">
 	let messages = $state([{ sender: 'Support', text: 'Hello! How can I assist you today?' }]);
 	let inputText = $state('');
 	import { Mic } from 'lucide-svelte';
-	let recording = $state(false);
-
-	function sendMessage() {
-		if (messages[messages.length - 1].sender === 'me') return;
-		if (inputText.trim() !== '') {
-			messages = [...messages, { sender: 'me', text: inputText }];
-			inputText = '';
-		}
-	}
-	function Recording() {
-		if (recording) {
-			console.log('Recording stopped');
-			recording = false;
-			sendAudio();
-		} else {
-			console.log('Recording started');
-			recording = true;
-		}
-	}
-
-	function sendAudio() {
-		console.log('Audio sent');
-		if (messages[messages.length - 1].sender === 'me') return;
-		messages = [...messages, { sender: 'me', text: 'SomeAudio' }];
-	}
+	const Recording = () => {
+		console.log('Recording...');
+	};
+	const sendMessage = () => {
+		console.log('Sending message...');
+	};
 </script>
+
+<svelte:head>
+	<title>Discussion | Hinagiku</title>
+</svelte:head>
 
 <main class="mt-20">
 	<div class="chat-container">

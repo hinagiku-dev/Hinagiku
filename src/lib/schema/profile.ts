@@ -1,5 +1,5 @@
-import { Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
+import { Timestamp } from './utils';
 
 export const route = (uid: string) => `/profiles/${uid}`;
 
@@ -8,8 +8,8 @@ export const ProfileSchema = z.object({
 	displayName: z.string(),
 	title: z.string().nullable(),
 	bio: z.string().nullable(),
-	updatedAt: z.instanceof(Timestamp),
-	createdAt: z.instanceof(Timestamp)
+	updatedAt: Timestamp,
+	createdAt: Timestamp
 });
 
 export type Profile = z.infer<typeof ProfileSchema>;
