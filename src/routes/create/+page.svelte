@@ -16,7 +16,7 @@
 			{/each}
 		</div>
 	{/if}
-		
+
 	<form method="POST" use:enhance class="space-y-6">
 		<div>
 			<Label for="title" class="mb-2">Session Title</Label>

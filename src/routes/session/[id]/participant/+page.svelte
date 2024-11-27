@@ -1,16 +1,17 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import QrScanner from '$lib/components/QrScanner.svelte';
-	import { db } from '$lib/firebase';
-	import type { FirestoreSession } from '$lib/types/session';
-	import { onSnapshot, doc } from 'firebase/firestore';
 	import { Users, Mic, MessageSquare } from 'lucide-svelte';
+	import { getContext } from 'svelte';
+	import type { Readable } from 'svelte/store';
+	import type { Session } from '$lib/schema/session';
 
 	let { data } = $props();
 	let { user } = $state(data);
 	let showScanner = $state(false);
 	let isRecording = $state(false);
 	let currentGroupId = $state<string | null>(null);
+	let session = getContext<Readable<Session>>('session');
 
 	// Find user's current group
 	$effect(() => {
@@ -122,7 +123,7 @@
 						<ul class="space-y-2">
 							{#each Object.values(session.groups[currentGroupId].members) as member}
 								<li class="flex items-center gap-2">
-									<span>{member.name}</span>
+									<span>{member}</span>
 								</li>
 							{/each}
 						</ul>

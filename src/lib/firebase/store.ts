@@ -4,9 +4,12 @@ import { writable, type Readable } from 'svelte/store';
 
 const log = debug('app:store');
 
-export type DocumentStore<T> = [Readable<T | null>, {
-	unsubscribe: () => void;
-}];
+export type DocumentStore<T> = [
+	Readable<T | null>,
+	{
+		unsubscribe: () => void;
+	}
+];
 
 export function subscribeAll<T = unknown>(
 	ref: Query,
@@ -26,12 +29,15 @@ export function subscribeAll<T = unknown>(
 		}
 	);
 
-	return [store, {
-		unsubscribe: () => {
-			log('unsubscribe', ref);
-			unsubscribe();
+	return [
+		store,
+		{
+			unsubscribe: () => {
+				log('unsubscribe', ref);
+				unsubscribe();
+			}
 		}
-	}];
+	];
 }
 
 export function subscribe<T = unknown>(
@@ -52,10 +58,13 @@ export function subscribe<T = unknown>(
 		}
 	);
 
-	return [store, {
-		unsubscribe: () => {
-			log('unsubscribe', ref);
-			unsubscribe();
+	return [
+		store,
+		{
+			unsubscribe: () => {
+				log('unsubscribe', ref);
+				unsubscribe();
+			}
 		}
-	}];
+	];
 }

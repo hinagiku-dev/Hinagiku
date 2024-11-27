@@ -1,8 +1,8 @@
+import { SessionSchema, type Session } from '$lib/schema/session';
 import { adminDb } from '$lib/server/firebase';
 import { fail, redirect } from '@sveltejs/kit';
+import { Timestamp } from 'firebase-admin/firestore';
 import type { Actions } from './$types';
-import { SessionSchema, type Session } from '$lib/schema/session';
-import { Timestamp } from 'firebase/firestore';
 
 export const actions = {
 	default: async ({ request, locals }) => {
@@ -21,7 +21,7 @@ export const actions = {
 			resources: [],
 			timing: {
 				self: Number(data.get('selfTime')) || 5,
-				group: Number(data.get('groupTime')) || 10,
+				group: Number(data.get('groupTime')) || 10
 			},
 			task: data.get('task')?.toString() || '',
 			subtasks: [],

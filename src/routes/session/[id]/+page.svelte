@@ -17,7 +17,7 @@
 	let goalInput = $state($session?.task || '');
 	let subQuestionsInput = $state($session?.subtasks || []);
 
-	let resources: { type: string; content: string; }[] = $state([]);
+	let resources: { type: string; content: string }[] = $state([]);
 
 	function addResource() {
 		resources = [...resources, { type: 'text', content: '' }];
@@ -287,7 +287,7 @@
 			{/if}
 		</div> -->
 
-		<!-- <div class="space-y-8">
+	<!-- <div class="space-y-8">
 			{#if isHost}
 				<div class="rounded-lg border p-6">
 					<div class="flex items-center justify-between">
