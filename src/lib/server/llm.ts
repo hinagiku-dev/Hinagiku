@@ -2,6 +2,7 @@ import { env } from '$env/dynamic/private';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
+import { error } from '@sveltejs/kit';
 import {
 	CHAT_SUMMARY_PROMPT,
 	DOCS_CONTEXT_SYSTEM_PROMPT,
@@ -48,11 +49,11 @@ export async function isHarmfulContent(message: string) {
 
 export async function chatWithLLMByDocs(
 	messages: ChatMessage[],
-	mainQuestion: string,
-	secondaryGoal: string[],
-	documents: {
+	task: string,
+	subtasks: string[],
+	resources: {
 		name: string;
-		text: string;
+		content: string;
 	}[],
 	temperature = 0.7
 ) {
@@ -64,16 +65,16 @@ export async function chatWithLLMByDocs(
 				error: 'Harmful content detected'
 			};
 		}
-		const formattedDocs = documents
+		const formattedDocs = resources
 			.map((doc, index) => {
 				const title = doc.name || `Document ${index + 1}`;
-				return `[${title}]:\n${doc.text}`;
+				return `[${title}]:\n${doc.content}`;
 			})
 			.join('\n\n');
 
-		const systemPrompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{mainQuestion}', mainQuestion)
-			.replace('{secondaryGoal}', secondaryGoal.join('\n'))
-			.replace('{documents}', formattedDocs);
+		const systemPrompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
+			.replace('{subtasks}', subtasks.join('\n'))
+			.replace('{resources}', formattedDocs);
 
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',
