@@ -1,5 +1,6 @@
 import { adminDb } from '$lib/server/firebase';
-import { error, json, RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 
 import type { Conversation } from '$lib/schema/conversation';
 import { chatWithLLMByDocs } from '$lib/server/llm';
