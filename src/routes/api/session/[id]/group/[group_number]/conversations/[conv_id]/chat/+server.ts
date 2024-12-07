@@ -28,7 +28,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		}
 
 		const conversationData = conversation.data() as Conversation;
-		const { userId, task, subtasks, resources, history } = await conversationData;
+		const { userId, task, subtasks, resources, history } = conversationData;
 		if (userId !== locals.user.uid) {
 			throw error(403, 'Forbidden');
 		}
