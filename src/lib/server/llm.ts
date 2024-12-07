@@ -2,7 +2,6 @@ import { env } from '$env/dynamic/private';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
-import { error } from '@sveltejs/kit';
 import {
 	CHAT_SUMMARY_PROMPT,
 	DOCS_CONTEXT_SYSTEM_PROMPT,
@@ -48,7 +47,7 @@ export async function isHarmfulContent(message: string) {
 }
 
 export async function chatWithLLMByDocs(
-	messages: ChatMessage[],
+	history: ChatMessage[],
 	task: string,
 	subtasks: string[],
 	resources: {
@@ -58,7 +57,7 @@ export async function chatWithLLMByDocs(
 	temperature = 0.7
 ) {
 	try {
-		if (await isHarmfulContent(messages[messages.length - 1].content)) {
+		if (await isHarmfulContent(history[history.length - 1].content)) {
 			return {
 				success: false,
 				message: '',
@@ -83,7 +82,7 @@ export async function chatWithLLMByDocs(
 					role: 'system',
 					content: systemPrompt
 				},
-				...messages.map((msg) => ({
+				...history.map((msg) => ({
 					role: msg.role as 'user' | 'assistant' | 'system',
 					content: msg.content
 				}))

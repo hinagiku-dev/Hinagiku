@@ -10,7 +10,6 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		if (!locals.user) {
 			throw error(401, 'Unauthorized');
 		}
-
 		if (!params.id || !params.group_number || !params.conv_id) {
 			throw error(400, 'Missing parameters');
 		}
@@ -35,25 +34,13 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		}
 
 		const data = await request.json();
-		const { audio } = data.get('audio');
-
-		if (!audio) {
-			throw error(400, 'Content is required');
-		}
-
-		const audio_response = await fetch('/api/stt', {
-			method: 'POST',
-			body: audio
-		});
-		if (!audio_response.ok) {
-			throw error(500, 'Error processing audio');
-		}
-		const content = await audio_response.text();
+		const content = data.get('content');
+		const audio = data.get('audio');
 
 		history.push({
-			role: 'user',
 			content: content,
-			audio: null
+			role: 'user',
+			audio: audio
 		});
 
 		const response = await chatWithLLMByDocs(history, task, subtasks, resources);
