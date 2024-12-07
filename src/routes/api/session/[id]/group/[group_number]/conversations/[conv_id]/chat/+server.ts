@@ -1,13 +1,17 @@
 import { adminDb } from '$lib/server/firebase';
 import { error, json, RequestHandler } from '@sveltejs/kit';
 
-import { Conversation } from '$lib/schema/conversation';
+import type { Conversation } from '$lib/schema/conversation';
 import { chatWithLLMByDocs } from '$lib/server/llm';
 
 export const POST: RequestHandler = async ({ request, params, locals }) => {
 	try {
 		if (!locals.user) {
 			throw error(401, 'Unauthorized');
+		}
+
+		if (!params.id || !params.group_number || !params.conv_id) {
+			throw error(400, 'Missing parameters');
 		}
 
 		const conversationRef = adminDb
@@ -30,15 +34,25 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		}
 
 		const data = await request.json();
-		const { content } = data.get('content');
+		const { audio } = data.get('audio');
 
-		if (!content) {
+		if (!audio) {
 			throw error(400, 'Content is required');
 		}
 
+		const audio_response = await fetch('/api/stt', {
+			method: 'POST',
+			body: audio
+		});
+		if (!audio_response.ok) {
+			throw error(500, 'Error processing audio');
+		}
+		const content = await audio_response.text();
+
 		history.push({
 			role: 'user',
-			content
+			content: content,
+			audio: null
 		});
 
 		const response = await chatWithLLMByDocs(history, task, subtasks, resources);
@@ -48,13 +62,14 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 
 		history.push({
 			role: 'assistant',
-			content: response.result
+			audio: null,
+			content: response.message
 		});
 		await conversationRef.update({
 			history
 		});
 
-		return json({ success: true, message: response.result });
+		return json({ success: true, message: response.message });
 	} catch (error) {
 		console.error('Error processing request:', error);
 		return json({ status: 'error', message: 'Internal Server Error' }, { status: 500 });
