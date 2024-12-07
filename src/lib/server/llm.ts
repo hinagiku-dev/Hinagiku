@@ -47,33 +47,33 @@ export async function isHarmfulContent(message: string) {
 }
 
 export async function chatWithLLMByDocs(
-	messages: ChatMessage[],
-	mainQuestion: string,
-	secondaryGoal: string[],
-	documents: {
+	history: ChatMessage[],
+	task: string,
+	subtasks: string[],
+	resources: {
 		name: string;
-		text: string;
+		content: string;
 	}[],
 	temperature = 0.7
 ) {
 	try {
-		if (await isHarmfulContent(messages[messages.length - 1].content)) {
+		if (await isHarmfulContent(history[history.length - 1].content)) {
 			return {
 				success: false,
 				message: '',
 				error: 'Harmful content detected'
 			};
 		}
-		const formattedDocs = documents
+		const formattedDocs = resources
 			.map((doc, index) => {
 				const title = doc.name || `Document ${index + 1}`;
-				return `[${title}]:\n${doc.text}`;
+				return `[${title}]:\n${doc.content}`;
 			})
 			.join('\n\n');
 
-		const systemPrompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{mainQuestion}', mainQuestion)
-			.replace('{secondaryGoal}', secondaryGoal.join('\n'))
-			.replace('{documents}', formattedDocs);
+		const systemPrompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
+			.replace('{subtasks}', subtasks.join('\n'))
+			.replace('{resources}', formattedDocs);
 
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',
@@ -82,7 +82,7 @@ export async function chatWithLLMByDocs(
 					role: 'system',
 					content: systemPrompt
 				},
-				...messages.map((msg) => ({
+				...history.map((msg) => ({
 					role: msg.role as 'user' | 'assistant' | 'system',
 					content: msg.content
 				}))

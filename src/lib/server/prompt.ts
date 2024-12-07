@@ -7,13 +7,13 @@ export const DOCS_CONTEXT_SYSTEM_PROMPT = `你是一位可以存取特定文件�
 6. 永遠不要否定學生的答案，但不能偏離文件希望達到的目標
 
 主要問題：
-{mainQuestion}
+{task}
 
 次要目標：
-{secondaryGoal}
+{subtasks}
 
 參考文件：
-{documents}`;
+{resources}`;
 
 export const CHAT_SUMMARY_PROMPT = `請總結以下對話，重點關注學生的觀點、想法和結論：
 
