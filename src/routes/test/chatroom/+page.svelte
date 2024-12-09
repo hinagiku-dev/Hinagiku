@@ -15,6 +15,9 @@
 	let audioFile = $state<string | null>(null);
 	let media: Blob[] = [];
 	let mediaRecorder: MediaRecorder;
+	let transcription = $state<string | null>(null);
+	let url = $state<string | null>(null);
+
 	onMount(async () => {
 		const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 		mediaRecorder = new MediaRecorder(stream);
@@ -31,6 +34,30 @@
 		};
 	});
 
+	async function Transcribe() {
+		if (!messages[messages.length - 1].WithVoice) return;
+		const formData = new FormData();
+		formData.append('file', messages[messages.length - 1].voice as string);
+
+		try {
+			const response = await fetch('/api/your-endpoint', {
+				method: 'POST',
+				body: formData
+			});
+
+			const result = await response.json();
+			if (result.status === 'success') {
+				transcription = result.transcription;
+				url = result.url;
+			} else {
+				alert(result.message);
+			}
+		} catch (error) {
+			console.error('Error uploading audio:', error);
+			alert('Error uploading audio');
+		}
+	}
+
 	const StartRecording = () => {
 		console.log('Recording...');
 		mediaRecorder.start();
@@ -40,6 +67,7 @@
 		console.log('Stopped recording...');
 		mediaRecorder.stop();
 		sendVoiceMessage();
+		Transcribe();
 	};
 
 	const sendVoiceMessage = () => {
@@ -84,6 +112,10 @@
 							<audio controls>
 								<source src={audioFile} type="audio/ogg; codecs=opus" />
 							</audio>
+							{#if transcription}
+								<p class="text-sm text-gray-500">{transcription}</p>
+								<p class="text-sm text-gray-500">{url}</p>
+							{/if}
 						{/if}
 					</div>
 					{#if message.sender === 'me'}
@@ -98,7 +130,7 @@
 				disabled={messages[messages.length - 1].sender === 'me'}
 				onmousedown={StartRecording}
 				onmouseup={StopRecording}
-				class="recordbtn"
+				class="mr-2 rounded-full bg-gray-100 p-2 active:bg-red-700"
 			>
 				<Mic size={24} />
 			</button>
@@ -109,8 +141,10 @@
 				placeholder="Type your message..."
 				onkeyup={(e) => e.key === 'Enter' && sendMessage()}
 			/>
-			<button disabled={messages[messages.length - 1].sender === 'me'} onclick={sendMessage}
-				>Send</button
+			<button
+				disabled={messages[messages.length - 1].sender === 'me'}
+				onclick={sendMessage}
+				class="p-[10px] hover:bg-gray-100 disabled:pointer-events-none">Send</button
 			>
 			<div class="w-full"></div>
 			{#if messages[messages.length - 1].sender === 'me'}
@@ -141,27 +175,5 @@
 	.input-area input {
 		flex: 1;
 		padding: 10px;
-	}
-	.input-area button {
-		padding: 10px;
-	}
-	.input-area button:hover {
-		background-color: #f0f0f0;
-	}
-	.input-area button:active {
-		background-color: #e0e0e0 !important;
-	}
-	.input-area button:disabled {
-		pointer-events: none;
-	}
-	.recordbtn {
-		background-color: #f0f0f0;
-		border: none;
-		border-radius: 50%;
-		padding: 10px;
-		margin-right: 10px;
-	}
-	.recordbtn:active {
-		background-color: red;
 	}
 </style>
