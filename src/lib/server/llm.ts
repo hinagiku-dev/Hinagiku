@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import fs from 'fs/promises';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
@@ -37,7 +38,42 @@ const SummaryGroupOpinionSchema = z.object({
 	key_points: z.array(z.string())
 });
 
-export async function isHarmfulContent(message: string) {
+async function isHarmfulContent(content: string): Promise<boolean> {
+	const moderation = await openai.moderations.create({
+		model: 'omni-moderation-latest',
+		input: content
+	});
+
+	return moderation.results[0].flagged;
+}
+
+export async function checkFileContent(
+	filePath: string
+): Promise<{ success: boolean; message: string; error?: string }> {
+	try {
+		const content = await fs.readFile(filePath, 'utf-8');
+		if (await isHarmfulContentfile(content)) {
+			return {
+				success: false,
+				message: '',
+				error: 'Harmful content detected in the uploaded file'
+			};
+		}
+		return {
+			success: true,
+			message: 'File content is appropriate'
+		};
+	} catch (error) {
+		console.error('Error in checkFileContent:', error);
+		return {
+			success: false,
+			message: '',
+			error: 'Error reading the file'
+		};
+	}
+}
+
+export async function isHarmfulContentfile(message: string) {
 	const moderation = await openai.moderations.create({
 		model: 'omni-moderation-latest',
 		input: message

@@ -83,6 +83,7 @@
 		console.log('Sending message...');
 		messages = [...messages, { sender: 'me', text: inputText, voice: null, WithVoice: false }];
 		inputText = '';
+		//call takala's api here
 	};
 </script>
 
