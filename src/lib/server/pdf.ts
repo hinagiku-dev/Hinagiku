@@ -1,13 +1,13 @@
-import fs from 'fs';
 import pdf from 'pdf-parse';
 
-export async function pdf2Text(filePath: string): Promise<string> {
-	const dataBuffer = fs.readFileSync(filePath);
-	const data = await pdf(dataBuffer);
-
-	const text = data.text;
-	// remove space line
-	data.text = text.replace(/^\s*\n+/gm, '\n');
-
-	return data.text;
+export async function pdf2Text(fileBuffer: ArrayBuffer): Promise<string | null> {
+	try {
+		const data = await pdf(Buffer.from(fileBuffer));
+		const text = data.text;
+		data.text = text.replace(/^\s*\n+/gm, '\n');
+		return data.text;
+	} catch (error) {
+		console.error('Error in pdf2Text', error);
+		return null;
+	}
 }
