@@ -1,13 +1,12 @@
-import { signOut } from '$lib/stores/auth';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (locals.user) {
-		throw redirect(303, '/dashboard');
-	} else {
-		signOut();
+	if (!locals.user) {
+		throw redirect(303, '/login');
 	}
 
-	return {};
+	return {
+		user: locals.user
+	};
 };
