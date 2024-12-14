@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Mic } from 'lucide-svelte';
+	const transAPI = 'http://localhost:5173/api/stt';
 
 	let messages = $state([
 		{
@@ -40,7 +41,7 @@
 		formData.append('file', messages[messages.length - 1].voice as string);
 
 		try {
-			const response = await fetch('/api/your-endpoint', {
+			const response = await fetch(transAPI, {
 				method: 'POST',
 				body: formData
 			});
