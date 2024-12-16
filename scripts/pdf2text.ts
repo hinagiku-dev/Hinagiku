@@ -29,8 +29,9 @@ async function main() {
 	}
 
 	console.log(`Transcribing pdf file: ${pdf_filepath}`);
-
-	const text = await pdf2Text(pdf_filepath);
+	// load pdf file to arraybuffer
+	const pdf_data = fs.readFileSync(pdf_filepath);
+	const text = await pdf2Text(pdf_data);
 
 	console.log('Transcription Result:');
 	console.log(text);
