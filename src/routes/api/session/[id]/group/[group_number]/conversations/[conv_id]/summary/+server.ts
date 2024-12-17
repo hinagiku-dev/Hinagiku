@@ -1,6 +1,6 @@
 import type { Conversation } from '$lib/schema/conversation';
 import { adminDb } from '$lib/server/firebase';
-import { summarizeStudentChat } from '$lib/server/llm';
+import { summarizeConcepts, summarizeStudentChat } from '$lib/server/llm';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error } from '@sveltejs/kit';
 
@@ -40,10 +40,45 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		if (!response.success) {
 			throw error(500, response.error);
 		}
-
 		await conversationRef.update({
-			summary: response.summary
+			summary: response.summary,
+			keyPoints: response.keyPoints
 		});
+
+		const conversationsRef = adminDb
+			.collection('sessions')
+			.doc(params.id)
+			.collection('groups')
+			.doc(params.group_number)
+			.collection('conversations');
+		const conversations = await conversationsRef.get();
+
+		const allSummarized = conversations.docs.every((doc) => {
+			const data = doc.data() as Conversation;
+			return data.summary !== null;
+		});
+
+		if (!allSummarized) {
+			return new Response(JSON.stringify({ success: true }), { status: 200 });
+		}
+
+		const result = await summarizeConcepts(
+			conversations.docs.map((doc) => {
+				const data = doc.data() as Conversation;
+				return { student_summary: data.summary!, student_key_points: data.keyPoints! };
+			})
+		);
+
+		const groupRef = adminDb
+			.collection('sessions')
+			.doc(params.id)
+			.collection('groups')
+			.doc(params.group_number);
+
+		await groupRef.update({
+			concept: `${result.students_summary}\n\nSimilar view points: ${result.similar_view_points}\n\nDifferent view points: ${result.different_view_points}`
+		});
+
 		return new Response(JSON.stringify({ success: true }), { status: 200 });
 	} catch (error) {
 		console.error('Error creating session:', error);

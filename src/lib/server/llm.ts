@@ -5,6 +5,7 @@ import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
 import {
 	CHAT_SUMMARY_PROMPT,
+	CONCEPT_SUMMARY_PROMPT,
 	DOCS_CONTEXT_SYSTEM_PROMPT,
 	GROUP_OPINION_SUMMARY_PROMPT
 } from './prompt';
@@ -20,22 +21,24 @@ interface ChatMessage {
 }
 
 interface Student_opinion {
-	student_id: string;
-	student_conclusions: string;
+	student_summary: string;
+	student_key_points: string[];
 }
 
 const SummaryStudentOpinionSchema = z.object({
-	student_viewpoints: z.string(),
-	student_thoughts: z.string(),
-	student_conclusions: z.string(),
-	key_points: z.array(z.string())
+	student_summary: z.string(),
+	student_key_points: z.array(z.string())
+});
+
+const SummaryStudentConceptSchema = z.object({
+	similar_view_points: z.array(z.string()),
+	different_view_points: z.array(z.string()),
+	students_summary: z.string()
 });
 
 const SummaryGroupOpinionSchema = z.object({
-	group_viewpoints: z.string(),
-	group_thoughts: z.string(),
-	group_conclusions: z.string(),
-	key_points: z.array(z.string())
+	group_summary: z.string(),
+	group_key_points: z.array(z.string())
 });
 
 async function isHarmfulContent(content: string): Promise<boolean> {
@@ -52,7 +55,7 @@ export async function checkFileContent(
 ): Promise<{ success: boolean; message: string; error?: string }> {
 	try {
 		const content = await fs.readFile(filePath, 'utf-8');
-		if (await isHarmfulContentfile(content)) {
+		if (await isHarmfulContentFile(content)) {
 			return {
 				success: false,
 				message: '',
@@ -73,7 +76,7 @@ export async function checkFileContent(
 	}
 }
 
-export async function isHarmfulContentfile(message: string) {
+export async function isHarmfulContentFile(message: string) {
 	const moderation = await openai.moderations.create({
 		model: 'omni-moderation-latest',
 		input: message
@@ -164,14 +167,15 @@ export async function summarizeStudentChat(chatHistory: ChatMessage[]) {
 			response_format: zodResponseFormat(SummaryStudentOpinionSchema, 'chat_summary')
 		});
 
-		const result = completion.choices[0].message.content;
+		const result = completion.choices[0].message.parsed;
 		if (!result) {
 			throw new Error('Failed to parse response');
 		}
 
 		return {
 			success: true,
-			summary: result
+			summary: result.student_summary,
+			keyPoints: result.student_key_points
 		};
 	} catch (error) {
 		console.error('Error in summarizeChat:', error);
@@ -188,11 +192,54 @@ export async function summarizeStudentChat(chatHistory: ChatMessage[]) {
 	}
 }
 
-export async function summarizeGroupOpinions(groupOpinions: Student_opinion[]) {
+export async function summarizeConcepts(student_opinion: Student_opinion[]) {
 	try {
-		const formattedOpinions = groupOpinions
+		const formattedOpinions = student_opinion
 			.map((opinion) => {
-				return `Student ID: ${opinion.student_id}\nViewpoints: ${opinion.student_conclusions}`;
+				return `${opinion.student_summary}\nKey points: ${opinion.student_key_points.join(',')}`;
+			})
+			.join('\n{separator}\n');
+
+		const prompt = CONCEPT_SUMMARY_PROMPT.replace('{studentOpinions}', formattedOpinions);
+
+		const completion = await openai.beta.chat.completions.parse({
+			model: 'gpt-4o-mini',
+			messages: [{ role: 'user', content: prompt }],
+			temperature: 0.5,
+			response_format: zodResponseFormat(SummaryStudentConceptSchema, 'concept_summary')
+		});
+
+		const result = completion.choices[0].message.parsed;
+		if (!result) {
+			throw new Error('Failed to parse response');
+		}
+
+		return {
+			success: true,
+			similar_view_points: result.similar_view_points,
+			different_view_points: result.different_view_points,
+			students_summary: result.students_summary
+		};
+	} catch (error) {
+		console.error('Error in summarizeConcepts:', error);
+		if (error instanceof z.ZodError) {
+			return {
+				success: false,
+				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
+			};
+		}
+		return {
+			success: false,
+			error: 'Failed to summarize concepts'
+		};
+	}
+}
+
+export async function summarizeGroupOpinions(student_opinion: ChatMessage[][]) {
+	try {
+		const formattedOpinions = student_opinion
+			.map((opinions) => {
+				return opinions.map((opinion) => `${opinion.role}: ${opinion.content}`).join('\n');
 			})
 			.join('\n\n');
 
@@ -202,7 +249,7 @@ export async function summarizeGroupOpinions(groupOpinions: Student_opinion[]) {
 			model: 'gpt-4o-mini',
 			messages: [{ role: 'user', content: prompt }],
 			temperature: 0.5,
-			response_format: zodResponseFormat(SummaryGroupOpinionSchema, 'group_opinion_summary')
+			response_format: zodResponseFormat(SummaryGroupOpinionSchema, 'group_summary')
 		});
 
 		const result = completion.choices[0].message.content;
