@@ -7,12 +7,15 @@ import {
 	getGroupRef
 } from '$lib/utils/firestore';
 import type { RequestHandler } from '@sveltejs/kit';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
+
+// Endpoint for summarizing a student chat
+// POST /api/session/[id]/group/[group_number]/conversations/[conv_id]/summary/+server
 
 export const POST: RequestHandler = async ({ params, locals }) => {
 	try {
 		if (!locals.user) {
-			throw error(401, 'Unauthorized');
+			redirect(303, '/login');
 		}
 		const { id, group_number, conv_id } = params;
 		if (!id || !group_number || !conv_id) {

@@ -1,15 +1,11 @@
-import { createConversation } from '$lib/utils/firestore';
+import { getGroupData, getGroupRef } from '$lib/utils/firestore';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
-// Endpoint for creating a new conversation in a group by teacher
-// POST /api/session/[id]/group/[group_number]/conversations/+server
-// Request data format
 const requestDataFormat = z.object({
-	task: z.string(),
-	subtasks: z.array(z.string()),
-	resources: z.array(z.string())
+	content: z.string(),
+	speaker: z.string()
 });
 
 export const POST: RequestHandler = async ({ request, params, locals }) => {
@@ -22,23 +18,25 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			throw error(400, 'Missing parameters');
 		}
 
-		const { task, subtasks, resources } = await getRequestData(request);
+		const group_ref = getGroupRef(id, group_number);
+		const { discussions } = await getGroupData(group_ref);
 
-		const conv_id = await createConversation(
-			id,
-			group_number,
-			locals.user.uid,
-			task,
-			subtasks,
-			resources
-		);
+		const { content, speaker } = await getRequestData(request);
 
-		return json({
-			success: true,
-			conversationId: conv_id
+		await group_ref.update({
+			discussions: [
+				...discussions,
+				{
+					id: locals.user.uid,
+					content: content,
+					speaker: speaker
+				}
+			]
 		});
+
+		return json({ success: true }, { status: 200 });
 	} catch (error) {
-		console.error('Error creating conversation:', error);
+		console.error('Error adding discussion:', error);
 		return json({ error: 'Internal Server Error' }, { status: 500 });
 	}
 };
@@ -46,7 +44,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 async function getRequestData(request: Request): Promise<z.infer<typeof requestDataFormat>> {
 	const data = await request.json();
 	const result = requestDataFormat.parse(data);
-	if (!result.task || !result.subtasks || !result.resources) {
+	if (!result.content || !result.speaker) {
 		throw error(400, 'Missing parameters');
 	}
 	return result;

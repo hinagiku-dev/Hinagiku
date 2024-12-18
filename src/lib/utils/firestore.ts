@@ -1,7 +1,34 @@
 import type { Conversation } from '$lib/schema/conversation';
+import type { Group } from '$lib/schema/group';
 import { adminDb } from '$lib/server/firebase';
 import { error } from '@sveltejs/kit';
 
+export async function createConversation(
+	id: string,
+	group_number: string,
+	userId: string,
+	task: string,
+	subtasks: string[],
+	resources: string[]
+) {
+	const conversationRef = adminDb
+		.collection('sessions')
+		.doc(id)
+		.collection('groups')
+		.doc(group_number)
+		.collection('conversations')
+		.doc();
+
+	await conversationRef.set({
+		userId: userId,
+		task: task,
+		subtasks: subtasks,
+		resources: resources,
+		history: []
+	});
+
+	return conversationRef.id;
+}
 export async function getConversationRef(id: string, group_number: string, conv_id: string) {
 	return adminDb
 		.collection('sessions')
@@ -52,11 +79,11 @@ export function getGroupRef(id: string, group_number: string) {
 
 export async function getGroupData(
 	group_ref: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>
-): Promise<Conversation> {
+): Promise<Group> {
 	const group = await group_ref.get();
 	if (!group.exists) {
 		throw error(404, 'Group not found');
 	}
 
-	return group.data() as Conversation;
+	return group.data() as Group;
 }

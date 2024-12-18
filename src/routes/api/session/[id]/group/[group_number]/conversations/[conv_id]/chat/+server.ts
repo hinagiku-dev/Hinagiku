@@ -1,14 +1,22 @@
-import type { RequestHandler } from '@sveltejs/kit';
-import { error, json } from '@sveltejs/kit';
-
 import { chatWithLLMByDocs } from '$lib/server/llm';
 import { getConversationData, getConversationRef } from '$lib/utils/firestore';
 import type { DBChatMessage, LLMChatMessage } from '$lib/utils/types';
+import type { RequestHandler } from '@sveltejs/kit';
+import { error, json, redirect } from '@sveltejs/kit';
+import { z } from 'zod';
+
+// Endpoint for chatting with LLM
+// POST /api/session/[id]/group/[group_number]/conversations/[conv_id]/chat/+server
+// Request data format
+const requestDataFormat = z.object({
+	content: z.string(),
+	audio: z.string()
+});
 
 export const POST: RequestHandler = async ({ request, params, locals }) => {
 	try {
 		if (!locals.user) {
-			throw error(401, 'Unauthorized');
+			redirect(303, '/login');
 		}
 		const { id, group_number, conv_id } = params;
 		if (!id || !group_number || !conv_id) {
@@ -23,20 +31,15 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			throw error(403, 'Forbidden');
 		}
 
-		const data = await request.json();
-		const content = data.get('content');
-		const audio = data.get('audio');
-
-		if (!content || !audio) {
-			throw error(400, 'Missing content');
-		}
-		if (typeof content != 'string' || typeof audio != 'string') {
-			throw error(400, 'Wrong request body format');
-		}
-
+		const { content, audio } = await getRequestData(request);
 		const chat_history = history.map(DBChatMessage2LLMChatMessage);
 
-		const response = await chatWithLLMByDocs(chat_history, task, subtasks, resources);
+		const response = await chatWithLLMByDocs(
+			[...chat_history, { role: 'user', content: content }],
+			task,
+			subtasks,
+			resources
+		);
 		if (!response.success) {
 			throw error(500, response.error);
 		}
@@ -58,6 +61,15 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		return json({ status: 'error', message: 'Internal Server Error' }, { status: 500 });
 	}
 };
+
+async function getRequestData(request: Request): Promise<z.infer<typeof requestDataFormat>> {
+	const data = await request.json();
+	const parsedData = requestDataFormat.parse(data);
+	if (!parsedData.content && !parsedData.audio) {
+		throw error(400, 'Missing parameters');
+	}
+	return parsedData;
+}
 
 function DBChatMessage2LLMChatMessage(message: DBChatMessage): LLMChatMessage {
 	return {
