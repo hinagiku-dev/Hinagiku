@@ -1,4 +1,5 @@
-import { getGroupData, getGroupRef } from '$lib/utils/firestore';
+import { adminDb } from '$lib/server/firebase';
+import { getGroupRef } from '$lib/utils/firestore';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -22,19 +23,24 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		}
 
 		const group_ref = getGroupRef(id, group_number);
-		const { discussions } = await getGroupData(group_ref);
-
-		const { content, speaker } = await getRequestData(request);
-
-		await group_ref.update({
-			discussions: [
-				...discussions,
-				{
-					id: locals.user.uid,
-					content: content,
-					speaker: speaker
-				}
-			]
+		await adminDb.runTransaction(async (t) => {
+			const doc = await t.get(group_ref);
+			const data = doc.data();
+			if (!data || !data.discussions) {
+				throw error(400, 'Discussions not found');
+			}
+			const { discussions } = data;
+			const { content, speaker } = await getRequestData(request);
+			t.update(group_ref, {
+				discussions: [
+					...discussions,
+					{
+						id: locals.user?.uid,
+						content: content,
+						speaker: speaker
+					}
+				]
+			});
 		});
 
 		return json({ success: true }, { status: 200 });
