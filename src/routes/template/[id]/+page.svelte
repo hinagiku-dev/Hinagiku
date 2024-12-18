@@ -207,7 +207,6 @@
 			</div>
 
 			<div class="border-t pt-6">
-				<h2 class="mb-4 text-xl font-semibold">Resource List</h2>
 				{#key $template}
 					{#if $template}
 						<ResourceList template={$template} />
