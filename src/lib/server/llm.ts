@@ -2,6 +2,7 @@ import { env } from '$env/dynamic/private';
 import fs from 'fs/promises';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
+import type { ChatCompletionMessage } from 'openai/resources/chat/completions';
 import { z } from 'zod';
 import {
 	CHAT_SUMMARY_PROMPT,
@@ -14,16 +15,6 @@ const openai = new OpenAI({
 	apiKey: env.OPENAI_API_KEY,
 	baseURL: env.OPENAI_BASE_URL
 });
-
-interface ChatMessage {
-	role: string;
-	content: string;
-}
-
-interface Student_opinion {
-	student_summary: string;
-	student_key_points: string[];
-}
 
 const SummaryStudentOpinionSchema = z.object({
 	student_summary: z.string(),
@@ -85,48 +76,16 @@ export async function isHarmfulContentFile(message: string) {
 	return moderation.results[0].flagged;
 }
 
-export async function chatWithLLMByDocs(
-	history: ChatMessage[],
-	task: string,
-	subtasks: string[],
-	resources: {
-		name: string;
-		content: string;
-	}[],
+async function requestChatLLM(
+	system_prompt: string,
+	history: ChatCompletionMessage[],
 	temperature = 0.7
 ) {
 	try {
-		if (await isHarmfulContent(history[history.length - 1].content)) {
-			return {
-				success: false,
-				message: '',
-				error: 'Harmful content detected'
-			};
-		}
-		const formattedDocs = resources
-			.map((doc, index) => {
-				const title = doc.name || `Document ${index + 1}`;
-				return `[${title}]:\n${doc.content}`;
-			})
-			.join('\n\n');
-
-		const systemPrompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
-			.replace('{subtasks}', subtasks.join('\n'))
-			.replace('{resources}', formattedDocs);
-
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',
-			messages: [
-				{
-					role: 'system',
-					content: systemPrompt
-				},
-				...history.map((msg) => ({
-					role: msg.role as 'user' | 'assistant' | 'system',
-					content: msg.content
-				}))
-			],
-			temperature
+			messages: [{ role: 'system', content: system_prompt }, ...history],
+			temperature: temperature
 		});
 
 		const result = response.choices[0].message.content;
@@ -139,136 +98,191 @@ export async function chatWithLLMByDocs(
 			message: result
 		};
 	} catch (error) {
-		console.error('Error in chatWithLLMByDocs:', error);
-		if (error instanceof z.ZodError) {
-			return {
-				success: false,
-				message: '',
-				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
-			};
-		}
 		return {
 			success: false,
 			message: '',
-			error: 'Failed to process documents and generate response'
+			error: error
 		};
 	}
 }
-
-export async function summarizeStudentChat(chatHistory: ChatMessage[]) {
+async function requestZodLLM(
+	system_prompt: string,
+	zod_scheme: z.ZodSchema<unknown>,
+	temperature = 0.7
+) {
 	try {
-		const formattedHistory = chatHistory.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
-		const prompt = CHAT_SUMMARY_PROMPT.replace('{chatHistory}', formattedHistory);
-
-		const completion = await openai.beta.chat.completions.parse({
+		const response = await openai.beta.chat.completions.parse({
 			model: 'gpt-4o-mini',
-			messages: [{ role: 'user', content: prompt }],
-			temperature: 0.5,
-			response_format: zodResponseFormat(SummaryStudentOpinionSchema, 'chat_summary')
+			messages: [{ role: 'user', content: system_prompt }],
+			temperature: temperature,
+			response_format: zodResponseFormat(zod_scheme, 'response')
 		});
 
-		const result = completion.choices[0].message.parsed;
+		const result = response.choices[0].message.parsed;
 		if (!result) {
 			throw new Error('Failed to parse response');
 		}
 
 		return {
 			success: true,
-			summary: result.student_summary,
-			keyPoints: result.student_key_points
+			message: result
+		};
+	} catch (error) {
+		return {
+			success: false,
+			message: '',
+			error: error
+		};
+	}
+}
+
+export async function chatWithLLMByDocs(
+	history: ChatCompletionMessage[],
+	task: string,
+	subtasks: string[],
+	resources: {
+		name: string;
+		content: string;
+	}[],
+	temperature = 0.7
+): Promise<{ success: boolean; message: string; error?: string }> {
+	try {
+		const last_message_content = history[history.length - 1]?.content;
+		if (last_message_content && (await isHarmfulContent(last_message_content))) {
+			return {
+				success: false,
+				message: '',
+				error: 'Harmful content detected in the last message'
+			};
+		}
+		const formatted_docs = resources
+			.map((doc, index) => {
+				const title = doc.name || `Document ${index + 1}`;
+				return `[${title}]:\n${doc.content}`;
+			})
+			.join('\n\n');
+
+		const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
+			.replace('{subtasks}', subtasks.join('\n'))
+			.replace('{resources}', formatted_docs);
+
+		const response = await requestChatLLM(system_prompt, history, temperature);
+
+		if (!response.success) {
+			throw new Error('Failed to parse response');
+		}
+		return {
+			success: true,
+			message: response.message
+		};
+	} catch (error) {
+		console.error('Error in chatWithLLMByDocs:', error);
+		return {
+			success: false,
+			message: '',
+			error: 'Failed to chat with LLM'
+		};
+	}
+}
+
+export async function summarizeStudentChat(history: ChatCompletionMessage[]): Promise<{
+	success: boolean;
+	summary: string;
+	key_points: string[];
+	error?: string;
+}> {
+	try {
+		const formatted_history = history.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
+		const prompt = CHAT_SUMMARY_PROMPT.replace('{chatHistory}', formatted_history);
+
+		const response = await requestZodLLM(prompt, SummaryStudentOpinionSchema);
+
+		if (!response.success) {
+			throw new Error('Failed to parse response');
+		}
+
+		const message = response.message as z.infer<typeof SummaryStudentOpinionSchema>;
+		return {
+			success: true,
+			summary: message.student_summary,
+			key_points: message.student_key_points
 		};
 	} catch (error) {
 		console.error('Error in summarizeChat:', error);
-		if (error instanceof z.ZodError) {
-			return {
-				success: false,
-				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
-			};
-		}
 		return {
 			success: false,
+			summary: '',
+			key_points: [],
 			error: 'Failed to summarize chat'
 		};
 	}
 }
 
-export async function summarizeConcepts(student_opinion: Student_opinion[]) {
+export async function summarizeConcepts(
+	student_opinion: { summary: string; keyPoints: string[] }[]
+): Promise<{
+	success: boolean;
+	similar_view_points: string[];
+	different_view_points: string[];
+	students_summary: string;
+	error?: string;
+}> {
 	try {
-		const formattedOpinions = student_opinion
+		const formatted_opinions = student_opinion
 			.map((opinion) => {
-				return `${opinion.student_summary}\nKey points: ${opinion.student_key_points.join(',')}`;
+				return `${opinion.summary}\nKey points: ${opinion.keyPoints.join(',')}`;
 			})
 			.join('\n{separator}\n');
 
-		const prompt = CONCEPT_SUMMARY_PROMPT.replace('{studentOpinions}', formattedOpinions);
+		const system_prompt = CONCEPT_SUMMARY_PROMPT.replace('{studentOpinions}', formatted_opinions);
+		const response = await requestZodLLM(system_prompt, SummaryStudentConceptSchema);
 
-		const completion = await openai.beta.chat.completions.parse({
-			model: 'gpt-4o-mini',
-			messages: [{ role: 'user', content: prompt }],
-			temperature: 0.5,
-			response_format: zodResponseFormat(SummaryStudentConceptSchema, 'concept_summary')
-		});
-
-		const result = completion.choices[0].message.parsed;
-		if (!result) {
+		if (!response.success) {
 			throw new Error('Failed to parse response');
 		}
+		const message = response.message as z.infer<typeof SummaryStudentConceptSchema>;
 
 		return {
 			success: true,
-			similar_view_points: result.similar_view_points,
-			different_view_points: result.different_view_points,
-			students_summary: result.students_summary
+			similar_view_points: message.similar_view_points,
+			different_view_points: message.different_view_points,
+			students_summary: message.students_summary
 		};
 	} catch (error) {
 		console.error('Error in summarizeConcepts:', error);
-		if (error instanceof z.ZodError) {
-			return {
-				success: false,
-				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
-			};
-		}
 		return {
 			success: false,
+			similar_view_points: [],
+			different_view_points: [],
+			students_summary: '',
 			error: 'Failed to summarize concepts'
 		};
 	}
 }
 
-export async function summarizeGroupOpinions(student_opinion: ChatMessage[][]) {
+export async function summarizeGroupOpinions(
+	student_opinion: { role: string; content: string }[]
+): Promise<{ success: true; summary: string } | { success: false; error: string }> {
 	try {
-		const formattedOpinions = student_opinion
-			.map((opinions) => {
-				return opinions.map((opinion) => `${opinion.role}: ${opinion.content}`).join('\n');
-			})
-			.join('\n\n');
+		const formatted_opinions = student_opinion
+			.map((opinion) => `${opinion.role}: ${opinion.content}`)
+			.join('\n');
 
-		const prompt = GROUP_OPINION_SUMMARY_PROMPT.replace('{groupOpinions}', formattedOpinions);
+		const prompt = GROUP_OPINION_SUMMARY_PROMPT.replace('{groupOpinions}', formatted_opinions);
+		const response = await requestZodLLM(prompt, SummaryGroupOpinionSchema);
 
-		const completion = await openai.beta.chat.completions.parse({
-			model: 'gpt-4o-mini',
-			messages: [{ role: 'user', content: prompt }],
-			temperature: 0.5,
-			response_format: zodResponseFormat(SummaryGroupOpinionSchema, 'group_summary')
-		});
-
-		const result = completion.choices[0].message.content;
-		if (!result) {
+		if (!response.success) {
 			throw new Error('Failed to parse response');
 		}
 
+		const message = response.message as z.infer<typeof SummaryGroupOpinionSchema>;
+
 		return {
 			success: true,
-			summary: result
+			summary: message.group_summary
 		};
 	} catch (error) {
 		console.error('Error in summarizeGroupOpinions:', error);
-		if (error instanceof z.ZodError) {
-			return {
-				success: false,
-				error: 'Type error: ' + error.errors.map((e) => e.message).join(', ')
-			};
-		}
 		return {
 			success: false,
 			error: 'Failed to summarize group opinions'
