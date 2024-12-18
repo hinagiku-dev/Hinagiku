@@ -3,6 +3,9 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
+// Endpoint for adding a discussion in a group
+// POST /api/session/[id]/group/[group_number]/add_discussion/+server
+// Request data format
 const requestDataFormat = z.object({
 	content: z.string(),
 	speaker: z.string()
