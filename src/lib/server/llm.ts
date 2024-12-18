@@ -1,8 +1,8 @@
 import { env } from '$env/dynamic/private';
+import type { LLMChatMessage } from '$lib/utils/types';
 import fs from 'fs/promises';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
-import type { ChatCompletionMessage } from 'openai/resources/chat/completions';
 import { z } from 'zod';
 import {
 	CHAT_SUMMARY_PROMPT,
@@ -76,11 +76,7 @@ export async function isHarmfulContentFile(message: string) {
 	return moderation.results[0].flagged;
 }
 
-async function requestChatLLM(
-	system_prompt: string,
-	history: ChatCompletionMessage[],
-	temperature = 0.7
-) {
+async function requestChatLLM(system_prompt: string, history: LLMChatMessage[], temperature = 0.7) {
 	try {
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',
@@ -137,7 +133,7 @@ async function requestZodLLM(
 }
 
 export async function chatWithLLMByDocs(
-	history: ChatCompletionMessage[],
+	history: LLMChatMessage[],
 	task: string,
 	subtasks: string[],
 	resources: {
@@ -185,7 +181,7 @@ export async function chatWithLLMByDocs(
 	}
 }
 
-export async function summarizeStudentChat(history: ChatCompletionMessage[]): Promise<{
+export async function summarizeStudentChat(history: LLMChatMessage[]): Promise<{
 	success: boolean;
 	summary: string;
 	key_points: string[];
