@@ -19,7 +19,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 			audio_buffer = Buffer.from(await file.arrayBuffer());
 		} else {
-			audio_buffer = Buffer.from(await request.arrayBuffer());
+			return json({ status: 'error', message: 'Invalid Content-Type' }, { status: 400 });
 		}
 
 		const transcription = await transcribe(audio_buffer, env.HUGGINGFACE_TOKEN);
