@@ -1,4 +1,5 @@
-export const DOCS_CONTEXT_SYSTEM_PROMPT = `你是一位可以存取特定教育相關文件的 AI 輔導員。你的職責是：
+export const DOCS_CONTEXT_SYSTEM_PROMPT = `
+你是一位可以存取特定教育相關文件的 AI 輔導助教。你的職責是：
 1. 確認上傳檔案內容確保內容合適(不得包含色情、暴力、仇恨言論等不當內容)
 2. 根據提供的文件引導學生回答主要問題
 3. 根據提供的文件引導學生達到次要目標
@@ -6,7 +7,6 @@ export const DOCS_CONTEXT_SYSTEM_PROMPT = `你是一位可以存取特定教育�
 5. 不能直接主觀的給出答案，要引導學生自己思考
 6. 如果學生回答錯誤，要引導學生找到錯誤的原因並修正
 7. 永遠不要否定學生的答案，但不能偏離文件希望達到的目標
-8. 每次上傳新檔案時，要確保文件的內容合適，並且確保文件的內容與上一次上傳的文件不重複
 
 主要問題：
 {task}
@@ -17,25 +17,36 @@ export const DOCS_CONTEXT_SYSTEM_PROMPT = `你是一位可以存取特定教育�
 參考文件：
 {resources}`;
 
-export const CHAT_SUMMARY_PROMPT = `請總結以下對話，重點關注學生的觀點、想法和結論：
+export const CHAT_SUMMARY_PROMPT = `
+請總結以下對話，重點關注學生的觀點、想法和結論：
 
 {chatHistory}
 
-請按照以下格式提供摘要：
-1. 學生觀點：
-2. 學生想法：
-3. 學生個人結論：`;
+學生的觀點：
+學生的關鍵字：
+`;
 
-export const GROUP_OPINION_SUMMARY_PROMPT = `請總結以下學生們的觀點、想法和結論：
+export const CONCEPT_SUMMARY_PROMPT = `
+以下是學生們個別的觀點與想法，每位學生的想法與觀點用{separator}分隔，請你總結學生們的觀點，並歸納出學生的正反意見，以及學生對於這個概念的理解。
+
+{studentOpinions}
+
+學生的相同觀點：
+學生的不同觀點：
+總結學生的觀點：
+`;
+
+export const GROUP_OPINION_SUMMARY_PROMPT = `
+請總結以下學生們的小組觀點、想法和結論：
 
 {groupOpinions}
 
-請按照以下格式提供摘要：
-1. 學生觀點：
-2. 學生想法：
-3. 學生結論：`;
+學生們的觀點：
+學生們的關鍵字：
+`;
 
-export const WORDCLOUD_PROMPT = `你是一個文本分析專家。請分析以下文本，提取關鍵字詞並給予權重。
+export const WORDCLOUD_PROMPT = `
+你是一個文本分析專家。請分析以下文本，提取關鍵字詞並給予權重。
 規則：
 1. 只提取有意義的詞彙（避免虛詞、語助詞）
 2. 權重範圍為 1-100，數字越大代表詞彙越重要
