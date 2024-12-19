@@ -47,7 +47,7 @@ async function getRequestData(request: Request): Promise<z.infer<typeof requestD
 	const data = await request.json();
 	const result = requestDataFormat.parse(data);
 	if (!result.task || !result.subtasks || !result.resources) {
-		throw error(400, 'Missing parameters');
+		throw error(400, `Missing parameters: ${!result.task ? 'task ' : ''}${!result.subtasks ? 'subtasks ' : ''}${!result.resources ? 'resources' : ''}`.trim());
 	}
 	return result;
 }

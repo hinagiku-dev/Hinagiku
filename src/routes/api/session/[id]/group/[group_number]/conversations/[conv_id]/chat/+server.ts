@@ -66,7 +66,7 @@ async function getRequestData(request: Request): Promise<z.infer<typeof requestD
 	const data = await request.json();
 	const parsedData = requestDataFormat.parse(data);
 	if (!parsedData.content && !parsedData.audio) {
-		throw error(400, 'Missing parameters');
+		throw error(400, 'Missing content or audio parameter');
 	}
 	if (typeof parsedData.content !== 'string' || typeof parsedData.audio !== 'string') {
 		throw error(400, 'Invalid parameters');
