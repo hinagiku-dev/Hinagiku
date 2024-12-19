@@ -5,7 +5,7 @@ import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
 // Endpoint for adding a discussion in a group
-// POST /api/session/[id]/group/[group_number]/add_discussion/+server
+// POST /api/session/[id]/group/[group_number]/discussions/add/+server
 // Request data format
 const requestDataFormat = z.object({
 	content: z.string(),
@@ -46,7 +46,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		return json({ success: true }, { status: 200 });
 	} catch (error) {
 		console.error('Error adding discussion:', error);
-		return json({ error: 'Internal Server Error' }, { status: 500 });
+		return json({ error: 'Error adding discussion' }, { status: 500 });
 	}
 };
 

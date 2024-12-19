@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import type { LLMChatMessage } from '$lib/utils/types';
+import type { LLMChatMessage, StudentSpeak } from '$lib/utils/types';
 import fs from 'fs/promises';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
@@ -257,8 +257,8 @@ export async function summarizeConcepts(
 }
 
 export async function summarizeGroupOpinions(
-	student_opinion: { role: string; content: string }[]
-): Promise<{ success: true; summary: string } | { success: false; error: string }> {
+	student_opinion: StudentSpeak[]
+): Promise<{ success: boolean; summary: string; error?: string }> {
 	try {
 		const formatted_opinions = student_opinion
 			.map((opinion) => `${opinion.role}: ${opinion.content}`)
@@ -281,6 +281,7 @@ export async function summarizeGroupOpinions(
 		console.error('Error in summarizeGroupOpinions:', error);
 		return {
 			success: false,
+			summary: '',
 			error: 'Failed to summarize group opinions'
 		};
 	}
