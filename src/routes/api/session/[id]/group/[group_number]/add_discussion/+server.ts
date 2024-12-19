@@ -53,7 +53,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 async function getRequestData(request: Request): Promise<z.infer<typeof requestDataFormat>> {
 	const data = await request.json();
 	const result = requestDataFormat.parse(data);
-	if (!result.content || !result.speaker) {
+	if (!result) {
 		throw error(400, 'Missing parameters');
 	}
 	return result;
