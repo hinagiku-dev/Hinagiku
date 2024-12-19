@@ -12,8 +12,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --ignore-path .gitignore --write .",
 		"lint": "prettier --ignore-path .gitignore --check . && eslint .",
-		"stt": "tsx scripts/speech2text.ts",
-		"pdf": "tsx scripts/pdf2text.ts"
+		"stt": "pnpm tsx scripts/speech2text.ts",
+		"pdf": "pnpm tsx scripts/pdf2text.ts",
+		"tsx": "tsx --tsconfig tsconfig.tsx.json"
 	},
 	"devDependencies": {
 		"@aws-sdk/client-s3": "^3.699.0",
