@@ -30,11 +30,32 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw redirect(303, `/session/${params.id}/conversation/${conversationRef.id}`);
 	}
 
+	const sessionId = params.id;
+	const groupsRef = adminDb.collection('sessions').doc(sessionId).collection('groups');
+	const groupsSnapshot = await groupsRef.get();
+
+	const groups = await Promise.all(
+		groupsSnapshot.docs.map(async (groupDoc) => {
+			const participantsRef = groupDoc.ref.collection('participants');
+			const participantsSnapshot = await participantsRef.get();
+			const participants = participantsSnapshot.docs.map((doc) => ({
+				id: doc.id,
+				...doc.data()
+			}));
+
+			return {
+				id: groupDoc.id,
+				number: groupDoc.data().number,
+				participants
+			};
+		})
+	);
+
 	return {
-		user: locals.user
+		user: locals.user,
+		groups
 	};
 };
-
 export const actions = {
 	// startIndividualStage: async ({ locals, params }) => {
 	// 	const sessionId = params.id;
