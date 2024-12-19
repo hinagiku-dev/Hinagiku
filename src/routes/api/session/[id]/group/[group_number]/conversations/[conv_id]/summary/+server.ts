@@ -10,9 +10,9 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
 
 // Endpoint for summarizing a student chat
-// POST /api/session/[id]/group/[group_number]/conversations/[conv_id]/summary/+server
+// GET /api/session/[id]/group/[group_number]/conversations/[conv_id]/summary/+server
 
-export const POST: RequestHandler = async ({ params, locals }) => {
+export const GET: RequestHandler = async ({ params, locals }) => {
 	try {
 		if (!locals.user) {
 			redirect(303, '/login');

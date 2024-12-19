@@ -68,6 +68,9 @@ async function getRequestData(request: Request): Promise<z.infer<typeof requestD
 	if (!parsedData.content && !parsedData.audio) {
 		throw error(400, 'Missing parameters');
 	}
+	if (typeof parsedData.content !== 'string' || typeof parsedData.audio !== 'string') {
+		throw error(400, 'Invalid parameters');
+	}
 	return parsedData;
 }
 
