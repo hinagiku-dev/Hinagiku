@@ -15,7 +15,9 @@ export const ConversationSchema = z.object({
 			content: z.string(),
 			audio: z.string().nullable() // to find the raw file
 		})
-	)
+	),
+	summary: z.string().nullable(),
+	keyPoints: z.array(z.string()).nullable()
 });
 
 export type Conversation = z.infer<typeof ConversationSchema>;
