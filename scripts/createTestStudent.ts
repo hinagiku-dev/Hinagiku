@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import { Timestamp } from 'firebase-admin/firestore';
 import { GroupSchema } from '../src/lib/schema/group';
 import { ProfileSchema } from '../src/lib/schema/profile';
 import { adminDb } from '../src/lib/server/firebase'; // 假設有一個 Firebase store 模組
@@ -18,8 +19,8 @@ async function createTestStudents() {
 			displayName: `Student ${i}`,
 			title: null,
 			bio: null,
-			updatedAt: new Date(),
-			createdAt: new Date()
+			updatedAt: Timestamp.now(),
+			createdAt: Timestamp.now()
 		};
 
 		// 驗證 profile 是否符合 schema

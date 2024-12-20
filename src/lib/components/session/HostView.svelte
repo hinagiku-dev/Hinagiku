@@ -6,8 +6,43 @@
 	import { Button } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { page } from '$app/stores';
+	import { Alert } from 'flowbite-svelte';
+	import type { Group } from '$lib/schema/group';
+	import { onMount } from 'svelte';
+	import { collection, getDocs } from 'firebase/firestore';
+	import { db } from '$lib/firebase';
+	import { writable } from 'svelte/store';
+	import { getUser } from '$lib/utils/getUser';
 
 	let { session }: { session: Readable<Session> } = $props();
+	type GroupWithId = Group & { id: string };
+	let groups = writable<GroupWithId[]>([]);
+	let participantNames = $state(new Map<string, string>());
+
+	onMount(async () => {
+		try {
+			const groupsCollection = collection(db, `sessions/${$page.params.id}/groups`);
+			const snapshot = await getDocs(groupsCollection);
+			const groupsData: GroupWithId[] = snapshot.docs.map(
+				(doc) => ({ id: doc.id, ...doc.data() }) as GroupWithId
+			);
+			groups.set(groupsData);
+
+			for (const group of groupsData) {
+				for (const participant of group.participants) {
+					try {
+						const userData = await getUser(participant);
+						participantNames.set(participant, userData.displayName);
+					} catch (error) {
+						console.error(`無法獲取使用者 ${participant} 的資料:`, error);
+						participantNames.set(participant, '未知使用者');
+					}
+				}
+			}
+		} catch (error) {
+			console.error('無法加載群組資料:', error);
+		}
+	});
 
 	async function handleStartSession() {
 		const response = await fetch(`/api/session/${$page.params.id}/action/start-individual`, {
@@ -156,6 +191,40 @@
 						<div class="rounded-lg border p-4">
 							<h3 class="font-medium">{resource.name}</h3>
 							<p class="mt-2 text-gray-700">{resource.content}</p>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+		<!-- New Participant Status Dashboard Section -->
+		<div class="container mx-auto max-w-4xl px-4 py-8">
+			<h2 class="mb-4 text-3xl font-bold">Participant Status Dashboard</h2>
+			{#if $groups.length === 0}
+				<Alert color="blue">Loading groups...</Alert>
+			{:else}
+				<div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+					{#each $groups as group, index}
+						<div class="group mb-8">
+							<h3 class="mb-4 text-2xl font-semibold">Group #{index + 1}</h3>
+							{#if group.participants.length === 0}
+								<Alert color="blue">No participants in this group.</Alert>
+							{:else}
+								<ul class="space-y-4">
+									{#each group.participants as participant}
+										<li class="flex items-center justify-between border-b py-2">
+											{#await getUser(participant)}
+												<span class="text-lg">載入中...</span>
+											{:then userData}
+												<span class="text-lg">{userData.displayName}</span>
+											{:catch}
+												<span class="text-lg">未知使用者</span>
+											{/await}
+											<!-- <span class="status-indicator {`status-${participant.status}`}"></span> -->
+										</li>
+									{/each}
+								</ul>
+							{/if}
 						</div>
 					{/each}
 				</div>
