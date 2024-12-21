@@ -5,14 +5,14 @@ import { transcribe } from '../src/lib/stt/core';
 dotenv.config();
 
 const help_message = `
-Usage: tsx <script> [options] <audio_filepath>
+Usage: pnpm stt <audio_filepath> [options]
 
 Options:
-	--help, -h       Show this help message
 	<audio_filepath> Path to the audio file to be transcribed, (mp3, wav)
+	--help, -h       Show this help message
 
 Example:
-	tsx script.ts audio.mp3
+	pnpm stt audio.mp3
 `;
 
 main();
