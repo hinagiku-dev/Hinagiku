@@ -12,7 +12,7 @@ export function getUser(uid: string): Promise<Profile> {
 		const docRef = doc(db, 'profiles', uid);
 		const docSnap = await getDoc(docRef);
 		if (!docSnap.exists()) {
-			throw new Error(`找不到 UID 為 ${uid} 的使用者。`);
+			throw new Error(`User with UID ${uid} not found.`);
 		}
 		const data = docSnap.data();
 		if (!data) {
