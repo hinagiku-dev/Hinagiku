@@ -119,7 +119,7 @@
 	});
 </script>
 
-<main class="mx-auto max-w-4xl px-4 py-16">
+<main class="mx-auto max-w-7xl px-4 py-16">
 	<div class="mb-8 flex items-center justify-between">
 		<div>
 			<h1 class="text-3xl font-bold">{$session?.title}</h1>
@@ -135,12 +135,11 @@
 		</div>
 	</div>
 
-	<div class="grid gap-8 md:grid-cols-2">
+	<div class="grid gap-8 md:grid-cols-4">
 		<!-- Status Section -->
 		<div class="rounded-lg border p-6">
 			<h2 class="mb-4 text-xl font-semibold">Session Status</h2>
 			<div class="flex items-center gap-2">
-				<!-- svelte-ignore element_invalid_self_closing_tag -->
 				<span
 					class="inline-block h-3 w-3 rounded-full {$session?.status === 'preparing'
 						? 'bg-yellow-500'
@@ -151,7 +150,7 @@
 								: $session?.status === 'group'
 									? 'bg-green-500'
 									: 'bg-gray-500'}"
-				/>
+				></span>
 				<span class="capitalize">{$session?.status}</span>
 			</div>
 
@@ -163,8 +162,41 @@
 			{/if}
 		</div>
 
+		<!-- Participant Status Dashboard Section -->
+		<div class="col-span-3 rounded-lg border p-6">
+			<h2 class="mb-4 text-xl font-semibold">Groups</h2>
+			{#if $groups.length === 0}
+				<Alert color="blue">Loading groups...</Alert>
+			{:else}
+				<div class="grid grid-cols-3 gap-4">
+					{#each $groups as group, index}
+						<div class="rounded border p-3">
+							<h3 class="mb-2 text-sm font-semibold">Group #{index + 1}</h3>
+							{#if group.participants.length === 0}
+								<p class="text-xs text-gray-500">No participants</p>
+							{:else}
+								<ul class="space-y-1">
+									{#each group.participants as participant}
+										<li class="flex items-center justify-between text-sm">
+											{#await getUser(participant)}
+												<span class="text-xs">Loading...</span>
+											{:then userData}
+												<span class="text-xs">{userData.displayName}</span>
+											{:catch}
+												<span class="text-xs">Unknown user</span>
+											{/await}
+										</li>
+									{/each}
+								</ul>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
 		<!-- Task Section -->
-		<div class="rounded-lg border p-6">
+		<div class="col-span-4 rounded-lg border p-6">
 			<h2 class="mb-4 text-xl font-semibold">Main Task</h2>
 			<p class="text-gray-700">{$session?.task}</p>
 
@@ -181,7 +213,7 @@
 		</div>
 
 		<!-- Resources Section -->
-		<div class="rounded-lg border p-6 md:col-span-2">
+		<div class="col-span-4 rounded-lg border p-6">
 			<h2 class="mb-4 text-xl font-semibold">Resources</h2>
 			{#if $session?.resources.length === 0}
 				<p class="text-gray-600">No resources available</p>
@@ -191,40 +223,6 @@
 						<div class="rounded-lg border p-4">
 							<h3 class="font-medium">{resource.name}</h3>
 							<p class="mt-2 text-gray-700">{resource.content}</p>
-						</div>
-					{/each}
-				</div>
-			{/if}
-		</div>
-
-		<!-- New Participant Status Dashboard Section -->
-		<div class="container mx-auto max-w-4xl px-4 py-8">
-			<h2 class="mb-4 text-3xl font-bold">Participant Status Dashboard</h2>
-			{#if $groups.length === 0}
-				<Alert color="blue">Loading groups...</Alert>
-			{:else}
-				<div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-					{#each $groups as group, index}
-						<div class="group mb-8">
-							<h3 class="mb-4 text-2xl font-semibold">Group #{index + 1}</h3>
-							{#if group.participants.length === 0}
-								<Alert color="blue">No participants in this group.</Alert>
-							{:else}
-								<ul class="space-y-4">
-									{#each group.participants as participant}
-										<li class="flex items-center justify-between border-b py-2">
-											{#await getUser(participant)}
-												<span class="text-lg">載入中...</span>
-											{:then userData}
-												<span class="text-lg">{userData.displayName}</span>
-											{:catch}
-												<span class="text-lg">未知使用者</span>
-											{/await}
-											<!-- <span class="status-indicator {`status-${participant.status}`}"></span> -->
-										</li>
-									{/each}
-								</ul>
-							{/if}
 						</div>
 					{/each}
 				</div>
