@@ -17,6 +17,16 @@ export const DOCS_CONTEXT_SYSTEM_PROMPT = `
 參考文件：
 {resources}`;
 
+export const SUBTASKS_COMPLETED_PROMPT = `
+請根據對話學生的對話紀錄，確認學生是否已經完成以下次要目標，並回傳一個Boolean陣列，對應以下的每個次要目標是否已經完成。
+
+對話紀錄：
+{chatHistory}
+
+次要目標：
+{subtasks}
+`;
+
 export const CHAT_SUMMARY_PROMPT = `
 請總結以下對話，重點關注學生的觀點、想法和結論：
 
