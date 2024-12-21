@@ -52,7 +52,8 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 					content: response.message,
 					audio: audio
 				}
-			]
+			],
+			subtaskCompleted: response.subtask_completed
 		});
 
 		return json({ success: true, message: response.message });
