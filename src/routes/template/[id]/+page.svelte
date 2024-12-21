@@ -207,7 +207,6 @@
 			</div>
 
 			<div class="border-t pt-6">
-				<h2 class="mb-4 text-xl font-semibold">Resources</h2>
 				{#key $template}
 					{#if $template}
 						<ResourceList template={$template} />
@@ -215,14 +214,14 @@
 				{/key}
 			</div>
 
-			<div class="flex justify-end gap-4 pt-6">
+			<div class="flex justify-end gap-4 border-t pt-6">
 				<Button color="alternative" href="/dashboard">
 					<X class="mr-2 h-4 w-4" />
-					Back
+					Back to Dashboard
 				</Button>
 				<Button color="red" on:click={() => (showDeleteModal = true)}>
 					<Trash2 class="mr-2 h-4 w-4" />
-					Delete
+					Delete this Template
 				</Button>
 				<Button type="submit" color="primary">
 					<Save class="mr-2 h-4 w-4" />
