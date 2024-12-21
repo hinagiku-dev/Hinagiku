@@ -5,14 +5,14 @@ import { pdf2Text } from '../src/lib/server/pdf';
 dotenv.config();
 
 const help_message = `
-Usage: tsx <script> [options] <pdf_filepath>
+Usage: pnpm pdf <pdf_filepath> [options]
 
 Options:
-    --help, -h       Show this help message
-    <pdf_filepath> Path to the pdf file to be converted to text
+	<pdf_filepath> Path to the pdf file to be converted to text    
+	--help, -h     Show this help message
 
 Example:
-    tsx script.ts file.pdf
+    pnpm pdf file.pdf
 `;
 
 main();
