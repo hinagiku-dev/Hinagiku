@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Imports
 	import { Button, Input, Textarea, Alert, Spinner } from 'flowbite-svelte';
-	import { Trash2, ChevronDown, ChevronUp } from 'lucide-svelte';
+	import { Trash2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import type { Template } from '$lib/schema/template';
 	import { notifications } from '$lib/stores/notifications';
@@ -199,7 +199,20 @@
 			<div class="rounded-lg border p-4">
 				<div class="flex items-start justify-between">
 					<div class="flex-1">
-						<h3 class="font-semibold">{resource.name}</h3>
+						<div class="flex items-center gap-2">
+							<h3 class="font-semibold">{resource.name}</h3>
+							{#if resource.type === 'file' && resource.ref}
+								<a
+									href={resource.ref}
+									download
+									target="_blank"
+									class="inline-flex items-center text-blue-600 hover:text-blue-800"
+									title="Open file"
+								>
+									<ExternalLink class="h-4 w-4" />
+								</a>
+							{/if}
+						</div>
 						<div class="relative">
 							<p
 								class="mt-1 overflow-y-auto whitespace-pre-wrap break-words text-sm text-gray-600 transition-[max-height] duration-300 ease-in-out"

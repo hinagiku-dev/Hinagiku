@@ -46,6 +46,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		const name = formData.get('name') as string;
 		let content = formData.get('content') as string | File;
 		const type = formData.get('type') as 'text' | 'file';
+		let ref: string | null = null;
 		console.log(`Form processing took ${Date.now() - formProcessingStart}ms`);
 
 		// Handle file upload
@@ -61,7 +62,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			}
 
 			const uploadStart = Date.now();
-			await upload_object(Buffer.from(buffer), 'application/pdf');
+			ref = (await upload_object(Buffer.from(buffer), 'application/pdf')) as string;
 			console.log(`File upload took ${Date.now() - uploadStart}ms`);
 			content = text;
 		}
@@ -73,7 +74,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			name,
 			content: content as string,
 			createdAt: Timestamp.now(),
-			ref: null,
+			ref,
 			metadata: {}
 		};
 
