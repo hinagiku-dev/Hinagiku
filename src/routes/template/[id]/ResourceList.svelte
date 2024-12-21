@@ -3,7 +3,6 @@
 	import { Trash2 } from 'lucide-svelte';
 	import type { Template } from '$lib/schema/template';
 	import { page } from '$app/stores';
-	// import { pdf2Text } from '$lib/server/pdf';
 
 	export let template: Template;
 	let resources = template.resources;
@@ -17,23 +16,32 @@
 	let error = '';
 	let success = '';
 
+	// variables for drag and drop file upload handling
 	let isDragging = false;
 	let fileInput: HTMLInputElement | null = null;
 
+	// constants for resource limits, text resource name and content length
 	const sourceMaxNum = 10;
-	const nameMaxLength = 100;
-	const contentMaxLength = 1000;
+	const nameMaxLength = 30;
+	const contentMaxLength = 100;
 
-	// add text resource
-	async function addTextResource() {
+	// temp file to store file resource
+	let tempFile: File | null = null;
+
+	// add resource (text or file resource)
+	async function addResource() {
 		error = '';
 		success = '';
 
 		try {
+			const formData = new FormData();
+			formData.append('name', newResource.name);
+			formData.append('content', tempFile ? tempFile : newResource.content);
+			formData.append('type', newResource.type);
+
 			const res = await fetch(`/api/template/${$page.params.id}/resource`, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(newResource)
+				body: formData
 			});
 
 			if (!res.ok) {
@@ -43,44 +51,11 @@
 			}
 
 			newResource = { name: '', content: '', type: 'text' };
+			tempFile = null;
 			success = 'Text Resource added successfully';
 		} catch (e) {
 			console.error('Error adding text resource:', e);
 			error = 'Failed to add text resource';
-		}
-	}
-
-	// add file resource
-	async function addFileResource(file: File) {
-		error = '';
-		success = '';
-
-		try {
-			const fileName = file.name;
-
-			// const dataBuffer = await file.arrayBuffer();
-			// const file_content = await pdf2Text(dataBuffer);
-
-			newResource['name'] = fileName;
-			newResource['content'] = 'file_content';
-
-			const res = await fetch(`/api/template/${$page.params.id}/resource`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(newResource)
-			});
-
-			if (!res.ok) {
-				const data = await res.json();
-				error = data.error || 'Failed to add file resource';
-				return;
-			}
-
-			newResource = { name: '', content: '', type: 'text' };
-			success = 'File Resource added successfully';
-		} catch (e) {
-			console.error('Error adding file resource:', e);
-			error = 'Failed to add file resource';
 		}
 	}
 
@@ -104,25 +79,32 @@
 		}
 	}
 
-	// file change event handler for addFileResource function
+	// handle file to add in newResource object
+	async function processFileResource(file: File) {
+		newResource['name'] = file.name;
+		newResource['content'] = file.size + ' bytes';
+		addResource();
+	}
+
+	// file change event handler
 	async function handleFileChange(e: Event) {
 		const input = e.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
-			await addFileResource(input.files[0]);
+			await processFileResource(input.files[0]);
 		}
 	}
 
-	// drop event handler for addFileResource function
+	// drop event handler
 	async function handleDrop(e: DragEvent) {
 		e.preventDefault();
 		isDragging = false;
 
 		if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-			await addFileResource(e.dataTransfer.files[0]);
+			await processFileResource(e.dataTransfer.files[0]);
 		}
 	}
 
-	// open file selector for addFileResource function
+	// open file selector
 	function openFileSelector() {
 		fileInput?.click();
 	}
@@ -151,11 +133,14 @@
 		error = '';
 		success = '';
 	}
+
+	// handle text resource name input event
 	function handleNameInput(e: Event) {
 		const input = e.target as HTMLInputElement;
 		newResource.name = input.value.slice(0, nameMaxLength);
 	}
 
+	// handle text resource content input event
 	function handleContentInput(e: Event) {
 		const input = e.target as HTMLTextAreaElement;
 		newResource.content = input.value.slice(0, contentMaxLength);
@@ -229,11 +214,11 @@
 				{/if}
 				<input type="file" class="hidden" bind:this={fileInput} on:change={handleFileChange} />
 			</div>
-			<Button color="alternative" class="mt-4" on:click={resetForm}>Back</Button>
+			<Button color="alternative" on:click={resetForm}>Back</Button>
 
 			<!-- text state with text input area -->
 		{:else if uploadMode === 'text'}
-			<form on:submit|preventDefault={addTextResource} class="space-y-4">
+			<form on:submit|preventDefault={addResource} class="space-y-4">
 				<div>
 					<label for="name" class="mb-2 block">Name</label>
 					<Input
