@@ -15,6 +15,7 @@
 	import { getUser } from '$lib/utils/getUser';
 	import type { Conversation } from '$lib/schema/conversation';
 	import { getUserProgress } from '$lib/utils/getUserProgress';
+	import { Modal } from 'flowbite-svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	type GroupWithId = Group & { id: string };
@@ -26,6 +27,15 @@
 		completedTasks: boolean[];
 	};
 	let participantProgress = $state(new Map<string, ParticipantProgress>());
+	let showChatHistory = $state(false);
+	let selectedParticipant = $state<{
+		displayName: string;
+		history: Array<{
+			role: string;
+			content: string;
+			audio?: string | null;
+		}>;
+	} | null>(null);
 
 	onMount(async () => {
 		try {
@@ -153,6 +163,31 @@
 			show: false
 		}
 	});
+
+	async function handleParticipantClick(groupId: string, participant: string) {
+		try {
+			const conversationsRef = collection(
+				db,
+				`sessions/${$page.params.id}/groups/${groupId}/conversations`
+			);
+			const snapshot = await getDocs(conversationsRef);
+			const conversations = snapshot.docs
+				.map((doc) => doc.data() as Conversation)
+				.filter((conv) => conv.userId === participant);
+
+			if (conversations.length > 0) {
+				const userData = await getUser(participant);
+				selectedParticipant = {
+					displayName: userData.displayName,
+					history: conversations[0].history
+				};
+				showChatHistory = true;
+			}
+		} catch (error) {
+			console.error('無法加載對話歷史:', error);
+			notifications.error('無法加載對話歷史');
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
@@ -220,14 +255,23 @@
 												</div>
 											{:then progress}
 												<div class="flex items-center gap-2">
-													<span class="min-w-[60px] text-xs">{progress.displayName}</span>
+													<span
+														class="min-w-[60px] cursor-pointer text-xs hover:text-primary-600"
+														onclick={() => handleParticipantClick(group.id, participant)}
+														onkeydown={(e) =>
+															e.key === 'Enter' && handleParticipantClick(group.id, participant)}
+														role="button"
+														tabindex="0"
+													>
+														{progress.displayName}
+													</span>
 													<div class="flex h-2">
 														{#each progress.completedTasks as completed, i}
 															<div
 																class="h-full w-8 border-r border-white first:rounded-l last:rounded-r last:border-r-0 {completed
 																	? 'bg-green-500'
 																	: 'bg-gray-300'}"
-																title="Subtask {i + 1}"
+																title={$session?.subtasks[i] || `Subtask ${i + 1}`}
 															></div>
 														{/each}
 													</div>
@@ -279,4 +323,41 @@
 			{/if}
 		</div>
 	</div>
+
+	{#if showChatHistory && selectedParticipant}
+		<Modal bind:open={showChatHistory} size="xl" autoclose outsideclose class="w-full">
+			<div class="mb-4">
+				<h3 class="text-xl font-semibold">
+					{selectedParticipant.displayName} 的對話歷史
+				</h3>
+			</div>
+			<div class="messages h-[400px] overflow-y-auto rounded-lg border border-gray-200 p-4">
+				{#each selectedParticipant.history as message}
+					<div class="flex py-2 {message.role === 'user' ? 'justify-end' : 'items-start'}">
+						{#if message.role !== 'user'}
+							<img src="/DefaultUser.jpg" alt="AI Profile" class="h-12 w-12 rounded-full" />
+						{/if}
+						<div
+							class="leading-1.5 flex max-w-2xl flex-col rounded-xl border-gray-500 bg-gray-200 p-4 dark:bg-gray-900"
+						>
+							<div>
+								<h2 class="text-lg font-bold {message.role === 'user' ? 'text-right' : ''}">
+									{message.role === 'user' ? selectedParticipant.displayName : 'AI Assistant'}
+								</h2>
+								<p class="text-base text-gray-900">{message.content}</p>
+							</div>
+							{#if message.audio}
+								<audio controls>
+									<source src={message.audio} type="audio/ogg; codecs=opus" />
+								</audio>
+							{/if}
+						</div>
+						{#if message.role === 'user'}
+							<img src="/DefaultUser.jpg" alt="User Profile" class="h-12 w-12 rounded-full" />
+						{/if}
+					</div>
+				{/each}
+			</div>
+		</Modal>
+	{/if}
 </main>
