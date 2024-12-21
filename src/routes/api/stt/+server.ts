@@ -22,7 +22,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ status: 'error', message: 'Invalid Content-Type' }, { status: 400 });
 		}
 
-		const transcription = await transcribe(audio_buffer, env.HUGGINGFACE_TOKEN);
+		const transcription = await transcribe(audio_buffer, env.HUGGINGFACE_TOKEN as string);
 		const url = await upload_object(audio_buffer, 'audio/wav', { transcription });
 		return json({ status: 'success', transcription, url });
 	} catch (error) {
