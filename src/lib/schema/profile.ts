@@ -5,9 +5,9 @@ export const route = (uid: string) => `/profiles/${uid}`;
 
 export const ProfileSchema = z.object({
 	uid: z.string().describe('User ID associated with auth'),
-	displayName: z.string(),
-	title: z.string().nullable(),
-	bio: z.string().nullable(),
+	displayName: z.string().min(1).max(100),
+	title: z.string().min(1).max(100).nullable(),
+	bio: z.string().min(1).max(1000).nullable(),
 	updatedAt: Timestamp,
 	createdAt: Timestamp
 });
