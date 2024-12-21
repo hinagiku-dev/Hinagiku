@@ -7,7 +7,6 @@ export const route = (session: string, group: string, conv: string) =>
 export const ConversationSchema = z.object({
 	userId: z.string(),
 	task: z.string().min(1).max(200),
-	subtaskCompleted: z.array(z.boolean().default(false)),
 	subtasks: z.array(z.string().min(1).max(200)).max(10),
 	resources: z.array(ResourceSchema).max(10),
 	history: z.array(
