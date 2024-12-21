@@ -11,6 +11,8 @@
 			WithVoice: false
 		}
 	]);
+	// This is the massage that show on the screen
+
 	let inputText = $state('');
 
 	let audioFile = $state<string | null>(null);
