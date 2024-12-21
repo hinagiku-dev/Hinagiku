@@ -5,8 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 const CLOUDFLARE_ACCOUNT_ID = env.CLOUDFLARE_ACCOUNT_ID;
 const CLOUDFLARE_R2_BUCKET = env.CLOUDFLARE_R2_BUCKET;
-const CLOUDFLARE_R2_PUBLUC_URL = env.CLOUDFLARE_R2_PUBLUC_URL;
-if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_R2_BUCKET) {
+const CLOUDFLARE_R2_PUBLIC_URL = env.CLOUDFLARE_R2_PUBLIC_URL;
+if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_R2_BUCKET || !CLOUDFLARE_R2_PUBLIC_URL) {
 	throw new Error('Cloudflare R2 bucket and account ID are required');
 }
 
@@ -58,6 +58,7 @@ export async function upload_object(
 	});
 	await client.send(command);
 
-	const url = `https://${CLOUDFLARE_R2_PUBLUC_URL}/${key}`;
+	const url = `${CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
+	console.log(`Uploaded object to ${url}`);
 	return url;
 }
