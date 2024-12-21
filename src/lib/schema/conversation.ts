@@ -16,6 +16,7 @@ export const ConversationSchema = z.object({
 			audio: z.string().nullable() // to find the raw file
 		})
 	),
+	subtaskCompleted: z.array(z.boolean().default(false)),
 	summary: z.string().nullable(),
 	keyPoints: z.array(z.string()).nullable()
 });
