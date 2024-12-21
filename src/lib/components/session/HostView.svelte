@@ -9,15 +9,23 @@
 	import { Alert } from 'flowbite-svelte';
 	import type { Group } from '$lib/schema/group';
 	import { onMount } from 'svelte';
-	import { collection, getDocs } from 'firebase/firestore';
+	import { collection, getDocs, onSnapshot } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { writable } from 'svelte/store';
 	import { getUser } from '$lib/utils/getUser';
+	import type { Conversation } from '$lib/schema/conversation';
+	import { getUserProgress } from '$lib/utils/getUserProgress';
 
 	let { session }: { session: Readable<Session> } = $props();
 	type GroupWithId = Group & { id: string };
 	let groups = writable<GroupWithId[]>([]);
 	let participantNames = $state(new Map<string, string>());
+	type ParticipantProgress = {
+		displayName: string;
+		progress: number;
+		completedTasks: boolean[];
+	};
+	let participantProgress = $state(new Map<string, ParticipantProgress>());
 
 	onMount(async () => {
 		try {
@@ -37,6 +45,34 @@
 						console.error(`無法獲取使用者 ${participant} 的資料:`, error);
 						participantNames.set(participant, '未知使用者');
 					}
+				}
+			}
+
+			for (const group of groupsData) {
+				for (const participant of group.participants) {
+					const conversationsRef = collection(
+						db,
+						`sessions/${$page.params.id}/groups/${group.id}/conversations`
+					);
+					onSnapshot(conversationsRef, async (snapshot) => {
+						const conversations = snapshot.docs
+							.map((doc) => doc.data() as Conversation)
+							.filter((conv) => conv.userId === participant);
+
+						if (conversations.length > 0) {
+							const conv = conversations[0];
+							const userData = await getUser(participant);
+							const totalTasks = conv.subtasks.length;
+							const completedCount = conv.subtaskCompleted.filter(Boolean).length;
+							const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+
+							participantProgress.set(participant, {
+								displayName: userData.displayName,
+								progress,
+								completedTasks: conv.subtaskCompleted
+							});
+						}
+					});
 				}
 			}
 		} catch (error) {
@@ -169,21 +205,35 @@
 				<Alert color="blue">Loading groups...</Alert>
 			{:else}
 				<div class="grid grid-cols-3 gap-4">
-					{#each $groups as group, index}
+					{#each [...$groups].sort((a, b) => a.number - b.number) as group}
 						<div class="rounded border p-3">
-							<h3 class="mb-2 text-sm font-semibold">Group #{index + 1}</h3>
+							<h3 class="mb-2 text-sm font-semibold">Group #{group.number}</h3>
 							{#if group.participants.length === 0}
 								<p class="text-xs text-gray-500">No participants</p>
 							{:else}
-								<ul class="space-y-1">
+								<ul class="space-y-2">
 									{#each group.participants as participant}
-										<li class="flex items-center justify-between text-sm">
-											{#await getUser(participant)}
-												<span class="text-xs">Loading...</span>
-											{:then userData}
-												<span class="text-xs">{userData.displayName}</span>
+										<li class="space-y-1">
+											{#await getUserProgress($page.params.id, group.id, participant)}
+												<div class="flex items-center justify-between text-sm">
+													<span class="text-xs">Loading...</span>
+												</div>
+											{:then progress}
+												<div class="flex items-center gap-2">
+													<span class="min-w-[60px] text-xs">{progress.displayName}</span>
+													<div class="flex h-2">
+														{#each progress.completedTasks as completed, i}
+															<div
+																class="h-full w-8 border-r border-white first:rounded-l last:rounded-r last:border-r-0 {completed
+																	? 'bg-green-500'
+																	: 'bg-gray-300'}"
+																title="Subtask {i + 1}"
+															></div>
+														{/each}
+													</div>
+												</div>
 											{:catch}
-												<span class="text-xs">Unknown user</span>
+												<div class="text-xs text-red-500">Error loading progress</div>
 											{/await}
 										</li>
 									{/each}
