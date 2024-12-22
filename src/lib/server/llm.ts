@@ -18,20 +18,24 @@ const openai = new OpenAI({
 });
 
 async function isHarmfulContent(content: string): Promise<boolean> {
+	console.log('Checking content for harmful content:', { contentLength: content.length });
 	const moderation = await openai.moderations.create({
 		model: 'omni-moderation-latest',
 		input: content
 	});
-
+	console.log('Moderation result:', moderation.results[0]);
 	return moderation.results[0].flagged;
 }
 
 export async function checkFileContent(
 	filePath: string
 ): Promise<{ success: boolean; message: string; error?: string }> {
+	console.log('Checking file content:', { filePath });
 	try {
 		const content = await fs.readFile(filePath, 'utf-8');
+		console.log('File content read successfully:', { contentLength: content.length });
 		if (await isHarmfulContentFile(content)) {
+			console.warn('Harmful content detected in file');
 			return {
 				success: false,
 				message: '',
@@ -61,12 +65,25 @@ export async function isHarmfulContentFile(message: string) {
 	return moderation.results[0].flagged;
 }
 
-async function requestChatLLM(system_prompt: string, history: LLMChatMessage[], temperature = 0.7) {
+export async function requestChatLLM(
+	system_prompt: string,
+	history: LLMChatMessage[],
+	temperature = 0.7
+) {
+	console.log('Requesting chat LLM:', {
+		systemPromptLength: system_prompt.length,
+		historyLength: history.length,
+		temperature
+	});
 	try {
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',
 			messages: [{ role: 'system', content: system_prompt }, ...history],
 			temperature: temperature
+		});
+		console.log('Chat LLM response received:', {
+			responseLength: response.choices[0].message.content?.length,
+			usage: response.usage
 		});
 
 		const result = response.choices[0].message.content;
@@ -86,35 +103,31 @@ async function requestChatLLM(system_prompt: string, history: LLMChatMessage[], 
 		};
 	}
 }
-async function requestZodLLM(
+async function requestZodLLM<T extends Record<string, unknown>>(
 	system_prompt: string,
-	zod_scheme: z.ZodSchema<unknown>,
+	zod_scheme: z.ZodSchema<T>,
 	temperature = 0.7
 ) {
-	try {
-		const response = await openai.beta.chat.completions.parse({
-			model: 'gpt-4o-mini',
-			messages: [{ role: 'user', content: system_prompt }],
-			temperature: temperature,
-			response_format: zodResponseFormat(zod_scheme, 'response')
-		});
+	const response = await openai.beta.chat.completions.parse({
+		model: 'gpt-4o-mini',
+		messages: [{ role: 'user', content: system_prompt }],
+		temperature: temperature,
+		response_format: zodResponseFormat(zod_scheme, 'response')
+	});
+	console.log('Received response from LLM', {
+		response,
+		response_format: zodResponseFormat(zod_scheme, 'response')
+	});
 
-		const result = response.choices[0].message.parsed;
-		if (!result) {
-			throw new Error('Failed to parse response');
-		}
-
-		return {
-			success: true,
-			message: result
-		};
-	} catch (error) {
-		return {
-			success: false,
-			message: '',
-			error: error
-		};
+	const result = response.choices[0].message.parsed;
+	if (!result) {
+		throw new Error('Failed to parse response');
 	}
+
+	return {
+		success: true,
+		message: result
+	};
 }
 
 export async function chatWithLLMByDocs(
@@ -127,6 +140,12 @@ export async function chatWithLLMByDocs(
 	}[],
 	temperature = 0.7
 ): Promise<{ success: boolean; message: string; subtask_completed: boolean[]; error?: string }> {
+	console.log('Starting chatWithLLMByDocs:', {
+		historyLength: history.length,
+		task,
+		subtasksCount: subtasks.length,
+		resourcesCount: resources.length
+	});
 	try {
 		const last_message_content = history[history.length - 1]?.content;
 		if (last_message_content && (await isHarmfulContent(last_message_content))) {
@@ -149,7 +168,16 @@ export async function chatWithLLMByDocs(
 			.replace('{resources}', formatted_docs);
 
 		const subtask_completed = await checkSubtaskCompleted(history, subtasks);
+		console.log('Formatted system prompt:', {
+			promptLength: system_prompt.length,
+			subtaskCompletedCount: subtask_completed.completed.length
+		});
+
 		const response = await requestChatLLM(system_prompt, history, temperature);
+		console.log('Chat response received:', {
+			success: response.success,
+			messageLength: response.message.length
+		});
 
 		if (!response.success) {
 			throw new Error('Failed to parse response');
@@ -180,7 +208,9 @@ async function checkSubtaskCompleted(
 			'{chatHistory}',
 			formatted_history
 		).replace('{subtasks}', subtasks.join('\n'));
-		const completed_schema = z.array(z.boolean()).length(subtasks.length);
+		const completed_schema = z.object({
+			satisfied: z.object(Object.fromEntries(subtasks.map((subtask) => [subtask, z.boolean()])))
+		});
 
 		const response = await requestZodLLM(system_prompt, completed_schema);
 
@@ -188,10 +218,11 @@ async function checkSubtaskCompleted(
 			throw new Error('Failed to parse response');
 		}
 
-		const completed = response.message as z.infer<typeof completed_schema>;
+		const completed = subtasks.map((subtask) => response.message.satisfied[subtask]);
+
 		return {
 			success: true,
-			completed: completed
+			completed
 		};
 	} catch (error) {
 		console.error('Error in checkSubtaskCompleted:', error);
@@ -209,6 +240,7 @@ export async function summarizeStudentChat(history: LLMChatMessage[]): Promise<{
 	key_points: string[];
 	error?: string;
 }> {
+	console.log('Summarizing student chat:', { historyLength: history.length });
 	try {
 		const formatted_history = history.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
 		const system_prompt = CHAT_SUMMARY_PROMPT.replace('{chatHistory}', formatted_history);
@@ -218,6 +250,10 @@ export async function summarizeStudentChat(history: LLMChatMessage[]): Promise<{
 		});
 
 		const response = await requestZodLLM(system_prompt, summary_student_opinion_schema);
+		console.log('Summary response:', {
+			success: response.success,
+			messageType: typeof response.message
+		});
 
 		if (!response.success) {
 			throw new Error('Failed to parse response');

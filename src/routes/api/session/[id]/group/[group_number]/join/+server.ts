@@ -39,7 +39,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			participants: [...groupData.participants, locals.user.uid]
 		});
 
-		return json({ success: true });
+		return json({ success: true, groupId: groupDoc.id });
 	} catch (e) {
 		console.error('Error joining group:', e);
 		throw error(500, 'Failed to join group');

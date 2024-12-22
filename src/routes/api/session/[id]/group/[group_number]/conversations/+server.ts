@@ -3,13 +3,12 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
-// Endpoint for creating a new conversation in a group by teacher
-// POST /api/session/[id]/group/[group_number]/conversations/+server
-// Request data format
+// 更新請求數據格式
 const requestDataFormat = z.object({
 	task: z.string(),
 	subtasks: z.array(z.string()),
-	resources: z.array(z.string())
+	resources: z.array(z.string()),
+	participant: z.string()
 });
 
 export const POST: RequestHandler = async ({ request, params, locals }) => {
@@ -22,12 +21,12 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			throw error(400, 'Missing parameters');
 		}
 
-		const { task, subtasks, resources } = await getRequestData(request);
+		const { task, subtasks, resources, participant } = await getRequestData(request);
 
 		const conv_id = await createConversation(
 			id,
 			group_number,
-			locals.user.uid,
+			participant,
 			task,
 			subtasks,
 			resources
@@ -46,10 +45,12 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 async function getRequestData(request: Request): Promise<z.infer<typeof requestDataFormat>> {
 	const data = await request.json();
 	const result = requestDataFormat.parse(data);
-	if (!result.task || !result.subtasks || !result.resources) {
+	if (!result.task || !result.subtasks || !result.resources || !result.participant) {
 		throw error(
 			400,
-			`Missing parameters: ${!result.task ? 'task ' : ''}${!result.subtasks ? 'subtasks ' : ''}${!result.resources ? 'resources' : ''}`.trim()
+			`Missing parameters: ${!result.task ? 'task ' : ''}${!result.subtasks ? 'subtasks ' : ''}${
+				!result.resources ? 'resources ' : ''
+			}${!result.participant ? 'participant' : ''}`.trim()
 		);
 	}
 	return result;
