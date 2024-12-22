@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Card, Textarea } from 'flowbite-svelte';
-	import { Mic, Send } from 'lucide-svelte';
+	import { Mic, Send, Square } from 'lucide-svelte'; // Added Square icon import
 	import AudioPlayer from './AudioPlayer.svelte';
 
 	interface Conversation {
@@ -18,7 +18,7 @@
 		readonly = false,
 		autoscroll = true
 	}: {
-		record?: () => Promise<void>;
+		record?: () => Promise<() => Promise<void>>;
 		send?: (text: string) => Promise<void>;
 		conversations: Conversation[];
 		readonly?: boolean;
@@ -27,6 +27,8 @@
 
 	let text = $state('');
 	let operating = $state(false);
+	let recording = $state(false);
+	let stopRecording: (() => Promise<void>) | undefined = $state(undefined);
 	let messagesContainer: HTMLDivElement;
 
 	function scrollToBottom() {
@@ -45,8 +47,18 @@
 
 	async function handleRecord() {
 		if (operating) return;
+		if (recording && stopRecording) {
+			operating = true;
+			await stopRecording();
+			stopRecording = undefined;
+			recording = false;
+			operating = false;
+			return;
+		}
+
 		operating = true;
-		await record?.();
+		recording = true;
+		stopRecording = await record?.();
 		operating = false;
 	}
 
@@ -105,9 +117,18 @@
 					disabled={operating}
 					on:keydown={handleKeydown}
 				/>
-				<Button color="primary" class="gap-2" disabled={operating} on:click={handleRecord}>
-					<Mic class={operating ? 'animate-pulse' : ''} />
-					Record
+				<Button
+					color={recording ? 'red' : 'primary'}
+					class="gap-2"
+					disabled={operating}
+					on:click={handleRecord}
+				>
+					{#if recording}
+						<Square class="animate-pulse" />
+					{:else}
+						<Mic />
+					{/if}
+					{recording ? (operating ? 'Waiting' : 'Stop') : 'Record'}
 				</Button>
 				<Button
 					color="primary"
