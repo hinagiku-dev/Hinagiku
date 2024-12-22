@@ -52,6 +52,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const sessionRef = adminDb.collection('sessions').doc();
 		await sessionRef.set(result.data);
 
+		const code = Math.floor(100000 + Math.random() * 900000);
+		let Codes = adminDb.collection('temp_codes').doc(code.toString());
+		await Codes.set({
+			sessionId: sessionRef.id
+		});
+
+		Codes = adminDb.collection('temp_codes').doc(sessionRef.id);
+		await Codes.set({
+			code: code
+		});
+
 		return json({
 			success: true,
 			sessionId: sessionRef.id

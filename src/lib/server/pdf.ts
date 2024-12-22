@@ -1,14 +1,11 @@
 // import pdf from 'pdf-parse';
-import { LlamaParseReader } from 'llamaindex';
+import { LlamaParse } from './llamaparse';
 
 export async function pdf2Text(fileBuffer: ArrayBuffer, apiKey: string): Promise<string | null> {
 	try {
-		const reader = new LlamaParseReader({
-			resultType: 'markdown',
-			apiKey: apiKey
-		});
-		const documents = await reader.loadDataAsContent(new Uint8Array(fileBuffer));
-		return documents.map((doc) => doc.text).join('\n');
+		const parser = new LlamaParse(apiKey);
+		const result = await parser.parseFile(new Blob([fileBuffer]));
+		return result.markdown;
 	} catch (error) {
 		console.error('Error in pdf2Text', error);
 		return null;

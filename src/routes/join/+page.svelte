@@ -2,6 +2,8 @@
 	import { goto } from '$app/navigation';
 	import QrScanner from '$lib/components/QrScanner.svelte';
 	import { notifications } from '$lib/stores/notifications';
+	import { getDoc, doc } from 'firebase/firestore';
+	import { db } from '$lib/firebase';
 
 	async function handleScan(code: string) {
 		try {
@@ -13,6 +15,28 @@
 			}
 		} catch (e) {
 			notifications.error('Invalid QR code');
+			console.error(e);
+		}
+	}
+
+	let code = $state('');
+
+	async function joinwithcode() {
+		if (code.length != 6 || !/^\d{6}$/.test(code)) {
+			notifications.error('Code must be 6 digits');
+			return;
+		}
+		try {
+			const codeDoc = await getDoc(doc(db, 'temp_codes', code));
+			const sessionid = codeDoc.data()?.sessionId;
+			if (!sessionid) {
+				notifications.error('Invalid session code');
+				return;
+			}
+			const url = new URL(`/session/${sessionid}`, window.location.href);
+			await goto(url);
+		} catch (e) {
+			notifications.error('Invalid session code');
 			console.error(e);
 		}
 	}
@@ -31,5 +55,25 @@
 		</p>
 
 		<QrScanner onScan={handleScan} />
+	</div>
+	<!--Input Code-->
+	<div class="mt-8 flex flex-col gap-4">
+		<p class="text-gray-600">Or please enter the 6-digits code to join.</p>
+		<input
+			type="text"
+			placeholder="Enter code"
+			maxlength="6"
+			pattern="\d{6}"
+			class="w-full rounded-lg border px-6 py-2"
+			bind:value={code}
+			required
+		/>
+		<button
+			type="button"
+			class="w-full rounded-lg border px-6 py-2 hover:bg-gray-50"
+			onclick={joinwithcode}
+		>
+			Join Session
+		</button>
 	</div>
 </main>
