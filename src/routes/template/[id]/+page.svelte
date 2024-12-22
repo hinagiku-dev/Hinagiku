@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Input, Toggle, Textarea, Alert, Modal } from 'flowbite-svelte';
+	import { Button, Input, Toggle, Textarea, Modal } from 'flowbite-svelte';
 	import { Plus, Trash2, Save, X, Play } from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import type { Template } from '$lib/schema/template';
@@ -9,13 +9,12 @@
 	import { db } from '$lib/firebase';
 	import { subscribe } from '$lib/firebase/store';
 	import { goto } from '$app/navigation';
+	import { notifications } from '$lib/stores/notifications';
 
 	let title = '';
 	let task = '';
 	let isPublic = false;
 	let subtasks: string[] = [];
-	let error = '';
-	let success = '';
 	let showDeleteModal = false;
 
 	const templateRef = doc(db, 'templates', $page.params.id);
@@ -38,9 +37,6 @@
 	async function saveTemplate() {
 		if (!template) return;
 
-		error = '';
-		success = '';
-
 		try {
 			const res = await fetch(`/api/template/${$page.params.id}`, {
 				method: 'PATCH',
@@ -55,14 +51,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				error = data.error || 'Failed to save template';
+				notifications.error(data.error || 'Failed to save template');
 				return;
 			}
 
-			success = 'Template saved successfully';
+			notifications.success('Template saved successfully');
 		} catch (e) {
 			console.error('Error saving template:', e);
-			error = 'Failed to save template';
+			notifications.error('Failed to save template');
 		}
 	}
 
@@ -74,6 +70,7 @@
 
 	function removeSubtask(index: number) {
 		subtasks = subtasks.filter((_, i) => i !== index);
+		notifications.info('Subtask removed');
 	}
 
 	async function startSession() {
@@ -88,7 +85,7 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				error = data.error || 'Failed to create session';
+				notifications.error(data.error || 'Failed to create session');
 				return;
 			}
 
@@ -96,14 +93,11 @@
 			await goto(`/session/${data.sessionId}`);
 		} catch (e) {
 			console.error('Error creating session:', e);
-			error = 'Failed to create session';
+			notifications.error('Failed to create session');
 		}
 	}
 
 	async function deleteTemplate() {
-		error = '';
-		success = '';
-
 		try {
 			const res = await fetch(`/api/template/${$page.params.id}`, {
 				method: 'DELETE'
@@ -111,14 +105,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				error = data.error || 'Failed to delete template';
+				notifications.error(data.error || 'Failed to delete template');
 				return;
 			}
 
 			await goto('/dashboard');
 		} catch (e) {
 			console.error('Error deleting template:', e);
-			error = 'Failed to delete template';
+			notifications.error('Failed to delete template');
 		}
 	}
 </script>
@@ -136,18 +130,6 @@
 				Start Session
 			</Button>
 		</div>
-
-		{#if error}
-			<Alert color="red" class="mb-4">
-				{error}
-			</Alert>
-		{/if}
-
-		{#if success}
-			<Alert color="green" class="mb-4">
-				{success}
-			</Alert>
-		{/if}
 
 		<form on:submit|preventDefault={saveTemplate} class="space-y-6">
 			<div>
@@ -232,7 +214,7 @@
 	</div>
 {:else}
 	<div class="container mx-auto px-4 py-8">
-		<Alert color="blue">Loading template...</Alert>
+		<div class="text-center text-gray-500">Loading template...</div>
 	</div>
 {/if}
 
