@@ -61,7 +61,11 @@ export async function isHarmfulContentFile(message: string) {
 	return moderation.results[0].flagged;
 }
 
-async function requestChatLLM(system_prompt: string, history: LLMChatMessage[], temperature = 0.7) {
+export async function requestChatLLM(
+	system_prompt: string,
+	history: LLMChatMessage[],
+	temperature = 0.7
+) {
 	try {
 		const response = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',

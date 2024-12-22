@@ -14,10 +14,10 @@
 	import { writable } from 'svelte/store';
 	import { getUser } from '$lib/utils/getUser';
 	import type { Conversation } from '$lib/schema/conversation';
-	import { getUserProgress } from '$lib/utils/getUserProgress';
 	import { Modal } from 'flowbite-svelte';
 	import Chatroom from '$lib/components/Chatroom.svelte';
 	import { X } from 'lucide-svelte';
+	import { SvelteMap } from 'svelte/reactivity';
 
 	let { session }: { session: Readable<Session> } = $props();
 	type GroupWithId = Group & { id: string };
@@ -28,7 +28,7 @@
 		progress: number;
 		completedTasks: boolean[];
 	};
-	let participantProgress = $state(new Map<string, ParticipantProgress>());
+	let participantProgress = $state(new SvelteMap<string, ParticipantProgress>());
 	let showChatHistory = $state(false);
 	let selectedParticipant = $state<{
 		displayName: string;
@@ -42,9 +42,11 @@
 	} | null>(null);
 
 	onMount(() => {
-		const initializeSession = async () => {
+		const unsubscribes: (() => void)[] = [];
+		const initializeSession = () => {
 			try {
 				const groupsCollection = collection(db, `sessions/${$page.params.id}/groups`);
+				const groupChecked = new Set<string>();
 				const unsubscribe = onSnapshot(groupsCollection, (snapshot) => {
 					const groupsData: GroupWithId[] = snapshot.docs.map(
 						(doc) => ({ id: doc.id, ...doc.data() }) as GroupWithId
@@ -61,9 +63,34 @@
 								participantNames.set(participant, '未知使用者');
 							}
 						}
+
+						if (!groupChecked.has(group.id)) {
+							groupChecked.add(group.id);
+
+							const conversationsRef = collection(
+								db,
+								`sessions/${$page.params.id}/groups/${group.id}/conversations`
+							);
+							const unsubscribe = onSnapshot(conversationsRef, async (snapshot) => {
+								const conversations = snapshot.docs.map((doc) => doc.data() as Conversation);
+								for (const conv of conversations) {
+									const userData = await getUser(conv.userId);
+									const totalTasks = conv.subtasks.length;
+									const completedCount = conv.subtaskCompleted.filter(Boolean).length;
+									const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+
+									participantProgress.set(conv.userId, {
+										displayName: userData.displayName,
+										progress,
+										completedTasks: conv.subtaskCompleted
+									});
+								}
+							});
+							unsubscribes.push(unsubscribe);
+						}
 					});
 				});
-				return unsubscribe;
+				unsubscribes.push(unsubscribe);
 			} catch (error) {
 				console.error('無法加載群組資料:', error);
 			}
@@ -71,47 +98,60 @@
 
 		initializeSession();
 
-		for (const group of $groups) {
-			for (const participant of group.participants) {
-				const conversationsRef = collection(
-					db,
-					`sessions/${$page.params.id}/groups/${group.id}/conversations`
-				);
-				onSnapshot(conversationsRef, async (snapshot) => {
-					const conversations = snapshot.docs
-						.map((doc) => doc.data() as Conversation)
-						.filter((conv) => conv.userId === participant);
-
-					if (conversations.length > 0) {
-						const conv = conversations[0];
-						const userData = await getUser(participant);
-						const totalTasks = conv.subtasks.length;
-						const completedCount = conv.subtaskCompleted.filter(Boolean).length;
-						const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
-
-						participantProgress.set(participant, {
-							displayName: userData.displayName,
-							progress,
-							completedTasks: conv.subtaskCompleted
-						});
-					}
-				});
-			}
-		}
-
 		return () => {
-			initializeSession().then((unsubscribe) => unsubscribe?.());
+			unsubscribes.forEach((unsubscribe) => unsubscribe());
 		};
 	});
 
 	async function handleStartSession() {
-		const response = await fetch(`/api/session/${$page.params.id}/action/start-individual`, {
-			method: 'POST'
-		});
+		try {
+			// 為每個群組的每個參與者創建對話
+			for (const group of $groups) {
+				for (const participant of group.participants) {
+					const response = await fetch(
+						`/api/session/${$page.params.id}/group/${group.id}/conversations`,
+						{
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({
+								task: $session?.task || '',
+								subtasks: $session?.subtasks || [],
+								resources: $session?.resources.map((r) => r.content) || [],
+								participant: participant
+							})
+						}
+					);
 
-		if (!response.ok) {
-			const data = await response.json();
-			console.error('Failed to start session:', data.error);
+					if (!response.ok) {
+						const data = await response.json();
+						notifications.error(
+							data.error || `無法為參與者 ${participantNames.get(participant)} 創建對話`
+						);
+						return;
+					}
+				}
+			}
+
+			// 更新 session 狀態
+			const statusResponse = await fetch(
+				`/api/session/${$page.params.id}/action/start-individual`,
+				{
+					method: 'POST'
+				}
+			);
+
+			if (!statusResponse.ok) {
+				const data = await statusResponse.json();
+				notifications.error(data.error || '無法開始個人階段');
+				return;
+			}
+
+			notifications.success('成功開始個人階段', 3000);
+		} catch (error) {
+			console.error('無法開始個人階段:', error);
+			notifications.error('無法開始個人階段');
 		}
 	}
 
@@ -296,11 +336,7 @@
 								<ul class="space-y-2">
 									{#each group.participants as participant}
 										<li class="space-y-1">
-											{#await getUserProgress($page.params.id, group.id, participant)}
-												<div class="flex items-center justify-between text-sm">
-													<span class="text-xs">Loading...</span>
-												</div>
-											{:then progress}
+											{#if participantProgress.has(participant)}
 												<div class="flex items-center gap-2">
 													<span
 														class="min-w-[60px] cursor-pointer text-xs hover:text-primary-600"
@@ -310,10 +346,10 @@
 														role="button"
 														tabindex="0"
 													>
-														{progress.displayName}
+														{participantProgress.get(participant)?.displayName}
 													</span>
 													<div class="flex h-2">
-														{#each progress.completedTasks as completed, i}
+														{#each participantProgress.get(participant)?.completedTasks || [] as completed, i}
 															<div
 																class="h-full w-8 border-r border-white first:rounded-l last:rounded-r last:border-r-0 {completed
 																	? 'bg-green-500'
@@ -330,9 +366,11 @@
 														<X class="h-4 w-4" />
 													</button>
 												</div>
-											{:catch}
-												<div class="text-xs text-red-500">Error loading progress</div>
-											{/await}
+											{:else}
+												<div class="flex items-center justify-between text-sm">
+													<span class="text-xs">Loading...</span>
+												</div>
+											{/if}
 										</li>
 									{/each}
 								</ul>

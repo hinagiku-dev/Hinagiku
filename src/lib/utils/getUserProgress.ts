@@ -14,36 +14,63 @@ export async function getUserProgress(
 	groupId: string,
 	userId: string
 ): Promise<ParticipantProgress> {
-	console.log(`Fetching progress for user ${userId} in group ${groupId}`);
+	try {
+		console.log(`Fetching progress for user ${userId} in group ${groupId}`);
 
-	const conversationsRef = collection(db, `sessions/${sessionId}/groups/${groupId}/conversations`);
+		const conversationsRef = collection(
+			db,
+			'sessions',
+			sessionId,
+			'groups',
+			groupId,
+			'conversations'
+		);
 
-	const snapshot = await getDocs(conversationsRef);
-	const conversations = snapshot.docs
-		.map((doc) => doc.data() as Conversation)
-		.filter((conv) => conv.userId === userId);
+		const snapshot = await getDocs(conversationsRef);
 
-	if (conversations.length === 0) {
+		if (snapshot.empty) {
+			console.log(`No conversations found for user ${userId}`);
+			const userData = await getUser(userId);
+			return {
+				displayName: userData.displayName,
+				progress: 0,
+				completedTasks: []
+			};
+		}
+
+		const conversations = snapshot.docs
+			.map((doc) => doc.data() as Conversation)
+			.filter((conv) => conv.userId === userId);
+
+		if (conversations.length === 0) {
+			console.log(`No matching conversations found for user ${userId}`);
+			const userData = await getUser(userId);
+			return {
+				displayName: userData.displayName,
+				progress: 0,
+				completedTasks: []
+			};
+		}
+
+		const conv = conversations[0];
 		const userData = await getUser(userId);
-		return {
+
+		const subtaskCompleted = conv.subtaskCompleted || [];
+		const totalTasks = subtaskCompleted.length;
+		const completedCount = subtaskCompleted.filter(Boolean).length;
+		const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+
+		const result = {
 			displayName: userData.displayName,
-			progress: 0,
-			completedTasks: []
+			progress,
+			completedTasks: subtaskCompleted
 		};
+
+		console.log(`Progress result for ${userId}:`, result);
+		return result;
+	} catch (error: unknown) {
+		console.error('Error fetching user progress:', error);
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+		throw new Error(`Failed to fetch progress for user ${userId}: ${errorMessage}`);
 	}
-
-	const conv = conversations[0];
-	const userData = await getUser(userId);
-	const totalTasks = conv.subtaskCompleted.length;
-	const completedCount = conv.subtaskCompleted.filter(Boolean).length;
-	const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
-
-	const result = {
-		displayName: userData.displayName,
-		progress,
-		completedTasks: conv.subtaskCompleted
-	};
-
-	console.log(`Progress result for ${userId}:`, result);
-	return result;
 }

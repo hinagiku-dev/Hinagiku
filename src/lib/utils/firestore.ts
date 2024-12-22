@@ -24,7 +24,8 @@ export async function createConversation(
 		task: task,
 		subtasks: subtasks,
 		resources: resources,
-		history: []
+		history: [],
+		subtaskCompleted: new Array(subtasks.length).fill(false)
 	});
 
 	return conversationRef.id;
