@@ -100,7 +100,7 @@ async function getRequestData(request: Request): Promise<z.infer<typeof requestD
 	const parsed = requestDataFormat.safeParse(data);
 	if (!parsed.success) {
 		console.error('Invalid request data:', parsed.error);
-		throw error(400, 'Invalid request data');
+		throw error(400, `Invalid request data: ${parsed.error}`);
 	}
 	return parsed.data;
 }
