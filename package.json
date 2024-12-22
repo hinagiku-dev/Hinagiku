@@ -25,7 +25,6 @@
 		"@types/debug": "^4.1.12",
 		"@types/eslint": "^9.6.1",
 		"@types/node": "^22.10.2",
-		"@types/pdf-parse": "^1.1.4",
 		"@types/qrcode": "^1.5.5",
 		"@types/rfc2047": "^2.0.3",
 		"autoprefixer": "^10.4.20",
@@ -42,14 +41,15 @@
 		"html5-qrcode": "^2.3.8",
 		"husky": "^9.1.7",
 		"lint-staged": "^15.2.10",
+		"llamaindex": "^0.8.30",
 		"lucide-svelte": "^0.454.0",
 		"mdsvex": "^0.11.2",
 		"openai": "^4.73.0",
+		"postcss": "^8.1.0",
 		"prettier": "^3.3.3",
 		"prettier-plugin-organize-imports": "^4.1.0",
 		"prettier-plugin-svelte": "^3.3.2",
 		"prettier-plugin-tailwindcss": "^0.6.9",
-		"postcss": "^8.1.0",
 		"qrcode": "^1.5.4",
 		"rfc2047": "^4.0.1",
 		"svelte": "^5.2.7",
@@ -68,10 +68,5 @@
 			"eslint --fix"
 		]
 	},
-	"packageManager": "pnpm@9.12.3",
-	"dependencies": {
-		"llamaindex": "^0.8.29",
-		"parse": "^5.3.0",
-		"pdf-parse": "^1.1.1"
-	}
+	"packageManager": "pnpm@9.12.3"
 }
