@@ -15,6 +15,7 @@
 
 	// Props
 	export let template: Template;
+	export let isUploading: boolean = false;
 
 	// State
 	let resources = template.resources;
@@ -23,7 +24,6 @@
 	let isDragging = false;
 	let tempFile: File | null = null;
 	let success = '';
-	let isUploading = false;
 	let expandedResources = new Set<string>();
 	let dragError = false;
 
@@ -238,7 +238,12 @@
 							{/if}
 						</div>
 					</div>
-					<Button color="red" size="sm" on:click={() => deleteResource(resource.id)}>
+					<Button
+						color="red"
+						size="sm"
+						on:click={() => deleteResource(resource.id)}
+						disabled={isUploading}
+					>
 						<Trash2 class="h-4 w-4" />
 					</Button>
 				</div>

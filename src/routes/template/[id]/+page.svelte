@@ -16,6 +16,7 @@
 	let isPublic = false;
 	let subtasks: string[] = [];
 	let showDeleteModal = false;
+	let isUploading = false;
 
 	const templateRef = doc(db, 'templates', $page.params.id);
 	const [template, { unsubscribe }] = subscribe<Template>(templateRef);
@@ -125,7 +126,7 @@
 	<div class="container mx-auto max-w-4xl px-4 py-8">
 		<div class="mb-8 flex items-center justify-between">
 			<h1 class="text-3xl font-bold">Edit Template</h1>
-			<Button color="primary" on:click={startSession}>
+			<Button color="primary" on:click={startSession} disabled={isUploading}>
 				<Play class="mr-2 h-4 w-4" />
 				Start Session
 			</Button>
@@ -191,21 +192,21 @@
 			<div class="border-t pt-6">
 				{#key $template}
 					{#if $template}
-						<ResourceList template={$template} />
+						<ResourceList template={$template} bind:isUploading />
 					{/if}
 				{/key}
 			</div>
 
 			<div class="flex justify-end gap-4 border-t pt-6">
-				<Button color="alternative" href="/dashboard">
+				<Button color="alternative" href="/dashboard" disabled={isUploading}>
 					<X class="mr-2 h-4 w-4" />
 					Back to Dashboard
 				</Button>
-				<Button color="red" on:click={() => (showDeleteModal = true)}>
+				<Button color="red" on:click={() => (showDeleteModal = true)} disabled={isUploading}>
 					<Trash2 class="mr-2 h-4 w-4" />
 					Delete this Template
 				</Button>
-				<Button type="submit" color="primary">
+				<Button type="submit" color="primary" disabled={isUploading}>
 					<Save class="mr-2 h-4 w-4" />
 					Save Changes
 				</Button>
