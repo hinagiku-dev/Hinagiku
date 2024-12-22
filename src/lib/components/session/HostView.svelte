@@ -236,6 +236,12 @@
 		</div>
 
 		<div class="flex items-center gap-4">
+			{#if $session?.status === 'individual'}
+				<div class="flex items-center gap-2">
+					<span class="inline-block h-3 w-3 rounded-full bg-blue-500"></span>
+					<span class="capitalize">Individual Stage</span>
+				</div>
+			{/if}
 			{#if $session && stageButton[$session.status].show}
 				<Button color="primary" on:click={stageButton[$session.status].action}>
 					<Play class="mr-2 h-4 w-4" />
@@ -246,34 +252,36 @@
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-4">
-		<!-- Status Section -->
-		<div class="rounded-lg border p-6">
-			<h2 class="mb-4 text-xl font-semibold">Session Status</h2>
-			<div class="flex items-center gap-2">
-				<span
-					class="inline-block h-3 w-3 rounded-full {$session?.status === 'preparing'
-						? 'bg-yellow-500'
-						: $session?.status === 'individual'
-							? 'bg-blue-500'
+		{#if $session?.status && $session.status !== 'individual'}
+			<div class="rounded-lg border p-6">
+				<h2 class="mb-4 text-xl font-semibold">Session Status</h2>
+				<div class="flex items-center gap-2">
+					<span
+						class="inline-block h-3 w-3 rounded-full {$session?.status === 'preparing'
+							? 'bg-yellow-500'
 							: $session?.status === 'before-group'
 								? 'bg-purple-500'
 								: $session?.status === 'group'
 									? 'bg-green-500'
 									: 'bg-gray-500'}"
-				></span>
-				<span class="capitalize">{$session?.status}</span>
-			</div>
-
-			{#if $session?.status === 'preparing'}
-				<div class="mt-4">
-					<h3 class="mb-2 font-medium">Session QR Code</h3>
-					<QRCode value={`${$page.url.origin}/session/${$page.params.id}`} />
+					></span>
+					<span class="capitalize">{$session?.status}</span>
 				</div>
-			{/if}
-		</div>
 
-		<!-- Participant Status Dashboard Section -->
-		<div class="col-span-3 rounded-lg border p-6">
+				{#if $session?.status === 'preparing'}
+					<div class="mt-4">
+						<h3 class="mb-2 font-medium">Session QR Code</h3>
+						<QRCode value={`${$page.url.origin}/session/${$page.params.id}`} />
+					</div>
+				{/if}
+			</div>
+		{/if}
+
+		<div
+			class="col-span-3 rounded-lg border p-6 {$session?.status === 'individual'
+				? 'md:col-span-4'
+				: ''}"
+		>
 			<h2 class="mb-4 text-xl font-semibold">Groups</h2>
 			{#if $groups.length === 0}
 				<Alert color="blue">Loading groups...</Alert>
