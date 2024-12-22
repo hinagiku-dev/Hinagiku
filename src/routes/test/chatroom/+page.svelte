@@ -51,8 +51,11 @@
 	}
 
 	async function handleRecord() {
+		// 16kHz, frame size 512
 		const vad = await MicVAD.new({
 			model: 'v5',
+			minSpeechFrames: 16, // 0.5s
+			redemptionFrames: 32, // 1s
 			onSpeechEnd: async (audio: Float32Array) => {
 				const result = await sendAudioToSTT(audio);
 				if (result) {

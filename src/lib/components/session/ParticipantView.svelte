@@ -1,31 +1,20 @@
 <script lang="ts">
 	import type { Session } from '$lib/schema/session';
 	import type { Group } from '$lib/schema/group';
+	import type { Conversation } from '$lib/schema/conversation';
 	import type { Readable } from 'svelte/store';
 	import { Button, Input, Label } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { page } from '$app/stores';
 	import { UserPlus, Users } from 'lucide-svelte';
 	import { db } from '$lib/firebase';
-	import { collection, query, where } from 'firebase/firestore';
-	import { subscribeAll } from '$lib/firebase/store';
-	import { onDestroy } from 'svelte';
+	import { collection, query, where, onSnapshot } from 'firebase/firestore';
+	import { onDestroy, onMount } from 'svelte';
 	import { getUser } from '$lib/utils/getUser';
 	import Chatroom from '$lib/components/Chatroom.svelte';
+	import { MicVAD, utils } from '@ricky0123/vad-web';
 
-	let { session, user } = $props<{
-		session: Readable<Session>;
-		// eslint-disable-next-line no-undef
-		user: App.Locals['user'];
-	}>();
-
-	// Group subscription setup
-	const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
-	const q = query(groupsRef, where('participants', 'array-contains', user.uid));
-	const [group, { unsubscribe }] = subscribeAll<Group>(q);
-	onDestroy(unsubscribe);
-
-	interface Conversation {
+	interface ChatroomConversation {
 		name: string;
 		content: string;
 		self?: boolean;
@@ -33,9 +22,78 @@
 		avatar?: string;
 	}
 
+	let { session, user } = $props<{
+		session: Readable<Session>;
+		// eslint-disable-next-line no-undef
+		user: App.Locals['user'];
+	}>();
+
+	let groupDoc = $state<{ data: Group; id: string } | null>(null);
+	let conversationDoc = $state<{ data: Conversation; id: string } | null>(null);
+	let conversationDocUnsubscribe: (() => void) | null = null;
+	onDestroy(() => conversationDocUnsubscribe?.());
+
+	onMount(() => {
+		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
+		const groupDocQuery = query(groupsRef, where('participants', 'array-contains', user.uid));
+
+		const unsbscribe = onSnapshot(groupDocQuery, (snapshot) => {
+			if (snapshot.empty) {
+				return;
+			}
+			groupDoc = {
+				data: snapshot.docs[0].data() as Group,
+				id: snapshot.docs[0].id
+			};
+
+			updateConversationDoc();
+		});
+
+		return unsbscribe;
+	});
+
+	function updateConversationDoc() {
+		if (!groupDoc) {
+			conversationDoc = null;
+			conversationDocUnsubscribe?.();
+			conversationDocUnsubscribe = null;
+			return;
+		}
+		if (conversationDocUnsubscribe) {
+			return;
+		}
+
+		console.log('Updating conversation doc...');
+		const conversationsRef = collection(
+			db,
+			`sessions/${$page.params.id}/groups/${groupDoc.id}/conversations`
+		);
+		const conversationDocQuery = query(conversationsRef, where('userId', '==', user.uid));
+
+		conversationDocUnsubscribe = onSnapshot(conversationDocQuery, (snapshot) => {
+			if (snapshot.empty) {
+				return;
+			}
+			conversationDoc = {
+				data: snapshot.docs[0].data() as Conversation,
+				id: snapshot.docs[0].id
+			};
+		});
+	}
+
 	let groupNumber = $state('');
 	let creating = $state(false);
-	let conversations = $state<Conversation[]>([]);
+	let conversations = $derived.by<ChatroomConversation[]>(() => {
+		if (!conversationDoc) {
+			return [];
+		}
+		return conversationDoc.data.history.map((message) => ({
+			name: message.role === 'user' ? 'You' : 'AI Assistant',
+			self: message.role === 'user',
+			content: message.content,
+			audio: message.audio || undefined
+		}));
+	});
 
 	async function handleCreateGroup() {
 		try {
@@ -81,6 +139,117 @@
 			notifications.error('Failed to join group');
 		}
 	}
+
+	async function sendAudioToSTT(audio: Float32Array) {
+		const wavBuffer: ArrayBuffer = utils.encodeWAV(audio);
+		const file = new File([wavBuffer], 'audio.wav', { type: 'audio/wav' });
+		const formData = new FormData();
+		formData.append('file', file);
+		console.log('Sending audio to STT...', formData);
+
+		try {
+			const response = await fetch('/api/stt', {
+				method: 'POST',
+				body: formData
+			});
+			console.log('STT response:', response);
+			if (!response.ok) {
+				throw new Error('Failed to transcribe audio');
+			}
+			const data = await response.json();
+			if (data.status === 'success') {
+				return { transcription: data.transcription, url: data.url };
+			}
+			throw new Error(data.message || 'Failed to transcribe audio');
+		} catch (error) {
+			notifications.error('Failed to transcribe audio');
+			console.error(error);
+			return null;
+		}
+	}
+
+	async function handleRecord() {
+		if (!conversationDoc || !groupDoc) {
+			notifications.error('No group or conversation found');
+			return async () => {};
+		}
+
+		const vad = await MicVAD.new({
+			model: 'v5',
+			minSpeechFrames: 16, // 0.5s
+			redemptionFrames: 32, // 1s
+			onSpeechEnd: async (audio: Float32Array) => {
+				if (!conversationDoc || !groupDoc) {
+					notifications.error('No group or conversation found');
+					return;
+				}
+
+				const result = await sendAudioToSTT(audio);
+
+				if (result) {
+					try {
+						const response = await fetch(
+							`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/chat`,
+							{
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json'
+								},
+								body: JSON.stringify({
+									content: result.transcription,
+									audio: result.url
+								})
+							}
+						);
+
+						if (!response.ok) {
+							throw new Error('Failed to send message');
+						}
+					} catch (error) {
+						console.error('Error sending message:', error);
+						notifications.error('Failed to send message');
+					}
+				}
+			}
+		});
+		vad.start();
+
+		return async () => {
+			vad.pause();
+			vad.destroy();
+		};
+	}
+
+	async function handleSend(text: string) {
+		if (!conversationDoc || !groupDoc) {
+			notifications.error('No group or conversation found');
+			return;
+		}
+
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/chat`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						content: text,
+						audio: null
+					})
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('Failed to send message');
+			}
+			notifications.success('Message sent!');
+		} catch (error) {
+			console.error('Error sending message:', error);
+			notifications.error('Failed to send message');
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-2 py-8">
@@ -116,16 +285,16 @@
 			<!-- Group Section -->
 			<div class="rounded-lg border p-6">
 				<h2 class="mb-4 text-xl font-semibold">Group Information</h2>
-				{#if $group?.[0]}
+				{#if groupDoc}
 					<div class="space-y-4">
 						<div class="flex items-center gap-2">
 							<span class="font-medium">Group </span>
-							<span class="text-lg">#{$group[0][1].number}</span>
+							<span class="text-lg">#{groupDoc.data.number}</span>
 						</div>
 						<div>
 							<h3 class="mb-2 font-medium">Members:</h3>
 							<ul class="space-y-2">
-								{#each $group[0][1].participants as participant}
+								{#each groupDoc.data.participants as participant}
 									<li class="flex items-center gap-2">
 										<Users class="h-4 w-4" />
 										<span>
@@ -183,14 +352,14 @@
 			</div>
 		</div>
 
-		<div class="rounded-lg border p-6 md:col-span-3">
+		<div class="max-h-[calc(100vh-12rem)] overflow-y-auto rounded-lg border p-6 md:col-span-3">
 			{#if $session?.status === 'preparing'}
 				<div class="mt-4">
 					<h3 class="mb-2 font-medium">Waiting for session to start...</h3>
 					<p class="text-gray-600">The host will begin the session shortly.</p>
 				</div>
 			{:else if $session?.status === 'individual'}
-				<Chatroom {conversations} />
+				<Chatroom record={handleRecord} send={handleSend} {conversations} />
 			{:else if $session?.status === 'before-group'}
 				<div class="mt-4">
 					<h3 class="mb-2 font-medium">Preparing for Group Discussion</h3>
