@@ -27,10 +27,18 @@ export const DELETE: RequestHandler = async ({ params }) => {
 			throw error(400, '參與者不在此群組中');
 		}
 
-		// 從群組中移除參與者
-		await groupDoc.ref.update({
-			participants: groupData.participants.filter((p: string) => p !== participant)
-		});
+		// 計算移除參與者後的新參與者列表
+		const updatedParticipants = groupData.participants.filter((p: string) => p !== participant);
+
+		if (updatedParticipants.length === 0) {
+			// 如果群組將變成空的，直接刪除整個群組
+			await groupDoc.ref.delete();
+		} else {
+			// 否則只更新參與者列表
+			await groupDoc.ref.update({
+				participants: updatedParticipants
+			});
+		}
 
 		// 刪除參與者的對話記錄
 		const conversationsRef = groupDoc.ref.collection('conversations');
