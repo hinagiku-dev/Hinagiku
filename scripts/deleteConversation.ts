@@ -28,7 +28,7 @@ async function deleteAllConversationsInSession(sessionId: string) {
 			console.log(`群組 ${groupDoc.id} 的所有對話已刪除`);
 		}
 
-		console.log(`Session ${sessionId} ���所有對話刪除成功`);
+		console.log(`Session ${sessionId} 的所有對話刪除成功`);
 	} catch (error) {
 		console.error('刪除對話時發生錯誤:', error);
 	}
