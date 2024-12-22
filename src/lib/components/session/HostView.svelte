@@ -16,6 +16,7 @@
 	import type { Conversation } from '$lib/schema/conversation';
 	import { getUserProgress } from '$lib/utils/getUserProgress';
 	import { Modal } from 'flowbite-svelte';
+	import { X } from 'lucide-svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	type GroupWithId = Group & { id: string };
@@ -37,57 +38,67 @@
 		}>;
 	} | null>(null);
 
-	onMount(async () => {
-		try {
-			const groupsCollection = collection(db, `sessions/${$page.params.id}/groups`);
-			const snapshot = await getDocs(groupsCollection);
-			const groupsData: GroupWithId[] = snapshot.docs.map(
-				(doc) => ({ id: doc.id, ...doc.data() }) as GroupWithId
-			);
-			groups.set(groupsData);
-
-			for (const group of groupsData) {
-				for (const participant of group.participants) {
-					try {
-						const userData = await getUser(participant);
-						participantNames.set(participant, userData.displayName);
-					} catch (error) {
-						console.error(`無法獲取使用者 ${participant} 的資料:`, error);
-						participantNames.set(participant, '未知使用者');
-					}
-				}
-			}
-
-			for (const group of groupsData) {
-				for (const participant of group.participants) {
-					const conversationsRef = collection(
-						db,
-						`sessions/${$page.params.id}/groups/${group.id}/conversations`
+	onMount(() => {
+		const initializeSession = async () => {
+			try {
+				const groupsCollection = collection(db, `sessions/${$page.params.id}/groups`);
+				const unsubscribe = onSnapshot(groupsCollection, (snapshot) => {
+					const groupsData: GroupWithId[] = snapshot.docs.map(
+						(doc) => ({ id: doc.id, ...doc.data() }) as GroupWithId
 					);
-					onSnapshot(conversationsRef, async (snapshot) => {
-						const conversations = snapshot.docs
-							.map((doc) => doc.data() as Conversation)
-							.filter((conv) => conv.userId === participant);
+					groups.set(groupsData);
 
-						if (conversations.length > 0) {
-							const conv = conversations[0];
-							const userData = await getUser(participant);
-							const totalTasks = conv.subtasks.length;
-							const completedCount = conv.subtaskCompleted.filter(Boolean).length;
-							const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
-
-							participantProgress.set(participant, {
-								displayName: userData.displayName,
-								progress,
-								completedTasks: conv.subtaskCompleted
-							});
+					groupsData.forEach(async (group) => {
+						for (const participant of group.participants) {
+							try {
+								const userData = await getUser(participant);
+								participantNames.set(participant, userData.displayName);
+							} catch (error) {
+								console.error(`無法獲取使用者 ${participant} 的資料:`, error);
+								participantNames.set(participant, '未知使用者');
+							}
 						}
 					});
-				}
+				});
+				return unsubscribe;
+			} catch (error) {
+				console.error('無法加載群組資料:', error);
 			}
-		} catch (error) {
-			console.error('無法加載群組資料:', error);
+		};
+
+		initializeSession();
+
+		for (const group of $groups) {
+			for (const participant of group.participants) {
+				const conversationsRef = collection(
+					db,
+					`sessions/${$page.params.id}/groups/${group.id}/conversations`
+				);
+				onSnapshot(conversationsRef, async (snapshot) => {
+					const conversations = snapshot.docs
+						.map((doc) => doc.data() as Conversation)
+						.filter((conv) => conv.userId === participant);
+
+					if (conversations.length > 0) {
+						const conv = conversations[0];
+						const userData = await getUser(participant);
+						const totalTasks = conv.subtasks.length;
+						const completedCount = conv.subtaskCompleted.filter(Boolean).length;
+						const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+
+						participantProgress.set(participant, {
+							displayName: userData.displayName,
+							progress,
+							completedTasks: conv.subtaskCompleted
+						});
+					}
+				});
+			}
 		}
+
+		return () => {
+			initializeSession().then((unsubscribe) => unsubscribe?.());
+		};
 	});
 
 	async function handleStartSession() {
@@ -131,6 +142,26 @@
 		if (!response.ok) {
 			const data = await response.json();
 			console.error('Failed to end group stage:', data.error);
+		}
+	}
+
+	async function handleRemoveParticipant(groupId: string, participant: string) {
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupId}/join/${participant}`,
+				{
+					method: 'DELETE'
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('Failed to remove participant');
+			}
+
+			notifications.success('成功移除參與者', 3000);
+		} catch (error) {
+			console.error('無法移除參與者:', error);
+			notifications.error('無法移除參與者');
 		}
 	}
 
@@ -275,6 +306,13 @@
 															></div>
 														{/each}
 													</div>
+													<button
+														class="ml-auto rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-red-500"
+														onclick={() => handleRemoveParticipant(group.id, participant)}
+														title="移除參與者"
+													>
+														<X class="h-4 w-4" />
+													</button>
 												</div>
 											{:catch}
 												<div class="text-xs text-red-500">Error loading progress</div>
