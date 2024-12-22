@@ -24,7 +24,7 @@ export const ConversationSchema = z.object({
 				.nullable()
 		})
 	),
-	subCompleted: z.array(z.boolean()).nullable(),
+	completed: z.array(z.boolean()).nullable(),
 	summary: z.string().nullable(),
 	keyPoints: z.array(z.string()).nullable()
 });

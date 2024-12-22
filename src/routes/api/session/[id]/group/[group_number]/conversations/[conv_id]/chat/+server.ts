@@ -61,7 +61,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 
 		await conversation_ref.update({
 			history: history,
-			subCompleted: response.completed
+			completed: response.completed
 		});
 
 		return json({ success: true });

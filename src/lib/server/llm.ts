@@ -10,7 +10,7 @@ import {
 	DOCS_CONTEXT_SYSTEM_PROMPT,
 	GROUP_OPINION_SUMMARY_PROMPT,
 	SUBTASKS_COMPLETED_PROMPT,
-	WARMING_DETECTION_PROMPT
+	WARNING_DETECTION_PROMPT
 } from './prompt';
 
 const openai = new OpenAI({
@@ -57,7 +57,7 @@ async function warningDetection(history: LLMChatMessage[]) {
 	const llmMessage = history.length === 1 ? '' : history[history.length - 2].content;
 	const userMessage = history[history.length - 1].content;
 
-	const warning_detection_prompt = WARMING_DETECTION_PROMPT.replace(
+	const warning_detection_prompt = WARNING_DETECTION_PROMPT.replace(
 		'{studentMessage}',
 		userMessage
 	).replace('{llmMessage}', llmMessage);
