@@ -16,6 +16,7 @@
 	import type { Conversation } from '$lib/schema/conversation';
 	import { getUserProgress } from '$lib/utils/getUserProgress';
 	import { Modal } from 'flowbite-svelte';
+	import Chatroom from '$lib/components/Chatroom.svelte';
 	import { X } from 'lucide-svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
@@ -32,9 +33,11 @@
 	let selectedParticipant = $state<{
 		displayName: string;
 		history: Array<{
-			role: string;
+			name: string;
 			content: string;
-			audio?: string | null;
+			self?: boolean;
+			audio?: string;
+			avatar?: string;
 		}>;
 	} | null>(null);
 
@@ -210,7 +213,12 @@
 				const userData = await getUser(participant);
 				selectedParticipant = {
 					displayName: userData.displayName,
-					history: conversations[0].history
+					history: conversations[0].history.map((message) => ({
+						name: message.role === 'user' ? userData.displayName : 'AI Assistant',
+						content: message.content,
+						self: message.role === 'user',
+						audio: message.audio || undefined
+					}))
 				};
 				showChatHistory = true;
 			}
@@ -370,31 +378,7 @@
 				</h3>
 			</div>
 			<div class="messages h-[400px] overflow-y-auto rounded-lg border border-gray-200 p-4">
-				{#each selectedParticipant.history as message}
-					<div class="flex py-2 {message.role === 'user' ? 'justify-end' : 'items-start'}">
-						{#if message.role !== 'user'}
-							<img src="/DefaultUser.jpg" alt="AI Profile" class="h-12 w-12 rounded-full" />
-						{/if}
-						<div
-							class="leading-1.5 flex max-w-2xl flex-col rounded-xl border-gray-500 bg-gray-200 p-4 dark:bg-gray-900"
-						>
-							<div>
-								<h2 class="text-lg font-bold {message.role === 'user' ? 'text-right' : ''}">
-									{message.role === 'user' ? selectedParticipant.displayName : 'AI Assistant'}
-								</h2>
-								<p class="text-base text-gray-900">{message.content}</p>
-							</div>
-							{#if message.audio}
-								<audio controls>
-									<source src={message.audio} type="audio/ogg; codecs=opus" />
-								</audio>
-							{/if}
-						</div>
-						{#if message.role === 'user'}
-							<img src="/DefaultUser.jpg" alt="User Profile" class="h-12 w-12 rounded-full" />
-						{/if}
-					</div>
-				{/each}
+				<Chatroom readonly conversations={selectedParticipant.history} />
 			</div>
 		</Modal>
 	{/if}
