@@ -4,6 +4,20 @@ export interface LLMChatMessage {
 	name?: string;
 }
 
+export interface Warning {
+	moderation: boolean;
+	inappropriate_content: number;
+	stealing_llm_info: number;
+	off_topic: number;
+}
+export interface LLMChatResult {
+	success: boolean;
+	content: string;
+	warning: Warning;
+	completed: boolean[];
+	error?: string;
+}
+
 export interface DBChatMessage {
 	role: 'user' | 'assistant' | 'system';
 	content: string;

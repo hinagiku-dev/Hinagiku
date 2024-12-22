@@ -44,19 +44,27 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			throw error(500, response.error);
 		}
 
+		history.push(
+			{
+				role: 'user',
+				content: content,
+				audio: audio,
+				warning: response.warning
+			},
+			{
+				role: 'assistant',
+				content: response.content,
+				audio: null,
+				warning: null
+			}
+		);
+
 		await conversation_ref.update({
-			history: [
-				...history,
-				{
-					role: 'assistant',
-					content: response.message,
-					audio: audio
-				}
-			],
-			subtaskCompleted: response.subtask_completed
+			history: history,
+			subCompleted: response.completed
 		});
 
-		return json({ success: true, message: response.message });
+		return json({ success: true });
 	} catch (error) {
 		console.error('Error processing request:', error);
 		return json({ status: 'error', message: 'Internal Server Error' }, { status: 500 });

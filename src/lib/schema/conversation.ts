@@ -13,10 +13,18 @@ export const ConversationSchema = z.object({
 		z.object({
 			role: z.enum(['system', 'user', 'assistant']),
 			content: z.string(),
-			audio: z.string().nullable() // to find the raw file
+			audio: z.string().nullable(), // to find the raw file
+			warning: z
+				.object({
+					moderation: z.boolean(), // True if the message was flagged for moderation
+					inappropriate_content: z.number().min(1).max(10),
+					stealing_llm_info: z.number().min(1).max(10),
+					off_topic: z.number().min(1).max(10)
+				})
+				.nullable()
 		})
 	),
-	subtaskCompleted: z.array(z.boolean().default(false)),
+	subCompleted: z.array(z.boolean()).nullable(),
 	summary: z.string().nullable(),
 	keyPoints: z.array(z.string()).nullable()
 });

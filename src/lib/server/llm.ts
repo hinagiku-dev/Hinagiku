@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import type { LLMChatMessage, StudentSpeak } from '$lib/utils/types';
+import type { LLMChatMessage, LLMChatResult, StudentSpeak } from '$lib/utils/types';
 import fs from 'fs/promises';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
@@ -9,7 +9,8 @@ import {
 	CONCEPT_SUMMARY_PROMPT,
 	DOCS_CONTEXT_SYSTEM_PROMPT,
 	GROUP_OPINION_SUMMARY_PROMPT,
-	SUBTASKS_COMPLETED_PROMPT
+	SUBTASKS_COMPLETED_PROMPT,
+	WARMING_DETECTION_PROMPT
 } from './prompt';
 
 const openai = new OpenAI({
@@ -17,21 +18,12 @@ const openai = new OpenAI({
 	baseURL: env.OPENAI_BASE_URL
 });
 
-async function isHarmfulContent(content: string): Promise<boolean> {
-	const moderation = await openai.moderations.create({
-		model: 'omni-moderation-latest',
-		input: content
-	});
-
-	return moderation.results[0].flagged;
-}
-
 export async function checkFileContent(
 	filePath: string
 ): Promise<{ success: boolean; message: string; error?: string }> {
 	try {
 		const content = await fs.readFile(filePath, 'utf-8');
-		if (await isHarmfulContentFile(content)) {
+		if (await moderationDetection(content)) {
 			return {
 				success: false,
 				message: '',
@@ -52,13 +44,50 @@ export async function checkFileContent(
 	}
 }
 
-export async function isHarmfulContentFile(message: string) {
-	const moderation = await openai.moderations.create({
+async function moderationDetection(content: string) {
+	const moderation_result = await openai.moderations.create({
 		model: 'omni-moderation-latest',
-		input: message
+		input: content
 	});
 
-	return moderation.results[0].flagged;
+	return moderation_result.results[0].flagged;
+}
+
+async function warningDetection(history: LLMChatMessage[]) {
+	const llmMessage = history.length === 1 ? '' : history[history.length - 2].content;
+	const userMessage = history[history.length - 1].content;
+
+	const warning_detection_prompt = WARMING_DETECTION_PROMPT.replace(
+		'{studentMessage}',
+		userMessage
+	).replace('{llmMessage}', llmMessage);
+
+	const warning_detection_schema = z.object({
+		inappropriate_content: z.number().min(1).max(10),
+		stealing_llm_info: z.number().min(1).max(10),
+		off_topic: z.number().min(1).max(10)
+	});
+
+	const moderation_result = await moderationDetection(userMessage);
+	const warning_detection_response = await requestZodLLM(
+		warning_detection_prompt,
+		warning_detection_schema
+	);
+
+	if (!warning_detection_response.success) {
+		throw new Error('Failed to parse warning detection response');
+	}
+
+	const warning_detection_result = warning_detection_response.message as z.infer<
+		typeof warning_detection_schema
+	>;
+
+	return {
+		moderation: moderation_result,
+		inappropriate_content: warning_detection_result.inappropriate_content,
+		stealing_llm_info: warning_detection_result.stealing_llm_info,
+		off_topic: warning_detection_result.off_topic
+	};
 }
 
 async function requestChatLLM(system_prompt: string, history: LLMChatMessage[], temperature = 0.7) {
@@ -126,17 +155,8 @@ export async function chatWithLLMByDocs(
 		content: string;
 	}[],
 	temperature = 0.7
-): Promise<{ success: boolean; message: string; subtask_completed: boolean[]; error?: string }> {
+): Promise<LLMChatResult> {
 	try {
-		const last_message_content = history[history.length - 1]?.content;
-		if (last_message_content && (await isHarmfulContent(last_message_content))) {
-			return {
-				success: false,
-				message: '',
-				subtask_completed: [],
-				error: 'Harmful content detected in the last message'
-			};
-		}
 		const formatted_docs = resources
 			.map((doc, index) => {
 				const title = doc.name || `Document ${index + 1}`;
@@ -150,21 +170,29 @@ export async function chatWithLLMByDocs(
 
 		const subtask_completed = await checkSubtaskCompleted(history, subtasks);
 		const response = await requestChatLLM(system_prompt, history, temperature);
+		const warning_detection = await warningDetection(history);
 
 		if (!response.success) {
 			throw new Error('Failed to parse response');
 		}
 		return {
 			success: true,
-			message: response.message,
-			subtask_completed: subtask_completed.completed
+			content: response.message,
+			warning: warning_detection,
+			completed: subtask_completed.completed
 		};
 	} catch (error) {
 		console.error('Error in chatWithLLMByDocs:', error);
 		return {
 			success: false,
-			message: '',
-			subtask_completed: [],
+			content: '',
+			warning: {
+				moderation: false,
+				inappropriate_content: 0,
+				stealing_llm_info: 0,
+				off_topic: 0
+			},
+			completed: [],
 			error: 'Failed to chat with LLM'
 		};
 	}
