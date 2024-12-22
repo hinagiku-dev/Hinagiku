@@ -44,7 +44,7 @@
 
 	onMount(() => {
 		const unsubscribes: (() => void)[] = [];
-		const initializeSession = () => {
+		const initializeSession = async () => {
 			try {
 				const codeCollection = doc(db, 'temp_codes', $page.params.id);
 				const codeDoc = await getDoc(codeCollection);
