@@ -12,6 +12,7 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --ignore-path .gitignore --write .",
 		"lint": "prettier --ignore-path .gitignore --check . && eslint .",
+		"test": "vitest",
 		"stt": "pnpm tsx scripts/speech2text.ts",
 		"pdf": "pnpm tsx scripts/pdf2text.ts",
 		"tsx": "tsx --tsconfig tsconfig.tsx.json"
@@ -20,6 +21,7 @@
 		"@aws-sdk/client-s3": "^3.699.0",
 		"@ricky0123/vad-web": "^0.0.22",
 		"@sveltejs/adapter-auto": "^3.3.1",
+		"@sveltejs/adapter-vercel": "^5.5.2",
 		"@sveltejs/kit": "^2.8.2",
 		"@sveltejs/vite-plugin-svelte": "^4.0.1",
 		"@tailwindcss/typography": "^0.5.15",
@@ -42,7 +44,6 @@
 		"html5-qrcode": "^2.3.8",
 		"husky": "^9.1.7",
 		"lint-staged": "^15.2.10",
-		"llamaindex": "^0.8.30",
 		"lucide-svelte": "^0.454.0",
 		"mdsvex": "^0.11.2",
 		"openai": "^4.73.0",
@@ -61,6 +62,7 @@
 		"uuid": "^11.0.3",
 		"vite": "^5.4.11",
 		"vite-plugin-static-copy": "^2.2.0",
+		"vitest": "^2.1.8",
 		"zod": "^3.23.8"
 	},
 	"lint-staged": {
