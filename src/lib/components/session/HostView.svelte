@@ -9,7 +9,7 @@
 	import { Alert } from 'flowbite-svelte';
 	import type { Group } from '$lib/schema/group';
 	import { onMount } from 'svelte';
-	import { collection, getDocs, onSnapshot } from 'firebase/firestore';
+	import { collection, getDocs, onSnapshot, getDoc, doc } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { writable } from 'svelte/store';
 	import { getUser } from '$lib/utils/getUser';
@@ -37,8 +37,13 @@
 		}>;
 	} | null>(null);
 
+	let code = $state('Code generate error');
+
 	onMount(async () => {
 		try {
+			const codeCollection = doc(db, 'temp_codes', $page.params.id);
+			const codeDoc = await getDoc(codeCollection);
+			code = codeDoc.data()?.code;
 			const groupsCollection = collection(db, `sessions/${$page.params.id}/groups`);
 			const snapshot = await getDocs(groupsCollection);
 			const groupsData: GroupWithId[] = snapshot.docs.map(
@@ -229,6 +234,10 @@
 				<div class="mt-4">
 					<h3 class="mb-2 font-medium">Session QR Code</h3>
 					<QRCode value={`${$page.url.origin}/session/${$page.params.id}`} />
+				</div>
+				<div class="mt-4">
+					<h3 class="mb-2 font-medium">Session Code</h3>
+					<p class="text-blue-700">{code}</p>
 				</div>
 			{/if}
 		</div>
