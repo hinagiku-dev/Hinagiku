@@ -334,7 +334,7 @@
 		>
 			<h2 class="mb-4 text-xl font-semibold">Groups</h2>
 			{#if $groups.length === 0}
-				<Alert color="blue">Loading groups...</Alert>
+				<Alert>Waiting for participants to join groups...</Alert>
 			{:else}
 				<div class="grid grid-cols-3 gap-4">
 					{#each [...$groups].sort((a, b) => a.number - b.number) as group}
@@ -346,18 +346,20 @@
 								<ul class="space-y-2">
 									{#each group.participants as participant}
 										<li class="space-y-1">
-											{#if participantProgress.has(participant)}
-												<div class="flex items-center gap-2">
-													<span
-														class="min-w-[60px] cursor-pointer text-xs hover:text-primary-600"
-														onclick={() => handleParticipantClick(group.id, participant)}
-														onkeydown={(e) =>
-															e.key === 'Enter' && handleParticipantClick(group.id, participant)}
-														role="button"
-														tabindex="0"
-													>
-														{participantProgress.get(participant)?.displayName}
-													</span>
+											<div class="flex items-center gap-2">
+												<span
+													class="min-w-[60px] cursor-pointer text-xs hover:text-primary-600"
+													onclick={() => handleParticipantClick(group.id, participant)}
+													onkeydown={(e) =>
+														e.key === 'Enter' && handleParticipantClick(group.id, participant)}
+													role="button"
+													tabindex="0"
+												>
+													{#await getUser(participant) then userData}
+														{userData.displayName}
+													{/await}
+												</span>
+												{#if participantProgress.has(participant)}
 													<div class="flex h-2">
 														{#each participantProgress.get(participant)?.completedTasks || [] as completed, i}
 															<div
@@ -368,19 +370,15 @@
 															></div>
 														{/each}
 													</div>
-													<button
-														class="ml-auto rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-red-500"
-														onclick={() => handleRemoveParticipant(group.id, participant)}
-														title="移除參與者"
-													>
-														<X class="h-4 w-4" />
-													</button>
-												</div>
-											{:else}
-												<div class="flex items-center justify-between text-sm">
-													<span class="text-xs">Loading...</span>
-												</div>
-											{/if}
+												{/if}
+												<button
+													class="ml-auto rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-red-500"
+													onclick={() => handleRemoveParticipant(group.id, participant)}
+													title="移除參與者"
+												>
+													<X class="h-4 w-4" />
+												</button>
+											</div>
 										</li>
 									{/each}
 								</ul>
