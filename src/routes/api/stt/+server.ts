@@ -11,13 +11,16 @@ export const POST: RequestHandler = async ({ request }) => {
 		const content_type = request.headers.get('content-type');
 		let audio_buffer: Buffer | null = null;
 
+		console.log('Content-Type:', content_type);
 		if (content_type && content_type.includes('multipart/form-data')) {
 			const data = await request.formData();
 			const file = data.get('file') as File;
+			console.log('File:', file);
 			if (!file) {
 				return json({ status: 'error', message: 'No file provided' }, { status: 400 });
 			}
 			audio_buffer = Buffer.from(await file.arrayBuffer());
+			console.log('Audio Buffer:', audio_buffer);
 		} else {
 			return json({ status: 'error', message: 'Invalid Content-Type' }, { status: 400 });
 		}
