@@ -1,5 +1,7 @@
+import { ProfileSchema } from '$lib/schema/profile';
 import { adminDb } from '$lib/server/firebase';
 import { fail, redirect } from '@sveltejs/kit';
+import { FieldValue } from 'firebase-admin/firestore';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -20,10 +22,20 @@ export const actions = {
 
 		const data = await request.formData();
 		const displayName = data.get('displayName')?.toString();
-		const title = data.get('title')?.toString();
-		const bio = data.get('bio')?.toString();
+		const title = data.get('title')?.toString() || null;
+		const bio = data.get('bio')?.toString() || null;
 
-		if (!displayName) {
+		const profile = ProfileSchema.omit({
+			updatedAt: true,
+			createdAt: true
+		}).safeParse({
+			uid: locals.user.uid,
+			displayName,
+			title,
+			bio
+		});
+
+		if (!profile.success) {
 			return fail(400, { missing: true });
 		}
 
@@ -34,11 +46,8 @@ export const actions = {
 				.doc(locals.user.uid)
 				.set(
 					{
-						uid: locals.user.uid,
-						displayName,
-						title: title || null,
-						bio: bio || null,
-						updatedAt: new Date()
+						...profile.data,
+						updatedAt: FieldValue.serverTimestamp()
 					},
 					{ merge: true }
 				);

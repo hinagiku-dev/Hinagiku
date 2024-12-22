@@ -1,5 +1,6 @@
-import { adminAuth } from '$lib/server/firebase';
+import { adminAuth, adminDb } from '$lib/server/firebase';
 import { json } from '@sveltejs/kit';
+import { FieldValue } from 'firebase-admin/firestore';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
@@ -19,9 +20,29 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			maxAge: expiresIn / 1000 // Convert from milliseconds to seconds
 		});
 
+		// Check and create profile if needed
+		const decodedToken = await adminAuth.verifyIdToken(idToken);
+		const uid = decodedToken.uid;
+
+		const profileRef = adminDb.collection('profiles').doc(uid);
+		const profile = await profileRef.get();
+
+		if (!profile.exists) {
+			const user = await adminAuth.getUser(uid);
+			const defaultProfile = {
+				uid,
+				displayName: user.displayName || 'User',
+				email: user.email || '',
+				createdAt: FieldValue.serverTimestamp(),
+				updatedAt: FieldValue.serverTimestamp()
+			};
+
+			await profileRef.set(defaultProfile);
+		}
+
 		return json({ status: 'success' });
 	} catch (error) {
-		console.error('Error creating session:', error);
+		console.error('Error during sign in:', error);
 		return json({ status: 'error', message: 'Unauthorized request' }, { status: 401 });
 	}
 };
