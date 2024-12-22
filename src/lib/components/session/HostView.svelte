@@ -315,11 +315,13 @@
 				{#if $session?.status === 'preparing'}
 					<div class="mt-4">
 						<h3 class="mb-2 font-medium">Session QR Code</h3>
-						<QRCode value={`${$page.url.origin}/session/${$page.params.id}`} />
+						<div class="flex justify-center">
+							<QRCode value={`${$page.url.origin}/session/${$page.params.id}`} />
+						</div>
 					</div>
 					<div class="mt-4">
 						<h3 class="mb-2 font-medium">Session Code</h3>
-						<p class="text-blue-700">{code}</p>
+						<p class="text-center text-5xl font-bold text-orange-600">{code}</p>
 					</div>
 				{/if}
 			</div>
