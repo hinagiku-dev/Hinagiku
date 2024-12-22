@@ -17,6 +17,7 @@
 	import { getUserProgress } from '$lib/utils/getUserProgress';
 	import { Modal } from 'flowbite-svelte';
 	import Chatroom from '$lib/components/Chatroom.svelte';
+	import { X } from 'lucide-svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	type GroupWithId = Group & { id: string };
@@ -40,57 +41,67 @@
 		}>;
 	} | null>(null);
 
-	onMount(async () => {
-		try {
-			const groupsCollection = collection(db, `sessions/${$page.params.id}/groups`);
-			const snapshot = await getDocs(groupsCollection);
-			const groupsData: GroupWithId[] = snapshot.docs.map(
-				(doc) => ({ id: doc.id, ...doc.data() }) as GroupWithId
-			);
-			groups.set(groupsData);
-
-			for (const group of groupsData) {
-				for (const participant of group.participants) {
-					try {
-						const userData = await getUser(participant);
-						participantNames.set(participant, userData.displayName);
-					} catch (error) {
-						console.error(`無法獲取使用者 ${participant} 的資料:`, error);
-						participantNames.set(participant, '未知使用者');
-					}
-				}
-			}
-
-			for (const group of groupsData) {
-				for (const participant of group.participants) {
-					const conversationsRef = collection(
-						db,
-						`sessions/${$page.params.id}/groups/${group.id}/conversations`
+	onMount(() => {
+		const initializeSession = async () => {
+			try {
+				const groupsCollection = collection(db, `sessions/${$page.params.id}/groups`);
+				const unsubscribe = onSnapshot(groupsCollection, (snapshot) => {
+					const groupsData: GroupWithId[] = snapshot.docs.map(
+						(doc) => ({ id: doc.id, ...doc.data() }) as GroupWithId
 					);
-					onSnapshot(conversationsRef, async (snapshot) => {
-						const conversations = snapshot.docs
-							.map((doc) => doc.data() as Conversation)
-							.filter((conv) => conv.userId === participant);
+					groups.set(groupsData);
 
-						if (conversations.length > 0) {
-							const conv = conversations[0];
-							const userData = await getUser(participant);
-							const totalTasks = conv.subtasks.length;
-							const completedCount = conv.subtaskCompleted.filter(Boolean).length;
-							const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
-
-							participantProgress.set(participant, {
-								displayName: userData.displayName,
-								progress,
-								completedTasks: conv.subtaskCompleted
-							});
+					groupsData.forEach(async (group) => {
+						for (const participant of group.participants) {
+							try {
+								const userData = await getUser(participant);
+								participantNames.set(participant, userData.displayName);
+							} catch (error) {
+								console.error(`無法獲取使用者 ${participant} 的資料:`, error);
+								participantNames.set(participant, '未知使用者');
+							}
 						}
 					});
-				}
+				});
+				return unsubscribe;
+			} catch (error) {
+				console.error('無法加載群組資料:', error);
 			}
-		} catch (error) {
-			console.error('無法加載群組資料:', error);
+		};
+
+		initializeSession();
+
+		for (const group of $groups) {
+			for (const participant of group.participants) {
+				const conversationsRef = collection(
+					db,
+					`sessions/${$page.params.id}/groups/${group.id}/conversations`
+				);
+				onSnapshot(conversationsRef, async (snapshot) => {
+					const conversations = snapshot.docs
+						.map((doc) => doc.data() as Conversation)
+						.filter((conv) => conv.userId === participant);
+
+					if (conversations.length > 0) {
+						const conv = conversations[0];
+						const userData = await getUser(participant);
+						const totalTasks = conv.subtasks.length;
+						const completedCount = conv.subtaskCompleted.filter(Boolean).length;
+						const progress = totalTasks > 0 ? (completedCount / totalTasks) * 100 : 0;
+
+						participantProgress.set(participant, {
+							displayName: userData.displayName,
+							progress,
+							completedTasks: conv.subtaskCompleted
+						});
+					}
+				});
+			}
 		}
+
+		return () => {
+			initializeSession().then((unsubscribe) => unsubscribe?.());
+		};
 	});
 
 	async function handleStartSession() {
@@ -134,6 +145,26 @@
 		if (!response.ok) {
 			const data = await response.json();
 			console.error('Failed to end group stage:', data.error);
+		}
+	}
+
+	async function handleRemoveParticipant(groupId: string, participant: string) {
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupId}/join/${participant}`,
+				{
+					method: 'DELETE'
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('Failed to remove participant');
+			}
+
+			notifications.success('成功移除參與者', 3000);
+		} catch (error) {
+			console.error('無法移除參與者:', error);
+			notifications.error('無法移除參與者');
 		}
 	}
 
@@ -205,6 +236,12 @@
 		</div>
 
 		<div class="flex items-center gap-4">
+			{#if $session?.status === 'individual'}
+				<div class="flex items-center gap-2">
+					<span class="inline-block h-3 w-3 rounded-full bg-blue-500"></span>
+					<span class="capitalize">Individual Stage</span>
+				</div>
+			{/if}
 			{#if $session && stageButton[$session.status].show}
 				<Button color="primary" on:click={stageButton[$session.status].action}>
 					<Play class="mr-2 h-4 w-4" />
@@ -215,34 +252,36 @@
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-4">
-		<!-- Status Section -->
-		<div class="rounded-lg border p-6">
-			<h2 class="mb-4 text-xl font-semibold">Session Status</h2>
-			<div class="flex items-center gap-2">
-				<span
-					class="inline-block h-3 w-3 rounded-full {$session?.status === 'preparing'
-						? 'bg-yellow-500'
-						: $session?.status === 'individual'
-							? 'bg-blue-500'
+		{#if $session?.status && $session.status !== 'individual'}
+			<div class="rounded-lg border p-6">
+				<h2 class="mb-4 text-xl font-semibold">Session Status</h2>
+				<div class="flex items-center gap-2">
+					<span
+						class="inline-block h-3 w-3 rounded-full {$session?.status === 'preparing'
+							? 'bg-yellow-500'
 							: $session?.status === 'before-group'
 								? 'bg-purple-500'
 								: $session?.status === 'group'
 									? 'bg-green-500'
 									: 'bg-gray-500'}"
-				></span>
-				<span class="capitalize">{$session?.status}</span>
-			</div>
-
-			{#if $session?.status === 'preparing'}
-				<div class="mt-4">
-					<h3 class="mb-2 font-medium">Session QR Code</h3>
-					<QRCode value={`${$page.url.origin}/session/${$page.params.id}`} />
+					></span>
+					<span class="capitalize">{$session?.status}</span>
 				</div>
-			{/if}
-		</div>
 
-		<!-- Participant Status Dashboard Section -->
-		<div class="col-span-3 rounded-lg border p-6">
+				{#if $session?.status === 'preparing'}
+					<div class="mt-4">
+						<h3 class="mb-2 font-medium">Session QR Code</h3>
+						<QRCode value={`${$page.url.origin}/session/${$page.params.id}`} />
+					</div>
+				{/if}
+			</div>
+		{/if}
+
+		<div
+			class="col-span-3 rounded-lg border p-6 {$session?.status === 'individual'
+				? 'md:col-span-4'
+				: ''}"
+		>
 			<h2 class="mb-4 text-xl font-semibold">Groups</h2>
 			{#if $groups.length === 0}
 				<Alert color="blue">Loading groups...</Alert>
@@ -283,6 +322,13 @@
 															></div>
 														{/each}
 													</div>
+													<button
+														class="ml-auto rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-red-500"
+														onclick={() => handleRemoveParticipant(group.id, participant)}
+														title="移除參與者"
+													>
+														<X class="h-4 w-4" />
+													</button>
 												</div>
 											{:catch}
 												<div class="text-xs text-red-500">Error loading progress</div>

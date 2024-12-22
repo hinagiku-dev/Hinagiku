@@ -10,6 +10,7 @@
 	import { collection, query, where } from 'firebase/firestore';
 	import { subscribeAll } from '$lib/firebase/store';
 	import { onDestroy } from 'svelte';
+	import { getUser } from '$lib/utils/getUser';
 
 	let { session, user } = $props<{
 		session: Readable<Session>;
@@ -115,7 +116,19 @@
 							{#each $group[0][1].participants as participant}
 								<li class="flex items-center gap-2">
 									<Users class="h-4 w-4" />
-									<span>{participant === user.uid ? 'You' : participant}</span>
+									<span>
+										{#if participant === user.uid}
+											You
+										{:else}
+											{#await getUser(participant)}
+												<span class="text-gray-500">載入中...</span>
+											{:then profile}
+												{profile.displayName}
+											{:catch}
+												<span class="text-red-500">未知使用者</span>
+											{/await}
+										{/if}
+									</span>
 								</li>
 							{/each}
 						</ul>
