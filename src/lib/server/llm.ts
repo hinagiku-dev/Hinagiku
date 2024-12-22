@@ -68,11 +68,10 @@ async function warningDetection(history: LLMChatMessage[]) {
 		off_topic: z.number().min(1).max(10)
 	});
 
-	const moderation_result = await moderationDetection(userMessage);
-	const warning_detection_response = await requestZodLLM(
-		warning_detection_prompt,
-		warning_detection_schema
-	);
+	const [moderation_result, warning_detection_response] = await Promise.all([
+		moderationDetection(userMessage),
+		requestZodLLM(warning_detection_prompt, warning_detection_schema)
+	]);
 
 	if (!warning_detection_response.success) {
 		throw new Error('Failed to parse warning detection response');
@@ -168,9 +167,11 @@ export async function chatWithLLMByDocs(
 			.replace('{subtasks}', subtasks.join('\n'))
 			.replace('{resources}', formatted_docs);
 
-		const subtask_completed = await checkSubtaskCompleted(history, subtasks);
-		const response = await requestChatLLM(system_prompt, history, temperature);
-		const warning_detection = await warningDetection(history);
+		const [subtask_completed, response, warning_detection] = await Promise.all([
+			checkSubtaskCompleted(history, subtasks),
+			requestChatLLM(system_prompt, history, temperature),
+			warningDetection(history)
+		]);
 
 		if (!response.success) {
 			throw new Error('Failed to parse response');
