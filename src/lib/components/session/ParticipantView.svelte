@@ -13,6 +13,7 @@
 	import { getUser } from '$lib/utils/getUser';
 	import Chatroom from '$lib/components/Chatroom.svelte';
 	import { MicVAD, utils } from '@ricky0123/vad-web';
+	import Summary from '$lib/components/session/Summary.svelte';
 
 	interface ChatroomConversation {
 		name: string;
@@ -278,6 +279,10 @@
 					</div>
 					{#if $session?.status === 'individual'}
 						<p class="text-gray-600">Work on your individual contributions.</p>
+					{:else if $session?.status === 'before-group'}
+						<p class="text-gray-600">Get ready to collaborate with your group.</p>
+					{:else if $session?.status === 'group'}
+						<p class="text-gray-600">Collaborate with your group members.</p>
 					{/if}
 				</div>
 			</div>
@@ -361,9 +366,10 @@
 			{:else if $session?.status === 'individual'}
 				<Chatroom record={handleRecord} send={handleSend} {conversations} />
 			{:else if $session?.status === 'before-group'}
-				<div class="mt-4">
-					<h3 class="mb-2 font-medium">Preparing for Group Discussion</h3>
-					<p class="text-gray-600">Get ready to collaborate with your group.</p>
+				<div class="space-y-6">
+					{#if groupDoc && conversationDoc}
+						<Summary group={groupDoc} conversation={conversationDoc} />
+					{/if}
 				</div>
 			{:else if $session?.status === 'group'}
 				<div class="mt-4">

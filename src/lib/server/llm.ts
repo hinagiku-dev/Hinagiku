@@ -286,11 +286,34 @@ export async function summarizeConcepts(
 	error?: string;
 }> {
 	try {
+		if (!Array.isArray(student_opinion) || student_opinion.length === 0) {
+			return {
+				success: false,
+				similar_view_points: [],
+				different_view_points: [],
+				students_summary: '',
+				error: 'no student opinion'
+			};
+		}
+
 		const formatted_opinions = student_opinion
 			.map((opinion) => {
-				return `${opinion.summary}\nKey points: ${opinion.keyPoints.join(',')}`;
+				const keyPoints = Array.isArray(opinion.keyPoints) ? opinion.keyPoints : [];
+				return `${opinion.summary || ''}\nKey points: ${keyPoints.join(',')}`;
 			})
+			.filter(Boolean)
 			.join('\n{separator}\n');
+
+		if (!formatted_opinions) {
+			return {
+				success: false,
+				similar_view_points: [],
+				different_view_points: [],
+				students_summary: '',
+				error: 'format student opinion error'
+			};
+		}
+
 		const system_prompt = CONCEPT_SUMMARY_PROMPT.replace('{studentOpinions}', formatted_opinions);
 		const summary_student_concept_schema = z.object({
 			similar_view_points: z.array(z.string()),
