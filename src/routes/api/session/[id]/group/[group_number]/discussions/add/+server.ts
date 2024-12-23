@@ -9,7 +9,8 @@ import { z } from 'zod';
 // Request data format
 const requestDataFormat = z.object({
 	content: z.string(),
-	speaker: z.string()
+	speaker: z.string(),
+	audio: z.string().nullable()
 });
 
 export const POST: RequestHandler = async ({ request, params, locals }) => {
@@ -30,16 +31,18 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 				throw error(400, 'Discussions not found');
 			}
 			const { discussions } = data;
-			const { content, speaker } = await getRequestData(request);
+			const { content, speaker, audio } = await getRequestData(request);
 			t.update(group_ref, {
 				discussions: [
 					...discussions,
 					{
 						id: locals.user?.uid,
 						content: content,
-						speaker: speaker
+						speaker: speaker,
+						audio: audio
 					}
-				]
+				],
+				updatedAt: new Date()
 			});
 		});
 

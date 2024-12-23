@@ -60,7 +60,18 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		await groupRef.update({
 			similar_view_points: similar_view_points,
 			different_view_points: different_view_points,
-			students_summary: students_summary
+			students_summary: students_summary,
+			discussions: [
+				{
+					content:
+						`**📝 討論總結：**\n\n${students_summary}\n\n` +
+						`**🤝 相似觀點：**\n\n${similar_view_points.map((point) => `• ${point}\n`).join('\n')}\n\n` +
+						`**💭 不同觀點：**\n\n${different_view_points.map((point) => `• ${point}\n`).join('\n')}\n\n` +
+						`\n\n**以上是大家各自想法的統整，請你們根據這些資料進行討論吧！**`,
+					id: '摘要小幫手',
+					speaker: '摘要小幫手'
+				}
+			]
 		});
 
 		return new Response(JSON.stringify({ success: true }), { status: 200 });

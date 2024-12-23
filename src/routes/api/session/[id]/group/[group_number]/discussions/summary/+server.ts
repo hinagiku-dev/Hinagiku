@@ -21,6 +21,11 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 		const group_ref = getGroupRef(id, group_number);
 		const { discussions } = await getGroupData(group_ref);
+
+		group_ref.update({
+			status: 'summarize'
+		});
+
 		const student_opinions = discussion2StudentSpeak(discussions);
 
 		const response = await summarizeGroupOpinions(student_opinions);
@@ -29,7 +34,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		}
 
 		group_ref.update({
-			group_summary: response.summary
+			summary: response.summary,
+			keywords: response.keywords
 		});
 
 		return json({ success: true }, { status: 200 });
@@ -43,7 +49,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 // PUT /api/session/[id]/group/[group_number]/discussions/summary/+server
 // Request data format
 const requestDataFormat = z.object({
-	updated_summary: z.string()
+	updated_summary: z.string(),
+	keywords: z.array(z.string())
 });
 
 export const PUT: RequestHandler = async ({ request, params, locals }) => {
@@ -57,10 +64,12 @@ export const PUT: RequestHandler = async ({ request, params, locals }) => {
 			return json({ error: 'Missing parameters' }, { status: 400 });
 		}
 
-		const { updated_summary } = await getRequestData(request);
+		const { updated_summary, keywords } = await getRequestData(request);
 		const group_ref = getGroupRef(id, group_number);
+		console.log('Updating group summary...', updated_summary, keywords);
 		group_ref.update({
-			group_summary: updated_summary
+			summary: updated_summary,
+			keywords: keywords
 		});
 
 		return json({ success: true }, { status: 200 });
