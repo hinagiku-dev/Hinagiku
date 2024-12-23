@@ -9,7 +9,7 @@
 	import { Alert } from 'flowbite-svelte';
 	import type { Group } from '$lib/schema/group';
 	import { onMount } from 'svelte';
-	import { collection, getDocs, onSnapshot, getDoc, doc } from 'firebase/firestore';
+	import { collection, getDocs, onSnapshot, getDoc, doc, Timestamp } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { writable } from 'svelte/store';
 	import { getUser } from '$lib/utils/getUser';
@@ -20,7 +20,7 @@
 	import ChatHistory from './ChatHistory.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
-	let code = $state('Code generate error');
+	let code = $state('');
 	type GroupWithId = Group & { id: string };
 	let groups = writable<GroupWithId[]>([]);
 	let participantNames = $state(new Map<string, string>());
@@ -47,9 +47,6 @@
 		const unsubscribes: (() => void)[] = [];
 		const initializeSession = async () => {
 			try {
-				const codeCollection = doc(db, 'temp_codes', $page.params.id);
-				const codeDoc = await getDoc(codeCollection);
-				code = codeDoc.data()?.code;
 				const groupsCollection = collection(db, `sessions/${$page.params.id}/groups`);
 				const groupChecked = new Set<string>();
 				const unsubscribe = onSnapshot(groupsCollection, (snapshot) => {
@@ -107,6 +104,33 @@
 			unsubscribes.forEach((unsubscribe) => unsubscribe());
 		};
 	});
+
+	async function getCode() {
+		const codeCollection = doc(db, 'temp_codes', $page.params.id);
+		const codeDoc = await getDoc(codeCollection);
+		console.log(codeDoc.data()?.code);
+		if (
+			!codeDoc.exists() ||
+			codeDoc.data()?.createTime.toMillis() - Timestamp.now().toMillis() > 3600000
+		) {
+			console.log('Generate new code');
+			const response = await fetch(`/api/session/${$page.params.id}/action/generate-code`, {
+				method: 'POST'
+			});
+
+			if (!response.ok) {
+				const data = await response.json();
+				notifications.error(data.error || '無法生成代碼');
+				return;
+			}
+
+			const data = await response.json();
+			code = data.code;
+		} else {
+			console.log('Use existing code');
+			code = codeDoc.data()?.code;
+		}
+	}
 
 	async function handleStartSession() {
 		try {
@@ -327,7 +351,11 @@
 					</div>
 					<div class="mt-4">
 						<h3 class="mb-2 font-medium">Session Code</h3>
-						<p class="text-center text-5xl font-bold text-orange-600">{code}</p>
+						{#if code === ''}
+							<Button color="primary" on:click={getCode}>Generate Code</Button>
+						{:else}
+							<p class="text-center text-5xl font-bold text-orange-600">{code}</p>
+						{/if}
 					</div>
 				{/if}
 			</div>
