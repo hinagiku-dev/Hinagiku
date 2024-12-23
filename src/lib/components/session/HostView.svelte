@@ -111,22 +111,23 @@
 	async function handleStartSession() {
 		try {
 			// 為每個群組的個參與者創建對話
-			for (const group of $groups) {
-				const response = await fetch(
-					`/api/session/${$page.params.id}/group/${group.id}/conversations`,
-					{
+			const responses = await Promise.all(
+				$groups.map((group) =>
+					fetch(`/api/session/${$page.params.id}/group/${group.id}/conversations`, {
 						method: 'GET',
 						headers: {
 							'Content-Type': 'application/json'
 						}
-					}
-				);
+					})
+				)
+			);
 
-				if (!response.ok) {
-					const data = await response.json();
-					notifications.error(data.error || `無法為群組 ${group.number} 的參與者創建對話`);
-					return;
-				}
+			// 檢查是否有任何請求失敗
+			const failedResponse = responses.find((response) => !response.ok);
+			if (failedResponse) {
+				const data = await failedResponse.json();
+				notifications.error(data.error || '無法為部分群組的參與者創建對話');
+				return;
 			}
 
 			// 更新 session 狀態
