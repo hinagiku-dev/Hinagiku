@@ -26,6 +26,43 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		const action = params.action;
 		const now = Timestamp.now();
 
+		if (action === 'generate-code') {
+			let Codes;
+			let code;
+			let tryCount = 0;
+			while (tryCount < 20) {
+				code = Math.floor(100000 + Math.random() * 900000);
+				Codes = adminDb.collection('temp_codes').doc(code.toString());
+				const codeExists = await Codes.get();
+				if (!codeExists.exists) {
+					break;
+				}
+				if (
+					codeExists.data() &&
+					now.toMillis() - codeExists.data()!.createTime.toMillis() > 3600000
+				) {
+					break;
+				}
+				tryCount++;
+			}
+			if (tryCount < 20) {
+				if (Codes) {
+					await Codes.set({
+						sessionId: sessionRef.id,
+						createTime: now
+					});
+					Codes = adminDb.collection('temp_codes').doc(sessionRef.id);
+					await Codes.set({
+						code: code,
+						createTime: now
+					});
+				}
+				return json({ code: code?.toString() });
+			} else {
+				return json({ error: 'Failed to generate code. Please retry.' }, { status: 500 });
+			}
+		}
+
 		// Define valid stage transitions
 		const validTransitions = {
 			'start-individual': {
