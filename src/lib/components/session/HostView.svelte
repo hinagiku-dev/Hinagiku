@@ -14,10 +14,10 @@
 	import { writable } from 'svelte/store';
 	import { getUser } from '$lib/utils/getUser';
 	import type { Conversation } from '$lib/schema/conversation';
-	import { Modal } from 'flowbite-svelte';
-	import Chatroom from '$lib/components/Chatroom.svelte';
 	import { X } from 'lucide-svelte';
 	import { SvelteMap } from 'svelte/reactivity';
+	import { renderMarkdown } from '$lib/utils/renderMarkdown';
+	import ChatHistory from './ChatHistory.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('Code generate error');
@@ -41,6 +41,7 @@
 			avatar?: string;
 		}>;
 	} | null>(null);
+	let selectedConversation = $state<{ data: Conversation; id: string } | null>(null);
 
 	onMount(() => {
 		const unsubscribes: (() => void)[] = [];
@@ -109,7 +110,7 @@
 
 	async function handleStartSession() {
 		try {
-			// 為每個群組的每個參與者創建對話
+			// 為每個群組的個參與者創建對話
 			for (const group of $groups) {
 				const response = await fetch(
 					`/api/session/${$page.params.id}/group/${group.id}/conversations`,
@@ -245,6 +246,10 @@
 
 			if (conversations.length > 0) {
 				const userData = await getUser(participant);
+				const conversation = {
+					data: conversations[0],
+					id: snapshot.docs[0].id
+				};
 				selectedParticipant = {
 					displayName: userData.displayName,
 					history: conversations[0].history.map((message) => ({
@@ -255,6 +260,7 @@
 					}))
 				};
 				showChatHistory = true;
+				selectedConversation = conversation;
 			}
 		} catch (error) {
 			console.error('無法加載對話歷史:', error);
@@ -406,7 +412,14 @@
 					{#each $session?.resources as resource}
 						<div class="rounded-lg border p-4">
 							<h3 class="font-medium">{resource.name}</h3>
-							<p class="mt-2 text-gray-700">{resource.content}</p>
+							<p class="prose prose-hina mt-2 text-gray-700">
+								{#await renderMarkdown(resource.content)}
+									Loading ...
+								{:then content}
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									{@html content}
+								{/await}
+							</p>
 						</div>
 					{/each}
 				</div>
@@ -414,16 +427,11 @@
 		</div>
 	</div>
 
-	{#if showChatHistory && selectedParticipant}
-		<Modal bind:open={showChatHistory} size="xl" autoclose outsideclose class="w-full">
-			<div class="mb-4">
-				<h3 class="text-xl font-semibold">
-					{selectedParticipant.displayName} 的對話歷史
-				</h3>
-			</div>
-			<div class="messages h-[400px] overflow-y-auto rounded-lg border border-gray-200 p-4">
-				<Chatroom readonly conversations={selectedParticipant.history} />
-			</div>
-		</Modal>
+	{#if showChatHistory && selectedParticipant && selectedConversation}
+		<ChatHistory
+			bind:open={showChatHistory}
+			participant={selectedParticipant}
+			conversation={selectedConversation}
+		/>
 	{/if}
 </main>

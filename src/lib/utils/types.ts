@@ -20,3 +20,8 @@ export interface StudentSpeak {
 	role: string;
 	content: string;
 }
+
+export interface SummaryData {
+	summary: string;
+	keyPoints: string[];
+}

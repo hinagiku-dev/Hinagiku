@@ -2,6 +2,7 @@
 	import { Button, Card, Textarea } from 'flowbite-svelte';
 	import { Mic, Send, Square } from 'lucide-svelte'; // Added Square icon import
 	import AudioPlayer from './AudioPlayer.svelte';
+	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 
 	interface Conversation {
 		name: string;
@@ -96,7 +97,14 @@
 				{/if}
 				<Card class="w-fit max-w-[80%] {conv.self ? 'bg-primary-50' : ''}">
 					<div class="-my-2">
-						<p class="text-gray-600">{conv.content}</p>
+						<p class="prose prose-hina text-gray-600">
+							{#await renderMarkdown(conv.content)}
+								Loading ...
+							{:then content}
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+								{@html content}
+							{/await}
+						</p>
 						{#if conv.audio}
 							<AudioPlayer src={conv.audio} />
 						{/if}

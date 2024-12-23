@@ -43,9 +43,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		const conversations_ref = getConversationsRef(id, group_number);
 		const conversations = await getConversationsData(conversations_ref);
 
-		if (!isAllSummarized(conversations)) {
+		if (!(await isAllSummarized(conversations))) {
 			return new Response(JSON.stringify({ success: true }), { status: 200 });
 		}
+		console.log('all summarized');
 
 		const { similar_view_points, different_view_points, students_summary } =
 			await summarizeConcepts(

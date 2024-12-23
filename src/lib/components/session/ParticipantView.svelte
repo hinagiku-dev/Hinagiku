@@ -13,6 +13,7 @@
 	import { getUser } from '$lib/utils/getUser';
 	import Chatroom from '$lib/components/Chatroom.svelte';
 	import { MicVAD, utils } from '@ricky0123/vad-web';
+	import Summary from '$lib/components/session/Summary.svelte';
 
 	interface ChatroomConversation {
 		name: string;
@@ -78,6 +79,10 @@
 				data: snapshot.docs[0].data() as Conversation,
 				id: snapshot.docs[0].id
 			};
+
+			if ($session?.status === 'before-group' && !conversationDoc.data.summary) {
+				fetchSummary();
+			}
 		});
 	}
 
@@ -250,6 +255,34 @@
 			notifications.error('Failed to send message');
 		}
 	}
+
+	let loadingSummary = $state(false);
+
+	async function fetchSummary() {
+		if (!groupDoc || !conversationDoc) {
+			notifications.error('無法獲取總結：找不到群組或對話');
+			return;
+		}
+
+		loadingSummary = true;
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/summary`
+			);
+
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || '無法獲取總結');
+			}
+
+			notifications.success('成功獲取總結');
+		} catch (error) {
+			console.error('獲取總結時出錯:', error);
+			notifications.error('無法獲取總結');
+		} finally {
+			loadingSummary = false;
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-2 py-8">
@@ -278,6 +311,10 @@
 					</div>
 					{#if $session?.status === 'individual'}
 						<p class="text-gray-600">Work on your individual contributions.</p>
+					{:else if $session?.status === 'before-group'}
+						<p class="text-gray-600">Get ready to collaborate with your group.</p>
+					{:else if $session?.status === 'group'}
+						<p class="text-gray-600">Collaborate with your group members.</p>
 					{/if}
 				</div>
 			</div>
@@ -361,9 +398,14 @@
 			{:else if $session?.status === 'individual'}
 				<Chatroom record={handleRecord} send={handleSend} {conversations} />
 			{:else if $session?.status === 'before-group'}
-				<div class="mt-4">
-					<h3 class="mb-2 font-medium">Preparing for Group Discussion</h3>
-					<p class="text-gray-600">Get ready to collaborate with your group.</p>
+				<div class="space-y-6">
+					{#if groupDoc && conversationDoc}
+						<Summary
+							conversation={conversationDoc}
+							loading={loadingSummary}
+							onRefresh={fetchSummary}
+						/>
+					{/if}
 				</div>
 			{:else if $session?.status === 'group'}
 				<div class="mt-4">

@@ -14,14 +14,19 @@ export async function createConversation(
 	history: LLMChatMessage[],
 	resources: { name: string; content: string }[]
 ) {
-	const conversationRef = adminDb
+	const conversationsRef = adminDb
 		.collection('sessions')
 		.doc(id)
 		.collection('groups')
 		.doc(group_number)
-		.collection('conversations')
-		.doc();
+		.collection('conversations');
 
+	const existingConversations = await conversationsRef.get();
+	if (!existingConversations.empty) {
+		return existingConversations.docs[0].id;
+	}
+
+	const conversationRef = conversationsRef.doc();
 	await conversationRef.set({
 		userId: userId,
 		task: task,
