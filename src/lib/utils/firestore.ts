@@ -50,7 +50,7 @@ export async function getConversationRef(id: string, group_number: string, conv_
 
 export function getConversationsRef(id: string, group_number: string) {
 	return adminDb
-		.collection('session')
+		.collection('sessions')
 		.doc(id)
 		.collection('groups')
 		.doc(group_number)
