@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import type { Resource } from '$lib/schema/resource';
 import type { LLMChatMessage, StudentSpeak } from '$lib/utils/types';
 import fs from 'fs/promises';
 import { OpenAI } from 'openai';
@@ -134,10 +135,7 @@ export async function chatWithLLMByDocs(
 	history: LLMChatMessage[],
 	task: string,
 	subtasks: string[],
-	resources: {
-		name: string;
-		content: string;
-	}[],
+	resources: Resource[],
 	temperature = 0.7
 ): Promise<{ success: boolean; message: string; subtask_completed: boolean[]; error?: string }> {
 	console.log('Starting chatWithLLMByDocs:', {
