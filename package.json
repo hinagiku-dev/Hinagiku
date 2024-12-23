@@ -19,6 +19,10 @@
 	},
 	"devDependencies": {
 		"@aws-sdk/client-s3": "^3.699.0",
+		"@ffmpeg/ffmpeg": "^0.12.10",
+		"@ffmpeg/util": "^0.12.1",
+		"@genkit-ai/googleai": "^0.9.12",
+		"@hinagiku/ffmpeg-core": "0.12.6-pcm-mpeg-only",
 		"@ricky0123/vad-web": "^0.0.22",
 		"@sveltejs/adapter-auto": "^3.3.1",
 		"@sveltejs/adapter-vercel": "^5.5.2",
@@ -41,6 +45,7 @@
 		"firebase-admin": "^12.7.0",
 		"flowbite": "^2.5.2",
 		"flowbite-svelte": "^0.47.3",
+		"genkit": "^0.9.12",
 		"globals": "^15.12.0",
 		"html5-qrcode": "^2.3.8",
 		"husky": "^9.1.7",
