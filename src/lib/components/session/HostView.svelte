@@ -105,30 +105,37 @@
 		};
 	});
 
+	async function genCode() {
+		const response = await fetch(`/api/session/${$page.params.id}/action/generate-code`, {
+			method: 'POST'
+		});
+
+		if (!response.ok) {
+			const data = await response.json();
+			notifications.error(data.error || '無法生成代碼');
+			return '';
+		}
+
+		const data = await response.json();
+		return data.code.toString();
+	}
+
 	async function getCode() {
 		const codeCollection = doc(db, 'temp_codes', $page.params.id);
 		const codeDoc = await getDoc(codeCollection);
-		console.log(codeDoc.data()?.code);
 		if (
 			!codeDoc.exists() ||
-			codeDoc.data()?.createTime.toMillis() - Timestamp.now().toMillis() > 3600000
+			Timestamp.now().toMillis() - codeDoc.data()?.createTime.toMillis() > 3600000
 		) {
-			console.log('Generate new code');
-			const response = await fetch(`/api/session/${$page.params.id}/action/generate-code`, {
-				method: 'POST'
-			});
-
-			if (!response.ok) {
-				const data = await response.json();
-				notifications.error(data.error || '無法生成代碼');
-				return;
-			}
-
-			const data = await response.json();
-			code = data.code;
+			code = await genCode();
 		} else {
-			console.log('Use existing code');
-			code = codeDoc.data()?.code;
+			const checkValid = doc(db, 'temp_codes', codeDoc.data()?.code.toString());
+			const checkDoc = await getDoc(checkValid);
+			if (!checkDoc.exists() || checkDoc.data()?.sessionId !== $page.params.id) {
+				code = await genCode();
+			} else {
+				code = codeDoc.data()?.code;
+			}
 		}
 	}
 
@@ -352,7 +359,7 @@
 					<div class="mt-4">
 						<h3 class="mb-2 font-medium">Session Code</h3>
 						{#if code === ''}
-							<Button color="primary" on:click={getCode}>Generate Code</Button>
+							<Button color="primary" on:click={getCode}>Show Code</Button>
 						{:else}
 							<p class="text-center text-5xl font-bold text-orange-600">{code}</p>
 						{/if}

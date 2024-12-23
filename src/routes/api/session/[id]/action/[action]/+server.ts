@@ -37,27 +37,29 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 				if (!codeExists.exists) {
 					break;
 				}
-				if (codeExists.data() && codeExists.data()!.Time - now.toMillis() > 60000) {
+				if (
+					codeExists.data() &&
+					now.toMillis() - codeExists.data()!.createTime.toMillis() > 3600000
+				) {
 					break;
 				}
 				tryCount++;
 			}
-			if (Codes) {
-				await Codes.set({
-					sessionId: sessionRef.id,
-					createTime: now
-				});
-				Codes = adminDb.collection('temp_codes').doc(sessionRef.id);
-				await Codes.set({
-					code: code,
-					createTime: now
-				});
-			}
-
 			if (tryCount < 20) {
+				if (Codes) {
+					await Codes.set({
+						sessionId: sessionRef.id,
+						createTime: now
+					});
+					Codes = adminDb.collection('temp_codes').doc(sessionRef.id);
+					await Codes.set({
+						code: code,
+						createTime: now
+					});
+				}
 				return json({ code: code?.toString() });
 			} else {
-				return json({ error: 'Failed to generate code' }, { status: 500 });
+				return json({ error: 'Failed to generate code. Please retry.' }, { status: 500 });
 			}
 		}
 
