@@ -1,8 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-import { env } from '$env/dynamic/private';
 import { upload_object } from '$lib/server/object-storage';
-import { transcribe } from '$lib/stt/core';
+import { transcribe } from '$lib/stt/gemini';
 
 // curl -X POST http://localhost:5173/api/stt -H "Content-Type: multipart/form-data" -H "Origin: http://localhost:5173" -F "file=@test.wav"
 export const POST: RequestHandler = async ({ request }) => {
@@ -25,8 +24,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ status: 'error', message: 'Invalid Content-Type' }, { status: 400 });
 		}
 
-		const transcription = await transcribe(audio_buffer, env.HUGGINGFACE_TOKEN as string);
-		const url = await upload_object(audio_buffer, 'audio/wav', { transcription });
+		const transcription = await transcribe(audio_buffer);
+		const url = await upload_object(audio_buffer, 'audio/mpeg', { transcription });
 		return json({ status: 'success', transcription, url });
 	} catch (error) {
 		console.error('Error processing request:', error);

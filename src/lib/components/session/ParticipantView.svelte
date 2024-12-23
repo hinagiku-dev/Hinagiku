@@ -13,9 +13,10 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { getUser } from '$lib/utils/getUser';
 	import Chatroom from '$lib/components/Chatroom.svelte';
-	import { MicVAD, utils } from '@ricky0123/vad-web';
+	import { MicVAD } from '@ricky0123/vad-web';
 	import Summary from '$lib/components/session/Summary.svelte';
 	import GroupSummary from '$lib/components/session/GroupSummary.svelte';
+	import { initFFmpeg, float32ArrayToWav, wav2mp3 } from '$lib/utils/wav2mp3';
 
 	interface ChatroomConversation {
 		name: string;
@@ -39,6 +40,8 @@
 
 	let loadingGroupSummary = $state(false);
 
+	let pInitFFmpeg: Promise<void> | null = null;
+
 	onMount(() => {
 		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
 		const groupDocQuery = query(groupsRef, where('participants', 'array-contains', user.uid));
@@ -54,6 +57,8 @@
 
 			updateConversationDoc();
 		});
+
+		pInitFFmpeg = initFFmpeg();
 
 		return unsbscribe;
 	});
@@ -152,9 +157,7 @@
 		}
 	}
 
-	async function sendAudioToSTT(audio: Float32Array) {
-		const wavBuffer: ArrayBuffer = utils.encodeWAV(audio);
-		const file = new File([wavBuffer], 'audio.wav', { type: 'audio/wav' });
+	async function sendAudioToSTT(file: File) {
 		const formData = new FormData();
 		formData.append('file', file);
 		console.log('Sending audio to STT...', formData);
@@ -196,7 +199,13 @@
 					return;
 				}
 
-				const result = await sendAudioToSTT(audio);
+				await pInitFFmpeg;
+				console.log('Audio recorded:', audio);
+				const wav = float32ArrayToWav(audio);
+				console.log('Audio converted to wav:', wav);
+				const mp3 = await wav2mp3(wav);
+				console.log('Audio converted to mp3:', mp3);
+				const result = await sendAudioToSTT(mp3);
 
 				if (result) {
 					try {
