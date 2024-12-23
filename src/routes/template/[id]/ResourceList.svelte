@@ -5,6 +5,7 @@
 	import { page } from '$app/stores';
 	import type { Template } from '$lib/schema/template';
 	import { notifications } from '$lib/stores/notifications';
+	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 
 	// Constants
 	const LIMITS = {
@@ -215,10 +216,15 @@
 						</div>
 						<div class="relative">
 							<p
-								class="mt-1 overflow-y-auto whitespace-pre-wrap break-words text-sm text-gray-600 transition-[max-height] duration-300 ease-in-out"
+								class="prose prose-hina mt-1 overflow-y-auto break-words text-sm text-gray-600 transition-[max-height] duration-300 ease-in-out"
 								style="max-height: {expandedResources.has(resource.id) ? '500px' : '100px'}"
 							>
-								{resource.content}
+								{#await renderMarkdown(resource.content)}
+									{resource.content}
+								{:then content}
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									{@html content}
+								{/await}
 							</p>
 							{#if resource.content.length > 100}
 								<Button

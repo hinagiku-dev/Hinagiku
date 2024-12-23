@@ -43,11 +43,11 @@ export async function signInWithGoogle() {
 }
 
 // Sign out function
-export async function signOut() {
+export async function signOut(f: typeof fetch = fetch) {
 	try {
 		await auth.signOut();
 		// Clear the session cookie
-		await fetch('/api/auth/signout', { method: 'POST' });
+		await f('/api/auth/signout', { method: 'POST' });
 		// Redirect to home page
 		await goto('/');
 	} catch (error) {

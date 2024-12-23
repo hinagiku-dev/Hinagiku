@@ -16,6 +16,7 @@
 	import type { Conversation } from '$lib/schema/conversation';
 	import { X } from 'lucide-svelte';
 	import { SvelteMap } from 'svelte/reactivity';
+	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 	import ChatHistory from './ChatHistory.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
@@ -421,7 +422,14 @@
 					{#each $session?.resources as resource}
 						<div class="rounded-lg border p-4">
 							<h3 class="font-medium">{resource.name}</h3>
-							<p class="mt-2 text-gray-700">{resource.content}</p>
+							<p class="prose prose-hina mt-2 text-gray-700">
+								{#await renderMarkdown(resource.content)}
+									Loading ...
+								{:then content}
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									{@html content}
+								{/await}
+							</p>
 						</div>
 					{/each}
 				</div>
