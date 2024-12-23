@@ -53,6 +53,12 @@
 		return unsbscribe;
 	});
 
+	$effect(() => {
+		if ($session?.status === 'before-group' && conversationDoc && !conversationDoc.data.summary) {
+			fetchSummary();
+		}
+	});
+
 	function updateConversationDoc() {
 		if (!groupDoc) {
 			conversationDoc = null;
@@ -79,10 +85,6 @@
 				data: snapshot.docs[0].data() as Conversation,
 				id: snapshot.docs[0].id
 			};
-
-			if ($session?.status === 'before-group' && !conversationDoc.data.summary) {
-				fetchSummary();
-			}
 		});
 	}
 

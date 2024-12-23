@@ -28,7 +28,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 
 		const conversation_ref = await getConversationRef(id, group_number, conv_id);
 		console.log('Retrieved conversation reference');
-		const { userId, task, subtasks, resources, history } =
+		const { userId, task, subtasks, resources, history, subtaskCompleted } =
 			await getConversationData(conversation_ref);
 		console.log('Retrieved conversation data', { userId, task, subtasksCount: subtasks.length });
 
@@ -83,7 +83,9 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 					content: response.message
 				}
 			],
-			subtaskCompleted: response.subtask_completed
+			subtaskCompleted: subtaskCompleted.map(
+				(completed, index) => completed || response.subtask_completed[index]
+			)
 		});
 
 		return json({ success: true, message: response.message });

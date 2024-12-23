@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import type { Resource } from '$lib/schema/resource';
 import type { LLMChatMessage, StudentSpeak } from '$lib/utils/types';
 import fs from 'fs/promises';
 import { OpenAI } from 'openai';
@@ -134,10 +135,7 @@ export async function chatWithLLMByDocs(
 	history: LLMChatMessage[],
 	task: string,
 	subtasks: string[],
-	resources: {
-		name: string;
-		content: string;
-	}[],
+	resources: Resource[],
 	temperature = 0.7
 ): Promise<{ success: boolean; message: string; subtask_completed: boolean[]; error?: string }> {
 	console.log('Starting chatWithLLMByDocs:', {
@@ -242,7 +240,10 @@ export async function summarizeStudentChat(history: LLMChatMessage[]): Promise<{
 }> {
 	console.log('Summarizing student chat:', { historyLength: history.length });
 	try {
-		const formatted_history = history.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
+		const formatted_history = history
+			.filter((msg) => msg.role === 'user')
+			.map((msg) => msg.content)
+			.join('\n');
 		const system_prompt = CHAT_SUMMARY_PROMPT.replace('{chatHistory}', formatted_history);
 		const summary_student_opinion_schema = z.object({
 			student_summary: z.string(),
