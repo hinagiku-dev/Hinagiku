@@ -1,7 +1,9 @@
 import type { Conversation } from '$lib/schema/conversation';
 import type { Group } from '$lib/schema/group';
+import type { Session } from '$lib/schema/session';
 import { adminDb } from '$lib/server/firebase';
 import { error } from '@sveltejs/kit';
+import type { LLMChatMessage } from './types';
 
 export async function createConversation(
 	id: string,
@@ -9,7 +11,8 @@ export async function createConversation(
 	userId: string,
 	task: string,
 	subtasks: string[],
-	resources: string[]
+	history: LLMChatMessage[],
+	resources: { name: string; content: string }[]
 ) {
 	const conversationRef = adminDb
 		.collection('sessions')
@@ -24,7 +27,7 @@ export async function createConversation(
 		task: task,
 		subtasks: subtasks,
 		resources: resources,
-		history: [],
+		history: history,
 		subtaskCompleted: new Array(subtasks.length).fill(false)
 	});
 
@@ -40,6 +43,15 @@ export async function getConversationRef(id: string, group_number: string, conv_
 		.doc(conv_id);
 }
 
+export function getConversationsRef(id: string, group_number: string) {
+	return adminDb
+		.collection('session')
+		.doc(id)
+		.collection('groups')
+		.doc(group_number)
+		.collection('conversations');
+}
+
 export async function getConversationData(
 	conversation_ref: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>
 ): Promise<Conversation> {
@@ -49,15 +61,6 @@ export async function getConversationData(
 	}
 
 	return conversation.data() as Conversation;
-}
-
-export function getConversationsRef(id: string, group_number: string) {
-	return adminDb
-		.collection('session')
-		.doc(id)
-		.collection('groups')
-		.doc(group_number)
-		.collection('conversations');
 }
 
 export async function getConversationsData(
@@ -78,6 +81,10 @@ export function getGroupRef(id: string, group_number: string) {
 	return adminDb.collection('sessions').doc(id).collection('groups').doc(group_number);
 }
 
+export function getGroupsRef(id: string) {
+	return adminDb.collection('sessions').doc(id).collection('groups');
+}
+
 export async function getGroupData(
 	group_ref: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>
 ): Promise<Group> {
@@ -87,4 +94,30 @@ export async function getGroupData(
 	}
 
 	return group.data() as Group;
+}
+
+export async function getGroupsData(
+	groups_ref: FirebaseFirestore.CollectionReference<FirebaseFirestore.DocumentData>
+): Promise<Group[]> {
+	const groups = await groups_ref.get();
+	if (groups.empty) {
+		throw error(404, 'Groups not found');
+	}
+
+	return groups.docs.map((doc) => doc.data() as Group);
+}
+
+export function getSessionRef(id: string) {
+	return adminDb.collection('sessions').doc(id);
+}
+
+export async function getSessionData(
+	session_ref: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>
+): Promise<Session> {
+	const session = await session_ref.get();
+	if (!session.exists) {
+		throw error(404, 'Session not found');
+	}
+
+	return session.data() as Session;
 }

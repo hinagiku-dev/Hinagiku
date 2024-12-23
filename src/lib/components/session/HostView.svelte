@@ -111,30 +111,20 @@
 		try {
 			// 為每個群組的每個參與者創建對話
 			for (const group of $groups) {
-				for (const participant of group.participants) {
-					const response = await fetch(
-						`/api/session/${$page.params.id}/group/${group.id}/conversations`,
-						{
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json'
-							},
-							body: JSON.stringify({
-								task: $session?.task || '',
-								subtasks: $session?.subtasks || [],
-								resources: $session?.resources.map((r) => r.content) || [],
-								participant: participant
-							})
+				const response = await fetch(
+					`/api/session/${$page.params.id}/group/${group.id}/conversations`,
+					{
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json'
 						}
-					);
-
-					if (!response.ok) {
-						const data = await response.json();
-						notifications.error(
-							data.error || `無法為參與者 ${participantNames.get(participant)} 創建對話`
-						);
-						return;
 					}
+				);
+
+				if (!response.ok) {
+					const data = await response.json();
+					notifications.error(data.error || `無法為群組 ${group.number} 的參與者創建對話`);
+					return;
 				}
 			}
 
