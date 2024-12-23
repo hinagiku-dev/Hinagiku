@@ -79,6 +79,10 @@
 				data: snapshot.docs[0].data() as Conversation,
 				id: snapshot.docs[0].id
 			};
+
+			if ($session?.status === 'before-group' && !conversationDoc.data.summary) {
+				fetchSummary();
+			}
 		});
 	}
 
@@ -251,6 +255,34 @@
 			notifications.error('Failed to send message');
 		}
 	}
+
+	let loadingSummary = $state(false);
+
+	async function fetchSummary() {
+		if (!groupDoc || !conversationDoc) {
+			notifications.error('無法獲取總結：找不到群組或對話');
+			return;
+		}
+
+		loadingSummary = true;
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/summary`
+			);
+
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || '無法獲取總結');
+			}
+
+			notifications.success('成功獲取總結');
+		} catch (error) {
+			console.error('獲取總結時出錯:', error);
+			notifications.error('無法獲取總結');
+		} finally {
+			loadingSummary = false;
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-2 py-8">
@@ -368,7 +400,11 @@
 			{:else if $session?.status === 'before-group'}
 				<div class="space-y-6">
 					{#if groupDoc && conversationDoc}
-						<Summary group={groupDoc} conversation={conversationDoc} />
+						<Summary
+							conversation={conversationDoc}
+							loading={loadingSummary}
+							onRefresh={fetchSummary}
+						/>
 					{/if}
 				</div>
 			{:else if $session?.status === 'group'}

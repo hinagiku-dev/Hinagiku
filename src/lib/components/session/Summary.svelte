@@ -1,81 +1,38 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { notifications } from '$lib/stores/notifications';
-	import { page } from '$app/stores';
-	import type { Group } from '$lib/schema/group';
 	import type { Conversation } from '$lib/schema/conversation';
 
-	export let group: {
-		data: Group;
-		id: string;
-	};
 	export let conversation: {
 		data: Conversation;
 		id: string;
 	};
+	export let loading: boolean;
+	export let onRefresh: () => Promise<void>;
+	export let readonly = false;
 
-	interface SummaryData {
-		summary: string;
-		keyPoints: string[];
-	}
-
-	let summaryData: SummaryData | null = null;
-	let loading = false;
-
-	async function fetchSummary() {
-		loading = true;
-		try {
-			const response = await fetch(
-				`/api/session/${$page.params.id}/group/${group.id}/conversations/${conversation.id}/summary`
-			);
-
-			if (!response.ok) {
-				const data = await response.json();
-				throw new Error(data.error || '無法獲取總結');
-			}
-
-			// 從對話文檔中獲取總結數據
-			summaryData = {
-				summary: conversation.data.summary || '尚未生成總結',
-				keyPoints: conversation.data.keyPoints || []
-			};
-
-			notifications.success('��功獲取總結');
-		} catch (error) {
-			console.error('獲取總結時出錯:', error);
-			notifications.error('無法獲取總結');
-		} finally {
-			loading = false;
-		}
-	}
-
-	onMount(async () => {
-		if (conversation.data.summary) {
-			summaryData = {
+	$: summaryData = conversation.data.summary
+		? {
 				summary: conversation.data.summary,
 				keyPoints: conversation.data.keyPoints || []
-			};
-		} else {
-			// 如果沒有現成的總結，自動調用 API
-			await fetchSummary();
-		}
-	});
+			}
+		: null;
 </script>
 
 <div class="space-y-6 p-6">
 	<div class="flex items-center justify-between">
 		<h2 class="text-xl font-semibold">對話總結</h2>
-		<button
-			class="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
-			on:click={fetchSummary}
-			disabled={loading}
-		>
-			{#if loading}
-				更新中...
-			{:else}
-				更新總結
-			{/if}
-		</button>
+		{#if !readonly}
+			<button
+				class="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
+				on:click={onRefresh}
+				disabled={loading}
+			>
+				{#if loading}
+					更新中...
+				{:else}
+					更新總結
+				{/if}
+			</button>
+		{/if}
 	</div>
 
 	{#if summaryData}
