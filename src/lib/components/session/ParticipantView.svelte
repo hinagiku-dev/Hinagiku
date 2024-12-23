@@ -7,7 +7,7 @@
 	import { Button, Input, Label } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { page } from '$app/stores';
-	import { UserPlus, Users } from 'lucide-svelte';
+	import { UserPlus, Users, CircleCheck } from 'lucide-svelte';
 	import { db } from '$lib/firebase';
 	import { collection, query, where, onSnapshot } from 'firebase/firestore';
 	import { onDestroy, onMount } from 'svelte';
@@ -15,6 +15,7 @@
 	import Chatroom from '$lib/components/Chatroom.svelte';
 	import { MicVAD, utils } from '@ricky0123/vad-web';
 	import Summary from '$lib/components/session/Summary.svelte';
+	import GroupSummary from '$lib/components/session/GroupSummary.svelte';
 
 	interface ChatroomConversation {
 		name: string;
@@ -31,9 +32,12 @@
 	}>();
 
 	let groupDoc = $state<{ data: Group; id: string } | null>(null);
+	let groupStatus = $derived.by(() => groupDoc?.data.status || 'discussion');
 	let conversationDoc = $state<{ data: Conversation; id: string } | null>(null);
 	let conversationDocUnsubscribe: (() => void) | null = null;
 	onDestroy(() => conversationDocUnsubscribe?.());
+
+	let loadingGroupSummary = $state(false);
 
 	onMount(() => {
 		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
@@ -315,7 +319,8 @@
 					},
 					body: JSON.stringify({
 						content: text,
-						speaker: $authUser?.displayName || 'Unknown User'
+						speaker: $authUser?.displayName || 'Unknown User',
+						audio: null
 					})
 				}
 			);
@@ -382,10 +387,123 @@
 			vad.destroy();
 		};
 	}
+
+	async function fetchGroupSummary() {
+		if (!groupDoc) {
+			notifications.error('找不到群組');
+			return;
+		}
+
+		loadingGroupSummary = true;
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/summary`
+			);
+
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || '無法獲取群組討論總結');
+			}
+
+			notifications.success('成功獲取群組討論總結');
+		} catch (error) {
+			console.error('獲取群組討論總結時出錯:', error);
+			notifications.error('無法獲取群組討論總結');
+		} finally {
+			loadingGroupSummary = false;
+		}
+	}
+
+	async function handleUpdateGroupSummary(summary: string, keywords: string[]) {
+		if (!groupDoc) {
+			notifications.error('找不到群組');
+			return;
+		}
+
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/summary`,
+				{
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						updated_summary: summary,
+						keywords: keywords
+					})
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('更新失敗');
+			}
+			notifications.success('成功更新群組討論總結');
+		} catch (error) {
+			console.error('更新群組討論總結時出錯:', error);
+			notifications.error('無法更新群組討論總結');
+		}
+	}
+
+	async function handleEndGroup() {
+		if (!groupDoc) {
+			notifications.error('找不到群組');
+			return;
+		}
+
+		try {
+			await fetchGroupSummary();
+			notifications.success('成功結束群組討論');
+		} catch (error) {
+			console.error('結束群組階段時出錯:', error);
+			notifications.error('無法結束群組階段');
+		}
+	}
+
+	async function handleEndSummarize() {
+		if (!groupDoc) {
+			notifications.error('找不到群組');
+			return;
+		}
+
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/end`,
+				{
+					method: 'POST'
+				}
+			);
+
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || '無法結束總結階段');
+			}
+
+			notifications.success('成功完成群組總結');
+		} catch (error) {
+			console.error('結束總結階段時出錯:', error);
+			notifications.error('無法結束總結階段');
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-2 py-8">
-	<h1 class="mb-8 text-3xl font-bold">{$session?.title}</h1>
+	<div class="flex items-center justify-between">
+		<h1 class="mb-8 text-3xl font-bold">{$session?.title}</h1>
+		{#if $session?.status === 'group' && groupDoc && groupDoc.data.participants[0] === user.uid}
+			{#if groupStatus === 'discussion'}
+				<Button color="green" on:click={handleEndGroup}>
+					<CircleCheck class="mr-2 h-4 w-4" />
+					Finish Group Discussion
+				</Button>
+			{:else if groupStatus === 'summarize'}
+				<Button color="green" on:click={handleEndSummarize}>
+					<CircleCheck class="mr-2 h-4 w-4" />
+					Confirm Group Summary
+				</Button>
+			{/if}
+		{/if}
+	</div>
 
 	<div class="grid gap-8 md:grid-cols-4">
 		<div class="space-y-8 md:col-span-1">
@@ -430,17 +548,17 @@
 						<div>
 							<h3 class="mb-2 font-medium">Members:</h3>
 							<ul class="space-y-2">
-								{#each groupDoc.data.participants as participant}
+								{#each groupDoc.data.participants as participant, index}
 									<li class="flex items-center gap-2">
 										<Users class="h-4 w-4" />
 										<span>
 											{#if participant === user.uid}
-												You
+												You{index === 0 ? ' (Leader)' : ''}
 											{:else}
 												{#await getUser(participant)}
 													<span class="text-gray-500">載入中...</span>
 												{:then profile}
-													{profile.displayName}
+													{profile.displayName}{index === 0 ? ' (Leader)' : ''}
 												{:catch}
 													<span class="text-red-500">未知使用者</span>
 												{/await}
@@ -508,11 +626,32 @@
 				</div>
 			{:else if $session?.status === 'group'}
 				<div class="space-y-6">
-					<Chatroom
-						conversations={groupDiscussions}
-						record={handleGroupRecord}
-						send={handleGroupSend}
-					/>
+					{#if groupStatus === 'discussion' && !loadingGroupSummary}
+						<Chatroom
+							conversations={groupDiscussions}
+							record={handleGroupRecord}
+							send={handleGroupSend}
+						/>
+					{:else if groupStatus === 'summarize' || loadingGroupSummary}
+						{#if groupDoc}
+							<GroupSummary
+								group={groupDoc}
+								loading={loadingGroupSummary}
+								onRefresh={fetchGroupSummary}
+								onUpdate={handleUpdateGroupSummary}
+							/>
+						{/if}
+					{:else if groupStatus === 'end'}
+						{#if groupDoc}
+							<GroupSummary
+								readonly
+								group={groupDoc}
+								loading={loadingGroupSummary}
+								onRefresh={fetchGroupSummary}
+								onUpdate={handleUpdateGroupSummary}
+							/>
+						{/if}
+					{/if}
 				</div>
 			{/if}
 		</div>

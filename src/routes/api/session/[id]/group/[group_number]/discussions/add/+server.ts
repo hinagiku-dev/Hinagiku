@@ -41,7 +41,8 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 						speaker: speaker,
 						audio: audio
 					}
-				]
+				],
+				updatedAt: new Date()
 			});
 		});
 

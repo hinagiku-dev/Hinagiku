@@ -14,6 +14,8 @@ export const GroupSchema = z.object({
 			audio: z.string().nullable() // to find the raw file
 		})
 	),
+	updatedAt: z.date().nullable(),
+	status: z.enum(['discussion', 'summarize', 'end']).default('discussion'),
 	summary: z.string().nullable(), // lock on stage 2 finalize transaction
 	keywords: z.record(z.string(), z.number().min(1).max(5))
 });

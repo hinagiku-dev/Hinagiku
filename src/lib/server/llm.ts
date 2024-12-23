@@ -349,9 +349,10 @@ export async function summarizeConcepts(
 
 export async function summarizeGroupOpinions(
 	student_opinion: StudentSpeak[]
-): Promise<{ success: boolean; summary: string; error?: string }> {
+): Promise<{ success: boolean; summary: string; keywords: string[]; error?: string }> {
 	try {
 		const formatted_opinions = student_opinion
+			.filter((opinion) => opinion.role !== '摘要小幫手')
 			.map((opinion) => `${opinion.role}: ${opinion.content}`)
 			.join('\n');
 
@@ -374,13 +375,15 @@ export async function summarizeGroupOpinions(
 
 		return {
 			success: true,
-			summary: message.group_summary
+			summary: message.group_summary,
+			keywords: message.group_key_points
 		};
 	} catch (error) {
 		console.error('Error in summarizeGroupOpinions:', error);
 		return {
 			success: false,
 			summary: '',
+			keywords: [],
 			error: 'Failed to summarize group opinions'
 		};
 	}
