@@ -5,7 +5,7 @@
 		data: Conversation;
 		id: string;
 	};
-	export let loading: boolean;
+	export let loading = false;
 	export let onRefresh: () => Promise<void>;
 	export let readonly = false;
 
