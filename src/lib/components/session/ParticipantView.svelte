@@ -360,7 +360,13 @@
 					return;
 				}
 
-				const result = await sendAudioToSTT(audio);
+				await pInitFFmpeg;
+				console.log('Audio recorded:', audio);
+				const wav = float32ArrayToWav(audio);
+				console.log('Audio converted to wav:', wav);
+				const mp3 = await wav2mp3(wav);
+				console.log('Audio converted to mp3:', mp3);
+				const result = await sendAudioToSTT(mp3);
 
 				if (result) {
 					try {
