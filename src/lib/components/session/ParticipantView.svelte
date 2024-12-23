@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { user as authUser } from '$lib/stores/auth';
 	import type { Session } from '$lib/schema/session';
 	import type { Group } from '$lib/schema/group';
 	import type { Conversation } from '$lib/schema/conversation';
@@ -285,6 +286,102 @@
 			loadingSummary = false;
 		}
 	}
+
+	let groupDiscussions = $derived.by<ChatroomConversation[]>(() => {
+		if (!groupDoc?.data.discussions) {
+			return [];
+		}
+		return groupDoc.data.discussions.map((message) => ({
+			name: message.speaker,
+			self: message.id === user.uid,
+			content: message.content,
+			audio: message.audio || undefined
+		}));
+	});
+
+	async function handleGroupSend(text: string) {
+		if (!groupDoc) {
+			notifications.error('找不到群組');
+			return;
+		}
+
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/add`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						content: text,
+						speaker: $authUser?.displayName || 'Unknown User'
+					})
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('Failed to send message');
+			}
+			notifications.success('訊息已送出');
+		} catch (error) {
+			console.error('Error sending group message:', error);
+			notifications.error('無法發送訊息');
+		}
+	}
+
+	async function handleGroupRecord() {
+		if (!groupDoc) {
+			notifications.error('找不到群組');
+			return async () => {};
+		}
+
+		const vad = await MicVAD.new({
+			model: 'v5',
+			minSpeechFrames: 16, // 0.5s
+			redemptionFrames: 32, // 1s
+			onSpeechEnd: async (audio: Float32Array) => {
+				if (!groupDoc) {
+					notifications.error('找不到群組');
+					return;
+				}
+
+				const result = await sendAudioToSTT(audio);
+
+				if (result) {
+					try {
+						const response = await fetch(
+							`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/add`,
+							{
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json'
+								},
+								body: JSON.stringify({
+									content: result.transcription,
+									speaker: $authUser?.displayName || 'Unknown User',
+									audio: result.url
+								})
+							}
+						);
+
+						if (!response.ok) {
+							throw new Error('Failed to send message');
+						}
+					} catch (error) {
+						console.error('Error sending group message:', error);
+						notifications.error('無法發送訊息');
+					}
+				}
+			}
+		});
+		vad.start();
+
+		return async () => {
+			vad.pause();
+			vad.destroy();
+		};
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-2 py-8">
@@ -410,9 +507,12 @@
 					{/if}
 				</div>
 			{:else if $session?.status === 'group'}
-				<div class="mt-4">
-					<h3 class="mb-2 font-medium">Group Discussion Phase</h3>
-					<p class="text-gray-600">Collaborate with your group members.</p>
+				<div class="space-y-6">
+					<Chatroom
+						conversations={groupDiscussions}
+						record={handleGroupRecord}
+						send={handleGroupSend}
+					/>
 				</div>
 			{/if}
 		</div>

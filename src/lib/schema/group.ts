@@ -10,11 +10,20 @@ export const GroupSchema = z.object({
 		z.object({
 			content: z.string(),
 			id: z.string().nullable(),
-			speaker: z.string() // i am not sure if this is going to be used
+			speaker: z.string(), // i am not sure if this is going to be used
+			audio: z.string().nullable() // to find the raw file
 		})
 	),
 	summary: z.string().nullable(), // lock on stage 2 finalize transaction
 	keywords: z.record(z.string(), z.number().min(1).max(5))
 });
+
+export interface GroupDiscussionMessage {
+	userId: string;
+	role: 'user' | 'assistant';
+	content: string;
+	audio?: string | null;
+	timestamp: Date;
+}
 
 export type Group = z.infer<typeof GroupSchema>;
