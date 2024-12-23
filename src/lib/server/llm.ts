@@ -240,7 +240,10 @@ export async function summarizeStudentChat(history: LLMChatMessage[]): Promise<{
 }> {
 	console.log('Summarizing student chat:', { historyLength: history.length });
 	try {
-		const formatted_history = history.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
+		const formatted_history = history
+			.filter((msg) => msg.role === 'user')
+			.map((msg) => msg.content)
+			.join('\n');
 		const system_prompt = CHAT_SUMMARY_PROMPT.replace('{chatHistory}', formatted_history);
 		const summary_student_opinion_schema = z.object({
 			student_summary: z.string(),
