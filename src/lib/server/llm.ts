@@ -35,7 +35,7 @@ export async function checkFileContent(
 	try {
 		const content = await fs.readFile(filePath, 'utf-8');
 		console.log('File content read successfully:', { contentLength: content.length });
-		if (await isHarmfulContentFile(content)) {
+		if (await isHarmfulContent(content)) {
 			console.warn('Harmful content detected in file');
 			return {
 				success: false,
@@ -55,15 +55,6 @@ export async function checkFileContent(
 			error: 'Error reading the file'
 		};
 	}
-}
-
-export async function isHarmfulContentFile(message: string) {
-	const moderation = await openai.moderations.create({
-		model: 'omni-moderation-latest',
-		input: message
-	});
-
-	return moderation.results[0].flagged;
 }
 
 export async function requestChatLLM(
