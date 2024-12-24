@@ -4,6 +4,10 @@
 	import { ArrowRight, Mic, Brain, GraduationCap, Github } from 'lucide-svelte';
 </script>
 
+<svelte:head>
+	<title>Home | Hinagiku</title>
+</svelte:head>
+
 <main class="min-h-screen">
 	<div class="bg-gradient-to-b from-primary-50 to-white">
 		<div class="mx-auto max-w-6xl px-4 py-24">
