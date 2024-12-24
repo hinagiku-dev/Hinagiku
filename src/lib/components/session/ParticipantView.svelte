@@ -67,6 +67,9 @@
 		if ($session?.status === 'before-group' && conversationDoc && !conversationDoc.data.summary) {
 			fetchSummary();
 		}
+		if ($session?.status === 'ended' && groupDoc && !groupDoc.data.summary) {
+			fetchGroupSummary();
+		}
 	});
 
 	function updateConversationDoc() {
@@ -668,6 +671,16 @@
 						{/if}
 					{/if}
 				</div>
+			{:else if $session?.status === 'ended'}
+				{#if groupDoc}
+					<GroupSummary
+						readonly
+						group={groupDoc}
+						loading={loadingGroupSummary}
+						onRefresh={fetchGroupSummary}
+						onUpdate={handleUpdateGroupSummary}
+					/>
+				{/if}
 			{/if}
 		</div>
 	</div>
