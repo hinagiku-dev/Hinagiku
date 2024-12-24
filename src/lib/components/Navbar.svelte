@@ -1,60 +1,61 @@
 <script>
-	import { sidebarOpen } from '$lib/stores/sidebar';
-	import Auth from '$lib/components/Auth.svelte';
+	import { Navbar, NavBrand, Avatar, Dropdown, DropdownItem } from 'flowbite-svelte';
+	import { LogOut, User, LayoutDashboard } from 'lucide-svelte';
+	import { signOut, user } from '$lib/stores/auth';
+	import { profile } from '$lib/stores/profile';
+	import { onMount } from 'svelte';
+
+	let hinagiku = $state('Hinagiku');
+	let highlight = $state(0);
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			let newHighlight;
+			do {
+				newHighlight = Math.floor(Math.random() * hinagiku.length);
+			} while (newHighlight === highlight);
+			highlight = newHighlight;
+		}, 800);
+
+		return () => clearInterval(interval);
+	});
 </script>
 
-<nav>
-	<button
-		class="menu-toggle"
-		on:click={() => sidebarOpen.update((n) => !n)}
-		aria-label="Toggle menu"
-	>
-		&#9776;
-	</button>
-	<a href="/" class="flex h-full w-auto cursor-pointer items-center space-x-4 no-underline">
-		<img
-			class="h-full w-auto cursor-pointer items-center"
-			src="/Icon.png"
-			alt="Welcome to Hinagiku!"
-		/>
-		<span class="inline-block text-2xl font-bold text-white">Hinagiku</span>
-	</a>
-	<div class="menu right">
-		<Auth />
+<Navbar class="fixed left-0 top-0 z-50 w-full shadow-sm">
+	<NavBrand href="/">
+		<img src="/Icon.png" class="mr-3 h-8" alt="Welcome to Hinagiku!" />
+		<span class="self-center whitespace-nowrap text-2xl font-bold">
+			{#each hinagiku as c, i}<span
+					class="transition-colors duration-500"
+					class:text-primary-600={i === highlight}>{c}</span
+				>{/each}
+		</span>
+	</NavBrand>
+	<div class="ml-auto flex items-center">
+		{#if $user}
+			<Avatar id="user-menu" src={$user.photoURL || ''} alt="User" class="cursor-pointer" />
+			<Dropdown triggeredBy="#user-menu" class="w-48">
+				<div class="px-4 py-3">
+					<p class="text-sm text-gray-900">{$profile?.displayName}</p>
+					<p class="truncate text-sm font-medium text-gray-500">{$user.email}</p>
+				</div>
+				<DropdownItem href="/profile" class="flex items-center"
+					><User class="mr-2 h-4 w-4" />Profile</DropdownItem
+				>
+				<DropdownItem href="/dashboard" class="flex items-center"
+					><LayoutDashboard class="mr-2 h-4 w-4" />Dashbaord</DropdownItem
+				>
+				<DropdownItem on:click={() => signOut()} class="flex items-center"
+					><LogOut class="mr-2 h-4 w-4" />Sign out</DropdownItem
+				>
+			</Dropdown>
+		{:else}
+			<a
+				href="/login"
+				class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:ring-4 focus:ring-primary-300"
+			>
+				Login
+			</a>
+		{/if}
 	</div>
-</nav>
-
-<style>
-	nav {
-		display: flex;
-		justify-content: left;
-		gap: 1rem;
-		align-items: center;
-		padding: 0.5rem;
-		background-color: #333;
-		color: white;
-		z-index: 1000;
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 3.5rem;
-	}
-
-	.menu {
-		display: flex;
-		gap: 1rem;
-	}
-
-	.menu.right {
-		margin-left: auto;
-		padding-right: 2rem;
-	}
-
-	.menu-toggle {
-		z-index: 1000;
-		display: flex;
-		cursor: pointer;
-		font-size: 1.5rem;
-	}
-</style>
+</Navbar>

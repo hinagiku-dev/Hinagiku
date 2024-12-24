@@ -644,14 +644,14 @@
 					{/if}
 				</div>
 			{:else if $session?.status === 'group'}
-				<div class="space-y-6">
-					{#if groupStatus === 'discussion' && !loadingGroupSummary}
-						<Chatroom
-							conversations={groupDiscussions}
-							record={handleGroupRecord}
-							send={handleGroupSend}
-						/>
-					{:else if groupStatus === 'summarize' || loadingGroupSummary}
+				{#if groupStatus === 'discussion' && !loadingGroupSummary}
+					<Chatroom
+						conversations={groupDiscussions}
+						record={handleGroupRecord}
+						send={handleGroupSend}
+					/>
+				{:else if groupStatus === 'summarize' || loadingGroupSummary}
+					<div class="space-y-6">
 						{#if groupDoc}
 							<GroupSummary
 								group={groupDoc}
@@ -660,7 +660,9 @@
 								onUpdate={handleUpdateGroupSummary}
 							/>
 						{/if}
-					{:else if groupStatus === 'end'}
+					</div>
+				{:else if groupStatus === 'end'}
+					<div class="space-y-6">
 						{#if groupDoc}
 							<GroupSummary
 								readonly
@@ -670,8 +672,8 @@
 								onUpdate={handleUpdateGroupSummary}
 							/>
 						{/if}
-					{/if}
-				</div>
+					</div>
+				{/if}
 			{:else if $session?.status === 'ended'}
 				<EndedView {conversationDoc} {groupDoc} {user} />
 			{/if}
