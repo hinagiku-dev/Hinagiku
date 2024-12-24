@@ -69,7 +69,9 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			console.error('LLM response failed:', response.error);
 			throw error(500, response.error);
 		}
-
+		if (isNaN(warning.offTopic)) {
+			warning.offTopic = 0;
+		}
 		await conversation_ref.update({
 			history: [
 				...history,
