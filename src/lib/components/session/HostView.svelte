@@ -159,7 +159,7 @@
 			limit(1)
 		);
 		const codeDoc = (await getDocs(codeQuery)).docs[0];
-		console.log(codeDoc.data());
+		//console.log(codeDoc.data());
 
 		if (!codeDoc || Timestamp.now().toMillis() - codeDoc.data()?.createTime.toMillis() > 3600000) {
 			code = await genCode();
