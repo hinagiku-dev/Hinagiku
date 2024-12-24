@@ -264,6 +264,7 @@
 	<div class="mt-16">
 		<div class="mb-6 flex items-center justify-between">
 			<h2 class="text-2xl font-semibold text-gray-900">Recent Host Sessions</h2>
+			<Button color="alternative" href="/dashboard/recent/host">View All</Button>
 		</div>
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 			{#if $hostSessions?.length}
@@ -300,6 +301,7 @@
 	<div class="mt-16">
 		<div class="mb-6 flex items-center justify-between">
 			<h2 class="text-2xl font-semibold text-gray-900">Recent Participant Sessions</h2>
+			<Button color="alternative" href="/dashboard/recent/participant">View All</Button>
 		</div>
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 			{#if $sessions.length}
