@@ -32,7 +32,9 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			summary: null,
 			keywords: {},
 			number: groupNumber,
-			createdAt: new Date()
+			createdAt: new Date(),
+			status: 'discussion',
+			updatedAt: new Date()
 		};
 
 		const result = GroupSchema.safeParse(groupData);

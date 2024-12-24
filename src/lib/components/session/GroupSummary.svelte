@@ -108,7 +108,7 @@
 		</div>
 	{:else}
 		<div class="text-center text-gray-600">
-			<p>點擊上方按鈕生成討論總結</p>
+			<p>尚無討論總結</p>
 		</div>
 	{/if}
 </div>

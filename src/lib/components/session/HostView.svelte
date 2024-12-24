@@ -18,10 +18,15 @@
 	import { SvelteMap } from 'svelte/reactivity';
 	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 	import ChatHistory from './ChatHistory.svelte';
+	import GroupChatHistory from './GroupChatHistory.svelte';
+	import GroupStatus from './GroupStatus.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
-	type GroupWithId = Group & { id: string };
+	type GroupWithId = Group & {
+		id: string;
+		updatedAt: Timestamp | undefined;
+	};
 	let groups = writable<GroupWithId[]>([]);
 	let participantNames = $state(new Map<string, string>());
 	type ParticipantProgress = {
@@ -42,6 +47,18 @@
 		}>;
 	} | null>(null);
 	let selectedConversation = $state<{ data: Conversation; id: string } | null>(null);
+	let showGroupChatHistory = $state(false);
+	let selectedGroup = $state<{
+		data: Group;
+		id: string;
+		discussions: Array<{
+			name: string;
+			content: string;
+			self?: boolean;
+			audio?: string;
+			avatar?: string;
+		}>;
+	} | null>(null);
 
 	onMount(() => {
 		const unsubscribes: (() => void)[] = [];
@@ -299,6 +316,27 @@
 			notifications.error('無法加載對話歷史');
 		}
 	}
+
+	async function handleGroupClick(group: GroupWithId) {
+		try {
+			const discussions = group.discussions.map((discussion) => ({
+				name: discussion.speaker,
+				content: discussion.content,
+				self: false,
+				audio: discussion.audio || undefined
+			}));
+
+			selectedGroup = {
+				data: group,
+				id: group.id,
+				discussions
+			};
+			showGroupChatHistory = true;
+		} catch (error) {
+			console.error('無法加載群組討論:', error);
+			notifications.error('無法加載群組討論');
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
@@ -371,7 +409,16 @@
 				<div class="grid grid-cols-3 gap-4">
 					{#each [...$groups].sort((a, b) => a.number - b.number) as group}
 						<div class="rounded border p-3">
-							<h3 class="mb-2 text-sm font-semibold">Group #{group.number}</h3>
+							<div class="mb-2 flex items-center justify-between">
+								<button
+									class="cursor-pointer text-sm font-semibold hover:text-primary-600"
+									onclick={() => handleGroupClick(group)}
+									onkeydown={(e) => e.key === 'Enter' && handleGroupClick(group)}
+								>
+									Group #{group.number}
+								</button>
+								<GroupStatus {group} showStatus={$session?.status === 'group'} />
+							</div>
 							{#if group.participants.length === 0}
 								<p class="text-xs text-gray-500">No participants</p>
 							{:else}
@@ -469,5 +516,9 @@
 			participant={selectedParticipant}
 			conversation={selectedConversation}
 		/>
+	{/if}
+
+	{#if showGroupChatHistory && selectedGroup}
+		<GroupChatHistory bind:open={showGroupChatHistory} group={selectedGroup} readonly={true} />
 	{/if}
 </main>
