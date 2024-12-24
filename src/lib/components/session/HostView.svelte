@@ -9,7 +9,15 @@
 	import { Alert } from 'flowbite-svelte';
 	import type { Group } from '$lib/schema/group';
 	import { onMount } from 'svelte';
-	import { collection, getDocs, onSnapshot, getDoc, doc, Timestamp } from 'firebase/firestore';
+	import {
+		collection,
+		getDocs,
+		onSnapshot,
+		Timestamp,
+		query,
+		where,
+		limit
+	} from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { writable } from 'svelte/store';
 	import { getUser } from '$lib/utils/getUser';
@@ -122,37 +130,33 @@
 		};
 	});
 
+	// 生成代碼
 	async function genCode() {
 		const response = await fetch(`/api/session/${$page.params.id}/action/generate-code`, {
 			method: 'POST'
 		});
-
 		if (!response.ok) {
 			const data = await response.json();
 			notifications.error(data.error || '無法生成代碼');
 			return '';
 		}
-
 		const data = await response.json();
 		return data.code.toString();
 	}
 
 	async function getCode() {
-		const codeCollection = doc(db, 'temp_codes', $page.params.id);
-		const codeDoc = await getDoc(codeCollection);
-		if (
-			!codeDoc.exists() ||
-			Timestamp.now().toMillis() - codeDoc.data()?.createTime.toMillis() > 3600000
-		) {
+		const codeQuery = query(
+			collection(db, 'temp_codes'),
+			where('sessionId', '==', $page.params.id),
+			limit(1)
+		);
+		const codeDoc = (await getDocs(codeQuery)).docs[0];
+		console.log(codeDoc.data());
+
+		if (!codeDoc || Timestamp.now().toMillis() - codeDoc.data()?.createTime.toMillis() > 3600000) {
 			code = await genCode();
 		} else {
-			const checkValid = doc(db, 'temp_codes', codeDoc.data()?.code.toString());
-			const checkDoc = await getDoc(checkValid);
-			if (!checkDoc.exists() || checkDoc.data()?.sessionId !== $page.params.id) {
-				code = await genCode();
-			} else {
-				code = codeDoc.data()?.code;
-			}
+			code = codeDoc.id;
 		}
 	}
 

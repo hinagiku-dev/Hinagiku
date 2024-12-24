@@ -51,11 +51,6 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 						sessionId: sessionRef.id,
 						createTime: now
 					});
-					Codes = adminDb.collection('temp_codes').doc(sessionRef.id);
-					await Codes.set({
-						code: code,
-						createTime: now
-					});
 				}
 				return json({ code: code?.toString() });
 			} else {
