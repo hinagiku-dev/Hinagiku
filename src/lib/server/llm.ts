@@ -49,6 +49,9 @@ async function isOffTopic(
 	prompt: string
 ): Promise<{ success: boolean; off_topic: boolean; error?: string }> {
 	console.log('Checking if off topic:', { historyLength: history.length });
+	if (history.length < 1) {
+		return { success: true, off_topic: false };
+	}
 	try {
 		const llm_message = history.length > 1 ? history[history.length - 2].content : prompt;
 		const student_message = history[history.length - 1].content;
@@ -206,7 +209,7 @@ export async function chatWithLLMByDocs(
 		const [response, subtask_completed, moderation, off_topic] = await Promise.all([
 			requestChatLLM(system_prompt, history, temperature),
 			checkSubtaskCompleted(history, subtasks),
-			isHarmfulContent(history[history.length - 1].content),
+			isHarmfulContent(history.length > 0 ? history[history.length - 1].content : ''),
 			isOffTopic(history, system_prompt)
 		]);
 

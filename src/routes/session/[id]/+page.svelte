@@ -10,6 +10,10 @@
 	let isHost = $derived($session?.host === data.user.uid);
 </script>
 
+<svelte:head>
+	<title>Session | Hinagiku</title>
+</svelte:head>
+
 {#if isHost}
 	<HostView {session} />
 {:else}

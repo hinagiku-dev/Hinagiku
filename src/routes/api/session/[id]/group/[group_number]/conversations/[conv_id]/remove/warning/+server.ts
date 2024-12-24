@@ -25,7 +25,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		conversation_ref.update({
 			warning: {
 				moderation: false,
-				offTopic: false
+				offTopic: (await conversation_ref.get()).data()?.warning?.offTopic || 0
 			}
 		});
 

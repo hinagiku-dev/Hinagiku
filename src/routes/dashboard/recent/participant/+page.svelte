@@ -39,6 +39,10 @@
 	getSessions();
 </script>
 
+<svelte:head>
+	<title>Recent Participant Sessions | Hinagiku</title>
+</svelte:head>
+
 <main class="mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-12 flex items-center justify-between">
 		<div>

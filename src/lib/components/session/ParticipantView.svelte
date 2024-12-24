@@ -3,6 +3,7 @@
 	import type { Session } from '$lib/schema/session';
 	import type { Group } from '$lib/schema/group';
 	import type { Conversation } from '$lib/schema/conversation';
+	import type { Profile } from '$lib/schema/profile';
 	import type { Readable } from 'svelte/store';
 	import { Button, Input, Label } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
@@ -42,11 +43,12 @@
 	let loadingGroupSummary = $state(false);
 
 	let pInitFFmpeg: Promise<void> | null = null;
+	let selfUser: Promise<Profile> | null = null;
 
 	onMount(() => {
 		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
 		const groupDocQuery = query(groupsRef, where('participants', 'array-contains', user.uid));
-
+		selfUser = getUser(user.uid);
 		const unsbscribe = onSnapshot(groupDocQuery, (snapshot) => {
 			if (snapshot.empty) {
 				return;
@@ -332,7 +334,7 @@
 					},
 					body: JSON.stringify({
 						content: text,
-						speaker: $authUser?.displayName || 'Unknown User',
+						speaker: (await selfUser)?.displayName || 'Unknown User',
 						audio: null
 					})
 				}

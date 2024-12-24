@@ -115,6 +115,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Dashboard | Hinagiku</title>
+</svelte:head>
+
 <main class="mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-12">
 		<h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>

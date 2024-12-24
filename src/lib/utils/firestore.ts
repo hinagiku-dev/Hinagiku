@@ -33,7 +33,8 @@ export async function createConversation(
 		subtasks: subtasks,
 		resources: resources,
 		history: history,
-		subtaskCompleted: new Array(subtasks.length).fill(false)
+		subtaskCompleted: new Array(subtasks.length).fill(false),
+		warning: { moderation: false, off_topic: 0 }
 	});
 
 	return conversationRef.id;
