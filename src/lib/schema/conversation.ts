@@ -18,7 +18,7 @@ export const ConversationSchema = z.object({
 	),
 	warning: z.object({
 		moderation: z.boolean().default(false),
-		offTopic: z.number().default(0)
+		offTopic: z.boolean().default(false)
 	}),
 	subtaskCompleted: z.array(z.boolean().default(false)),
 	summary: z.string().nullable(),
