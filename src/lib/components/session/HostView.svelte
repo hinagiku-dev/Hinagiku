@@ -417,7 +417,7 @@
 								>
 									Group #{group.number}
 								</button>
-								<GroupStatus {group} />
+								<GroupStatus {group} showStatus={$session?.status === 'group'} />
 							</div>
 							{#if group.participants.length === 0}
 								<p class="text-xs text-gray-500">No participants</p>
