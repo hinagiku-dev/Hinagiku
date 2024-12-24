@@ -28,6 +28,9 @@
 	import GroupChatHistory from './GroupChatHistory.svelte';
 	import GroupStatus from './GroupStatus.svelte';
 	import StageProgress from './StageProgress.svelte';
+	import WordCloud from './WordCloud.svelte';
+	import MostActiveParticipants from './MostActiveParticipants.svelte';
+	import MostActiveGroups from './MostActiveGroups.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -410,6 +413,25 @@
 						{/if}
 					</div>
 				{/if}
+			</div>
+		{/if}
+
+		{#if $session?.status === 'ended'}
+			<div class="col-span-4 rounded-lg border p-6">
+				<h2 class="mb-4 text-xl font-semibold">Final Summary</h2>
+				<div class="flex w-full flex-col gap-4">
+					<div class="h-96">
+						<WordCloud />
+					</div>
+					<div class="flex w-full gap-4">
+						<div class="h-96 flex-1">
+							<MostActiveParticipants />
+						</div>
+						<div class="h-96 flex-1">
+							<MostActiveGroups />
+						</div>
+					</div>
+				</div>
 			</div>
 		{/if}
 

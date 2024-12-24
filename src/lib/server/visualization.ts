@@ -29,7 +29,7 @@ export async function generateWordCloud(documents: string[]): Promise<{
 		const combinedText = documents.join('\n');
 
 		const completion = await openai.beta.chat.completions.parse({
-			model: 'gpt-4-turbo-preview',
+			model: 'gpt-4o-mini',
 			messages: [
 				{
 					role: 'system',
