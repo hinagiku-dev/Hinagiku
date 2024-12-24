@@ -11,12 +11,15 @@ export function getUser(uid: string): Promise<Profile> {
 	const user = (async () => {
 		const docRef = doc(db, 'profiles', uid);
 		const docSnap = await getDoc(docRef);
-		if (!docSnap.exists()) {
-			throw new Error(`User with UID ${uid} not found.`);
-		}
 		const data = docSnap.data();
 		if (!data) {
-			throw new Error(`UID 為 ${uid} 的使用者資料未定義。`);
+			console.error(`UID 為 ${uid} 的使用者資料不存在`);
+			return {
+				uid,
+				displayName: uid,
+				title: null,
+				bio: null
+			};
 		}
 		return ProfileSchema.omit({ updatedAt: true, createdAt: true }).parse(data);
 	})();
