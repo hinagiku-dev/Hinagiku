@@ -126,12 +126,12 @@
 					on:keydown={handleKeydown}
 				/>
 				<Button
-					color={recording ? 'red' : 'primary'}
+					color={recording && !operating ? 'red' : 'primary'}
 					class="gap-2"
 					disabled={operating}
 					on:click={handleRecord}
 				>
-					{#if recording}
+					{#if recording && !operating}
 						<Square class="animate-pulse" />
 					{:else}
 						<Mic />
