@@ -113,6 +113,7 @@
 		};
 	});
 
+	// 生成代碼
 	async function genCode() {
 		const response = await fetch(`/api/session/${$page.params.id}/action/generate-code`, {
 			method: 'POST'
