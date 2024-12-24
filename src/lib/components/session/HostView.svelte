@@ -19,10 +19,14 @@
 	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 	import ChatHistory from './ChatHistory.svelte';
 	import GroupChatHistory from './GroupChatHistory.svelte';
+	import GroupStatus from './GroupStatus.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
-	type GroupWithId = Group & { id: string };
+	type GroupWithId = Group & {
+		id: string;
+		updatedAt: Timestamp | undefined;
+	};
 	let groups = writable<GroupWithId[]>([]);
 	let participantNames = $state(new Map<string, string>());
 	type ParticipantProgress = {
@@ -405,13 +409,16 @@
 				<div class="grid grid-cols-3 gap-4">
 					{#each [...$groups].sort((a, b) => a.number - b.number) as group}
 						<div class="rounded border p-3">
-							<button
-								class="mb-2 cursor-pointer text-sm font-semibold hover:text-primary-600"
-								onclick={() => handleGroupClick(group)}
-								onkeydown={(e) => e.key === 'Enter' && handleGroupClick(group)}
-							>
-								Group #{group.number}
-							</button>
+							<div class="mb-2 flex items-center justify-between">
+								<button
+									class="cursor-pointer text-sm font-semibold hover:text-primary-600"
+									onclick={() => handleGroupClick(group)}
+									onkeydown={(e) => e.key === 'Enter' && handleGroupClick(group)}
+								>
+									Group #{group.number}
+								</button>
+								<GroupStatus {group} />
+							</div>
 							{#if group.participants.length === 0}
 								<p class="text-xs text-gray-500">No participants</p>
 							{:else}
