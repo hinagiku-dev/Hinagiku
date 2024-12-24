@@ -36,6 +36,16 @@ export const CHAT_SUMMARY_PROMPT = `
 學生的關鍵字：
 `;
 
+export const OFF_TOPIC_DETECTION_PROMPT = `
+請偵測學生的訊息是否聊天內容偏離主題，並回傳一個 Boolean 值，如果偏離主題則回傳 true，否則回傳 false。
+
+LLM訊息：
+{llmMessage}
+學生訊息：
+{studentMessage}
+結果：
+`;
+
 export const CONCEPT_SUMMARY_PROMPT = `
 以下是學生們個別的觀點與想法，每位學生的想法與觀點用{separator}分隔，請你總結學生們的觀點，並歸納出學生的正反意見，以及學生對於這個概念的理解。
 
