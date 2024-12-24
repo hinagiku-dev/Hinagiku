@@ -47,8 +47,11 @@ async function isHarmfulContent(
 async function isOffTopic(
 	history: LLMChatMessage[],
 	prompt: string
-): Promise<{ success: boolean; off_topic: boolean; error?: string }> {
+): Promise<{ success: boolean; off_topic: number; error?: string }> {
 	console.log('Checking if off topic:', { historyLength: history.length });
+	if (history.length < 2) {
+		return { success: true, off_topic: 0 };
+	}
 	try {
 		const llm_message = history.length > 1 ? history[history.length - 2].content : prompt;
 		const student_message = history[history.length - 1].content;
@@ -57,7 +60,7 @@ async function isOffTopic(
 			student_message
 		);
 
-		const response = await requestZodLLM(system_prompt, z.object({ result: z.boolean() }));
+		const response = await requestZodLLM(system_prompt, z.object({ result: z.number() }));
 
 		if (!response.success) {
 			throw new Error('Failed to detect off topic response');
@@ -72,7 +75,7 @@ async function isOffTopic(
 		console.error('Error in isOffTopic:', error);
 		return {
 			success: false,
-			off_topic: false,
+			off_topic: 0,
 			error: 'Failed to detect off topic'
 		};
 	}
@@ -182,7 +185,7 @@ export async function chatWithLLMByDocs(
 	success: boolean;
 	message: string;
 	subtask_completed: boolean[];
-	warning: { off_topic: boolean; moderation: boolean };
+	warning: { off_topic: number; moderation: boolean };
 	error?: string;
 }> {
 	console.log('Starting chatWithLLMByDocs:', {
@@ -206,7 +209,9 @@ export async function chatWithLLMByDocs(
 		const [response, subtask_completed, moderation, off_topic] = await Promise.all([
 			requestChatLLM(system_prompt, history, temperature),
 			checkSubtaskCompleted(history, subtasks),
-			isHarmfulContent(history[history.length - 1].content),
+			...(history.length
+				? [isHarmfulContent(history[history.length - 1].content)]
+				: [{ success: true, harmful: false }]),
 			isOffTopic(history, system_prompt)
 		]);
 
@@ -224,8 +229,8 @@ export async function chatWithLLMByDocs(
 			message: response.message,
 			subtask_completed: subtask_completed.completed,
 			warning: {
-				moderation: moderation.harmful,
-				off_topic: off_topic.off_topic
+				moderation: false,
+				off_topic: 0
 			}
 		};
 	} catch (error) {
@@ -234,7 +239,7 @@ export async function chatWithLLMByDocs(
 			success: false,
 			message: '',
 			subtask_completed: [],
-			warning: { moderation: false, off_topic: false },
+			warning: { moderation: false, off_topic: 0 },
 			error: 'Failed to chat with LLM by docs'
 		};
 	}
