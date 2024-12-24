@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Play, X, TriangleAlert, MessageSquareOff } from 'lucide-svelte';
+	import { X, TriangleAlert, MessageSquareOff } from 'lucide-svelte';
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
 	import QRCode from '$lib/components/QRCode.svelte';
@@ -27,6 +27,7 @@
 	import ChatHistory from './ChatHistory.svelte';
 	import GroupChatHistory from './GroupChatHistory.svelte';
 	import GroupStatus from './GroupStatus.svelte';
+	import StageProgress from './StageProgress.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -348,6 +349,29 @@
 			notifications.error('無法加載群組討論');
 		}
 	}
+
+	async function handlePreparing() {
+		await fetch(`/api/session/${$page.params.id}/action/preparing`, {
+			method: 'POST'
+		});
+	}
+
+	async function handleStageChange(newStage: string) {
+		const actions = {
+			preparing: handlePreparing,
+			individual: handleStartSession,
+			'before-group': handleEndIndividual,
+			group: handleStartGroup,
+			ended: handleEndGroup
+		};
+
+		try {
+			await actions[newStage as keyof typeof actions]();
+		} catch (error) {
+			console.error('Failed to change stage:', error);
+			notifications.error('Failed to change stage');
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
@@ -356,50 +380,31 @@
 			<h1 class="text-3xl font-bold">{$session?.title}</h1>
 		</div>
 
-		<div class="flex items-center gap-4">
-			{#if $session?.status === 'individual'}
-				<div class="flex items-center gap-2">
-					<span class="inline-block h-3 w-3 rounded-full bg-blue-500"></span>
-					<span class="capitalize">Individual Stage</span>
-				</div>
-			{/if}
-			{#if $session && stageButton[$session.status].show}
-				<Button color="primary" on:click={stageButton[$session.status].action}>
-					<Play class="mr-2 h-4 w-4" />
-					{stageButton[$session.status].text}
-				</Button>
-			{/if}
+		<div class="flex items-center gap-6">
+			<StageProgress
+				session={$session}
+				onStageChange={handleStageChange}
+				showAction={$session && stageButton[$session.status].show}
+			/>
 		</div>
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-4">
-		{#if $session?.status && $session.status !== 'individual'}
+		{#if $session?.status && $session.status === 'preparing'}
 			<div class="rounded-lg border p-6">
-				<h2 class="mb-4 text-xl font-semibold">Session Status</h2>
-				<div class="flex items-center gap-2">
-					<span
-						class="inline-block h-3 w-3 rounded-full {$session?.status === 'preparing'
-							? 'bg-yellow-500'
-							: $session?.status === 'before-group'
-								? 'bg-purple-500'
-								: $session?.status === 'group'
-									? 'bg-green-500'
-									: 'bg-gray-500'}"
-					></span>
-					<span class="capitalize">{$session?.status}</span>
-				</div>
-
+				<h2 class="mb-4 text-xl font-semibold">Join Session</h2>
+				<p class="text-gray-700">Please scan the QR code or enter the code to join the session.</p>
 				{#if $session?.status === 'preparing'}
 					<div class="mt-4">
-						<h3 class="mb-2 font-medium">Session QR Code</h3>
 						<div class="flex justify-center">
 							<QRCode value={`${$page.url.origin}/session/${$page.params.id}`} />
 						</div>
 					</div>
 					<div class="mt-4">
-						<h3 class="mb-2 font-medium">Session Code</h3>
 						{#if code === ''}
-							<Button color="primary" on:click={getCode}>Show Code</Button>
+							<div class="flex justify-center">
+								<Button color="primary" on:click={getCode}>Show Code</Button>
+							</div>
 						{:else}
 							<p class="text-center text-5xl font-bold text-orange-600">{code}</p>
 						{/if}
@@ -409,7 +414,7 @@
 		{/if}
 
 		<div
-			class="col-span-3 rounded-lg border p-6 {$session?.status === 'individual'
+			class="col-span-3 rounded-lg border p-6 {$session?.status !== 'preparing'
 				? 'md:col-span-4'
 				: ''}"
 		>
