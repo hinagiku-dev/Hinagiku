@@ -38,7 +38,7 @@ export async function createConversation(
 
 	return conversationRef.id;
 }
-export async function getConversationRef(id: string, group_number: string, conv_id: string) {
+export function getConversationRef(id: string, group_number: string, conv_id: string) {
 	return adminDb
 		.collection('sessions')
 		.doc(id)
