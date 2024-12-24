@@ -264,6 +264,39 @@
 		}
 	}
 
+	async function handleRemoveWarning(groupId: string, participant: string) {
+		try {
+			const conversationsRef = collection(
+				db,
+				`sessions/${$page.params.id}/groups/${groupId}/conversations`
+			);
+			const snapshot = await getDocs(conversationsRef);
+			const conversationDoc = snapshot.docs.find(
+				(doc) => (doc.data() as Conversation).userId === participant
+			);
+
+			if (!conversationDoc) {
+				throw new Error('Conversation not found');
+			}
+
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupId}/conversations/${conversationDoc.id}/remove/warning`,
+				{
+					method: 'GET'
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('Failed to remove warning');
+			}
+
+			notifications.success('成功移除警告', 3000);
+		} catch (error) {
+			console.error('無法移除警告:', error);
+			notifications.error('無法移除警告');
+		}
+	}
+
 	const stageButton = $derived({
 		preparing: {
 			text: 'Start Individual Stage',
@@ -479,9 +512,20 @@
 																				: ''}"
 																	>
 																		{#if warning.moderation}
-																			<TriangleAlert class="h-3 w-3 text-white" />
+																			<button
+																				class="flex items-center justify-center"
+																				onclick={() => handleRemoveWarning(group.id, participant)}
+																				title="點擊移除內容警告"
+																			>
+																				<TriangleAlert
+																					class="h-3 w-3 text-white hover:text-gray-200"
+																				/>
+																			</button>
 																		{:else if warning.offTopic >= 3}
-																			<MessageSquareOff class="h-3 w-3 text-white" />
+																			<MessageSquareOff
+																				class="h-3 w-3 text-white"
+																				aria-label="離題警告"
+																			/>
 																		{/if}
 																	</div>
 																{/if}
