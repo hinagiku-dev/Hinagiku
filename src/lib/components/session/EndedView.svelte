@@ -47,7 +47,7 @@
 	<div class="flex space-x-4">
 		<button
 			class="rounded-lg px-4 py-2 {activeTab === 'summary'
-				? 'bg-blue-500 text-white'
+				? 'bg-primary-600 text-white'
 				: 'bg-gray-200'}"
 			onclick={() => (activeTab = 'summary')}
 		>
@@ -55,21 +55,23 @@
 		</button>
 		<button
 			class="rounded-lg px-4 py-2 {activeTab === 'groupSummary'
-				? 'bg-blue-500 text-white'
+				? 'bg-primary-600 text-white'
 				: 'bg-gray-200'}"
 			onclick={() => (activeTab = 'groupSummary')}
 		>
 			群組總結
 		</button>
 		<button
-			class="rounded-lg px-4 py-2 {activeTab === 'chat' ? 'bg-blue-500 text-white' : 'bg-gray-200'}"
+			class="rounded-lg px-4 py-2 {activeTab === 'chat'
+				? 'bg-primary-600 text-white'
+				: 'bg-gray-200'}"
 			onclick={() => (activeTab = 'chat')}
 		>
 			個人對話歷史
 		</button>
 		<button
 			class="rounded-lg px-4 py-2 {activeTab === 'groupChat'
-				? 'bg-blue-500 text-white'
+				? 'bg-primary-600 text-white'
 				: 'bg-gray-200'}"
 			onclick={() => (activeTab = 'groupChat')}
 		>
