@@ -17,6 +17,7 @@
 	import Summary from '$lib/components/session/Summary.svelte';
 	import GroupSummary from '$lib/components/session/GroupSummary.svelte';
 	import { initFFmpeg, float32ArrayToWav, wav2mp3 } from '$lib/utils/wav2mp3';
+	import EndedView from '$lib/components/session/EndedView.svelte';
 
 	interface ChatroomConversation {
 		name: string;
@@ -672,15 +673,7 @@
 					{/if}
 				</div>
 			{:else if $session?.status === 'ended'}
-				{#if groupDoc}
-					<GroupSummary
-						readonly
-						group={groupDoc}
-						loading={loadingGroupSummary}
-						onRefresh={fetchGroupSummary}
-						onUpdate={handleUpdateGroupSummary}
-					/>
-				{/if}
+				<EndedView {conversationDoc} {groupDoc} {user} />
 			{/if}
 		</div>
 	</div>
