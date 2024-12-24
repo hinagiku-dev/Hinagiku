@@ -1,9 +1,14 @@
 import { adminDb } from '$lib/server/firebase';
+import type { RequestHandler } from '@sveltejs/kit';
 import { error, json } from '@sveltejs/kit';
 
-export async function POST({ params, locals }) {
+export const POST: RequestHandler = async ({ params, locals }) => {
 	if (!locals.user) {
 		throw error(401, '未經授權');
+	}
+
+	if (!params.id || !params.group_number) {
+		throw error(400, '缺少參數');
 	}
 
 	try {
@@ -20,6 +25,6 @@ export async function POST({ params, locals }) {
 		return json({ status: 'success' });
 	} catch (e) {
 		console.error('Error ending group summarize phase:', e);
-		throw error(500, '無法結束群組總結階段');
+		return json({ error: '無法結束群組總結階段' }, { status: 500 });
 	}
-}
+};
