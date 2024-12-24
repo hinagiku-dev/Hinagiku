@@ -85,7 +85,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			],
 			warning: {
 				moderation: warning.moderation || response.warning.moderation,
-				offTopic: warning.offTopic || response.warning.offTopic
+				offTopic: warning.offTopic || response.warning.off_topic
 			},
 			subtaskCompleted: subtaskCompleted.map(
 				(completed, index) => completed || response.subtask_completed[index]
