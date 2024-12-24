@@ -10,6 +10,7 @@ import {
 	CONCEPT_SUMMARY_PROMPT,
 	DOCS_CONTEXT_SYSTEM_PROMPT,
 	GROUP_OPINION_SUMMARY_PROMPT,
+	OFF_TOPIC_DETECTION_PROMPT,
 	SUBTASKS_COMPLETED_PROMPT
 } from './prompt';
 
@@ -18,14 +19,63 @@ const openai = new OpenAI({
 	baseURL: env.OPENAI_BASE_URL
 });
 
-async function isHarmfulContent(content: string): Promise<boolean> {
+async function isHarmfulContent(
+	content: string
+): Promise<{ success: boolean; harmful: boolean; error?: string }> {
 	console.log('Checking content for harmful content:', { contentLength: content.length });
-	const moderation = await openai.moderations.create({
-		model: 'omni-moderation-latest',
-		input: content
-	});
-	console.log('Moderation result:', moderation.results[0]);
-	return moderation.results[0].flagged;
+	try {
+		const moderation = await openai.moderations.create({
+			model: 'omni-moderation-latest',
+			input: content
+		});
+		console.log('Moderation result:', moderation.results[0]);
+		return {
+			success: true,
+			harmful: moderation.results[0].flagged,
+			error: ''
+		};
+	} catch (error) {
+		console.error('Error in isHarmfulContent:', error);
+		return {
+			success: false,
+			harmful: false,
+			error: 'Failed to detect harmful content'
+		};
+	}
+}
+
+async function isOffTopic(
+	history: LLMChatMessage[],
+	prompt: string
+): Promise<{ success: boolean; off_topic: boolean; error?: string }> {
+	console.log('Checking if off topic:', { historyLength: history.length });
+	try {
+		const llm_message = history.length > 1 ? history[history.length - 2].content : prompt;
+		const student_message = history[history.length - 1].content;
+		const system_prompt = OFF_TOPIC_DETECTION_PROMPT.replace('{llmMessage}', llm_message).replace(
+			'{studentMessage}',
+			student_message
+		);
+
+		const response = await requestZodLLM(system_prompt, z.object({ result: z.boolean() }));
+
+		if (!response.success) {
+			throw new Error('Failed to detect off topic response');
+		}
+
+		return {
+			success: true,
+			off_topic: response.message.result,
+			error: ''
+		};
+	} catch (error) {
+		console.error('Error in isOffTopic:', error);
+		return {
+			success: false,
+			off_topic: false,
+			error: 'Failed to detect off topic'
+		};
+	}
 }
 
 export async function checkFileContent(
@@ -35,7 +85,7 @@ export async function checkFileContent(
 	try {
 		const content = await fs.readFile(filePath, 'utf-8');
 		console.log('File content read successfully:', { contentLength: content.length });
-		if (await isHarmfulContentFile(content)) {
+		if (await isHarmfulContent(content)) {
 			console.warn('Harmful content detected in file');
 			return {
 				success: false,
@@ -55,15 +105,6 @@ export async function checkFileContent(
 			error: 'Error reading the file'
 		};
 	}
-}
-
-export async function isHarmfulContentFile(message: string) {
-	const moderation = await openai.moderations.create({
-		model: 'omni-moderation-latest',
-		input: message
-	});
-
-	return moderation.results[0].flagged;
 }
 
 export async function requestChatLLM(
@@ -137,7 +178,13 @@ export async function chatWithLLMByDocs(
 	subtasks: string[],
 	resources: Resource[],
 	temperature = 0.7
-): Promise<{ success: boolean; message: string; subtask_completed: boolean[]; error?: string }> {
+): Promise<{
+	success: boolean;
+	message: string;
+	subtask_completed: boolean[];
+	warning: { off_topic: boolean; moderation: boolean };
+	error?: string;
+}> {
 	console.log('Starting chatWithLLMByDocs:', {
 		historyLength: history.length,
 		task,
@@ -145,15 +192,6 @@ export async function chatWithLLMByDocs(
 		resourcesCount: resources.length
 	});
 	try {
-		const last_message_content = history[history.length - 1]?.content;
-		if (last_message_content && (await isHarmfulContent(last_message_content))) {
-			return {
-				success: false,
-				message: '',
-				subtask_completed: [],
-				error: 'Harmful content detected in the last message'
-			};
-		}
 		const formatted_docs = resources
 			.map((doc, index) => {
 				const title = doc.name || `Document ${index + 1}`;
@@ -165,25 +203,30 @@ export async function chatWithLLMByDocs(
 			.replace('{subtasks}', subtasks.join('\n'))
 			.replace('{resources}', formatted_docs);
 
-		const subtask_completed = await checkSubtaskCompleted(history, subtasks);
-		console.log('Formatted system prompt:', {
-			promptLength: system_prompt.length,
-			subtaskCompletedCount: subtask_completed.completed.length
-		});
+		const [response, subtask_completed, moderation, off_topic] = await Promise.all([
+			requestChatLLM(system_prompt, history, temperature),
+			checkSubtaskCompleted(history, subtasks),
+			isHarmfulContent(history[history.length - 1].content),
+			isOffTopic(history, system_prompt)
+		]);
 
-		const response = await requestChatLLM(system_prompt, history, temperature);
-		console.log('Chat response received:', {
-			success: response.success,
-			messageLength: response.message.length
-		});
-
-		if (!response.success) {
-			throw new Error('Failed to parse response');
+		if (
+			!response.success ||
+			!subtask_completed.success ||
+			!moderation.success ||
+			!off_topic.success
+		) {
+			throw new Error('Failed to get response');
 		}
+
 		return {
 			success: true,
 			message: response.message,
-			subtask_completed: subtask_completed.completed
+			subtask_completed: subtask_completed.completed,
+			warning: {
+				moderation: moderation.harmful,
+				off_topic: off_topic.off_topic
+			}
 		};
 	} catch (error) {
 		console.error('Error in chatWithLLMByDocs:', error);
@@ -191,7 +234,8 @@ export async function chatWithLLMByDocs(
 			success: false,
 			message: '',
 			subtask_completed: [],
-			error: 'Failed to chat with LLM'
+			warning: { moderation: false, off_topic: false },
+			error: 'Failed to chat with LLM by docs'
 		};
 	}
 }
