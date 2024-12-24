@@ -87,6 +87,12 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 					status: 'ended',
 					'timing.group.end': now
 				}
+			},
+			preparing: {
+				fromStatus: 'individual',
+				updates: {
+					status: 'preparing'
+				}
 			}
 		};
 
@@ -98,14 +104,14 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		const transition = validTransitions[action as keyof typeof validTransitions];
 
 		// Validate current status
-		if (sessionData.status !== transition.fromStatus) {
+		/*if (sessionData.status !== transition.fromStatus) {
 			return json(
 				{
 					error: `Invalid action ${action} for current status ${sessionData.status}`
 				},
 				{ status: 400 }
 			);
-		}
+		}*/
 
 		// Apply updates
 		await sessionRef.update(transition.updates);

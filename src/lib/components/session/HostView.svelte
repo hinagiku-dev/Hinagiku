@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Play } from 'lucide-svelte';
+	import { X, TriangleAlert, MessageSquareOff } from 'lucide-svelte';
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
 	import QRCode from '$lib/components/QRCode.svelte';
@@ -22,12 +22,12 @@
 	import { writable } from 'svelte/store';
 	import { getUser } from '$lib/utils/getUser';
 	import type { Conversation } from '$lib/schema/conversation';
-	import { X } from 'lucide-svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 	import ChatHistory from './ChatHistory.svelte';
 	import GroupChatHistory from './GroupChatHistory.svelte';
 	import GroupStatus from './GroupStatus.svelte';
+	import StageProgress from './StageProgress.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -41,6 +41,10 @@
 		displayName: string;
 		progress: number;
 		completedTasks: boolean[];
+		warning: {
+			moderation: boolean;
+			offTopic: number;
+		};
 	};
 	let participantProgress = $state(new SvelteMap<string, ParticipantProgress>());
 	let showChatHistory = $state(false);
@@ -109,7 +113,11 @@
 									participantProgress.set(conv.userId, {
 										displayName: userData.displayName,
 										progress,
-										completedTasks: conv.subtaskCompleted
+										completedTasks: conv.subtaskCompleted,
+										warning: {
+											moderation: conv.warning.moderation,
+											offTopic: conv.warning.offTopic
+										}
 									});
 								}
 							});
@@ -341,6 +349,29 @@
 			notifications.error('無法加載群組討論');
 		}
 	}
+
+	async function handlePreparing() {
+		await fetch(`/api/session/${$page.params.id}/action/preparing`, {
+			method: 'POST'
+		});
+	}
+
+	async function handleStageChange(newStage: string) {
+		const actions = {
+			preparing: handlePreparing,
+			individual: handleStartSession,
+			'before-group': handleEndIndividual,
+			group: handleStartGroup,
+			ended: handleEndGroup
+		};
+
+		try {
+			await actions[newStage as keyof typeof actions]();
+		} catch (error) {
+			console.error('Failed to change stage:', error);
+			notifications.error('Failed to change stage');
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
@@ -349,50 +380,31 @@
 			<h1 class="text-3xl font-bold">{$session?.title}</h1>
 		</div>
 
-		<div class="flex items-center gap-4">
-			{#if $session?.status === 'individual'}
-				<div class="flex items-center gap-2">
-					<span class="inline-block h-3 w-3 rounded-full bg-blue-500"></span>
-					<span class="capitalize">Individual Stage</span>
-				</div>
-			{/if}
-			{#if $session && stageButton[$session.status].show}
-				<Button color="primary" on:click={stageButton[$session.status].action}>
-					<Play class="mr-2 h-4 w-4" />
-					{stageButton[$session.status].text}
-				</Button>
-			{/if}
+		<div class="flex items-center gap-6">
+			<StageProgress
+				session={$session}
+				onStageChange={handleStageChange}
+				showAction={$session && stageButton[$session.status].show}
+			/>
 		</div>
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-4">
-		{#if $session?.status && $session.status !== 'individual'}
+		{#if $session?.status && $session.status === 'preparing'}
 			<div class="rounded-lg border p-6">
-				<h2 class="mb-4 text-xl font-semibold">Session Status</h2>
-				<div class="flex items-center gap-2">
-					<span
-						class="inline-block h-3 w-3 rounded-full {$session?.status === 'preparing'
-							? 'bg-yellow-500'
-							: $session?.status === 'before-group'
-								? 'bg-purple-500'
-								: $session?.status === 'group'
-									? 'bg-green-500'
-									: 'bg-gray-500'}"
-					></span>
-					<span class="capitalize">{$session?.status}</span>
-				</div>
-
+				<h2 class="mb-4 text-xl font-semibold">Join Session</h2>
+				<p class="text-gray-700">Please scan the QR code or enter the code to join the session.</p>
 				{#if $session?.status === 'preparing'}
 					<div class="mt-4">
-						<h3 class="mb-2 font-medium">Session QR Code</h3>
 						<div class="flex justify-center">
 							<QRCode value={`${$page.url.origin}/session/${$page.params.id}`} />
 						</div>
 					</div>
 					<div class="mt-4">
-						<h3 class="mb-2 font-medium">Session Code</h3>
 						{#if code === ''}
-							<Button color="primary" on:click={getCode}>Show Code</Button>
+							<div class="flex justify-center">
+								<Button color="primary" on:click={getCode}>Show Code</Button>
+							</div>
 						{:else}
 							<p class="text-center text-5xl font-bold text-orange-600">{code}</p>
 						{/if}
@@ -402,7 +414,7 @@
 		{/if}
 
 		<div
-			class="col-span-3 rounded-lg border p-6 {$session?.status === 'individual'
+			class="col-span-3 rounded-lg border p-6 {$session?.status !== 'preparing'
 				? 'md:col-span-4'
 				: ''}"
 		>
@@ -426,40 +438,63 @@
 							{#if group.participants.length === 0}
 								<p class="text-xs text-gray-500">No participants</p>
 							{:else}
-								<ul class="space-y-2">
+								<ul class="space-y-1.5">
 									{#each group.participants as participant}
-										<li class="space-y-1">
-											<div class="flex items-center gap-2">
-												<span
-													class="min-w-[60px] cursor-pointer text-xs hover:text-primary-600"
-													onclick={() => handleParticipantClick(group.id, participant)}
-													onkeydown={(e) =>
-														e.key === 'Enter' && handleParticipantClick(group.id, participant)}
-													role="button"
-													tabindex="0"
-												>
-													{#await getUser(participant) then userData}
-														{userData.displayName}
-													{/await}
-												</span>
-												{#if participantProgress.has(participant)}
-													<div class="flex h-2">
-														{#each participantProgress.get(participant)?.completedTasks || [] as completed, i}
-															<div
-																class="h-full w-8 border-r border-white first:rounded-l last:rounded-r last:border-r-0 {completed
-																	? 'bg-green-500'
-																	: 'bg-gray-300'}"
-																title={$session?.subtasks[i] || `Subtask ${i + 1}`}
-															></div>
-														{/each}
-													</div>
-												{/if}
+										<li>
+											<div class="flex items-center gap-1.5">
+												<div class="flex flex-1 items-center gap-1.5">
+													<span
+														class="min-w-[50px] cursor-pointer text-xs hover:text-primary-600"
+														onclick={() => handleParticipantClick(group.id, participant)}
+														onkeydown={(e) =>
+															e.key === 'Enter' && handleParticipantClick(group.id, participant)}
+														role="button"
+														tabindex="0"
+													>
+														{#await getUser(participant) then userData}
+															{userData.displayName}
+														{/await}
+													</span>
+													{#if participantProgress.has(participant)}
+														<div class="flex flex-1 items-center gap-1.5">
+															<div class="flex h-1.5 flex-1">
+																{#each participantProgress.get(participant)?.completedTasks || [] as completed, i}
+																	<div
+																		class="h-full flex-1 border-r border-white first:rounded-l last:rounded-r last:border-r-0 {completed
+																			? 'bg-green-500'
+																			: 'bg-gray-300'}"
+																		title={$session?.subtasks[i] || `Subtask ${i + 1}`}
+																	></div>
+																{/each}
+															</div>
+
+															{#if participantProgress.get(participant)?.warning}
+																{@const warning = participantProgress.get(participant)?.warning}
+																{#if warning}
+																	<div
+																		class="flex h-full min-w-[3rem] shrink-0 items-center justify-center rounded-full px-1.5 {warning.moderation
+																			? 'bg-red-500'
+																			: warning.offTopic >= 3
+																				? 'bg-orange-400'
+																				: ''}"
+																	>
+																		{#if warning.moderation}
+																			<TriangleAlert class="h-3 w-3 text-white" />
+																		{:else if warning.offTopic >= 3}
+																			<MessageSquareOff class="h-3 w-3 text-white" />
+																		{/if}
+																	</div>
+																{/if}
+															{/if}
+														</div>
+													{/if}
+												</div>
 												<button
-													class="ml-auto rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-red-500"
+													class="shrink-0 rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-red-500"
 													onclick={() => handleRemoveParticipant(group.id, participant)}
 													title="移除參與者"
 												>
-													<X class="h-4 w-4" />
+													<X class="h-3 w-3" />
 												</button>
 											</div>
 										</li>

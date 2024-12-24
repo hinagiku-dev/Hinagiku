@@ -7,7 +7,7 @@
 	import { Button, Input, Label } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { page } from '$app/stores';
-	import { UserPlus, Users, CircleCheck } from 'lucide-svelte';
+	import { UserPlus, User, Users, CircleCheck } from 'lucide-svelte';
 	import { db } from '$lib/firebase';
 	import { collection, query, where, onSnapshot } from 'firebase/firestore';
 	import { onDestroy, onMount } from 'svelte';
@@ -569,7 +569,7 @@
 							<ul class="space-y-2">
 								{#each groupDoc.data.participants as participant, index}
 									<li class="flex items-center gap-2">
-										<Users class="h-4 w-4" />
+										<User class="h-4 w-4" />
 										<span>
 											{#if participant === user.uid}
 												You{index === 0 ? ' (Leader)' : ''}
