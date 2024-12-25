@@ -394,9 +394,12 @@ export async function summarizeConcepts(
 	}
 }
 
-export async function summarizeGroupOpinions(
-	student_opinion: StudentSpeak[]
-): Promise<{ success: boolean; summary: string; keywords: string[]; error?: string }> {
+export async function summarizeGroupOpinions(student_opinion: StudentSpeak[]): Promise<{
+	success: boolean;
+	summary: string;
+	keywords: Record<string, number>;
+	error?: string;
+}> {
 	try {
 		const formatted_opinions = student_opinion
 			.filter((opinion) => opinion.role !== '摘要小幫手')
@@ -409,7 +412,7 @@ export async function summarizeGroupOpinions(
 		);
 		const summary_group_opinion_schema = z.object({
 			group_summary: z.string(),
-			group_key_points: z.array(z.string())
+			group_key_points: z.record(z.string(), z.number().min(1).max(5))
 		});
 
 		const response = await requestZodLLM(system_prompt, summary_group_opinion_schema);
@@ -430,7 +433,7 @@ export async function summarizeGroupOpinions(
 		return {
 			success: false,
 			summary: '',
-			keywords: [],
+			keywords: {},
 			error: 'Failed to summarize group opinions'
 		};
 	}

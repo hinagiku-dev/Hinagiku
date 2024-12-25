@@ -58,6 +58,7 @@ export const CONCEPT_SUMMARY_PROMPT = `
 
 export const GROUP_OPINION_SUMMARY_PROMPT = `
 請總結以下學生們的小組觀點、想法和結論：
+學生的關鍵字請以以單詞的方式提供，並給予每個單詞的在討論中重要度（1-5），數字越大代表詞彙越重要。
 
 {groupOpinions}
 
