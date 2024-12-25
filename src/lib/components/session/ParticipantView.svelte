@@ -8,7 +8,7 @@
 	import { Button, Input, Label } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { page } from '$app/stores';
-	import { UserPlus, User, Users, CircleCheck } from 'lucide-svelte';
+	import { UserPlus, User, Users, CircleCheck, LogOut } from 'lucide-svelte';
 	import { db } from '$lib/firebase';
 	import { collection, query, where, onSnapshot } from 'firebase/firestore';
 	import { onDestroy, onMount } from 'svelte';
@@ -53,6 +53,7 @@
 		selfUser = getUser(user.uid);
 		const unsbscribe = onSnapshot(groupDocQuery, (snapshot) => {
 			if (snapshot.empty) {
+				groupDoc = null;
 				return;
 			}
 			groupDoc = {
@@ -513,6 +514,29 @@
 			notifications.error('無法結束總結階段');
 		}
 	}
+
+	async function handleLeaveGroup(groupId: string, participant: string) {
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupId}/leave/${participant}`,
+				{
+					method: 'DELETE'
+				}
+			);
+
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || 'Failed to leave group');
+			}
+
+			notifications.success('Successfully left group');
+			groupDoc = null;
+			conversationDoc = null;
+		} catch (error) {
+			console.error('Error leaving group:', error);
+			notifications.error('Failed to leave group');
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-2 py-8">
@@ -569,9 +593,21 @@
 				<h2 class="mb-4 text-xl font-semibold">Group Information</h2>
 				{#if groupDoc}
 					<div class="space-y-4">
-						<div class="flex items-center gap-2">
-							<span class="font-medium">Group </span>
-							<span class="text-lg">#{groupDoc.data.number}</span>
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<span class="font-medium">Group </span>
+								<span class="text-lg">#{groupDoc.data.number}</span>
+							</div>
+							{#if $session?.status === 'preparing'}
+								<Button
+									color="red"
+									size="xs"
+									onclick={() => groupDoc?.id && handleLeaveGroup(groupDoc.id, user.uid)}
+								>
+									<LogOut class="mr-2 h-4 w-4" />
+									Leave Group
+								</Button>
+							{/if}
 						</div>
 						<div>
 							<h3 class="mb-2 font-medium">Members:</h3>

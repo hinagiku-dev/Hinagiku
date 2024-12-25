@@ -252,7 +252,7 @@
 	async function handleRemoveParticipant(groupId: string, participant: string) {
 		try {
 			const response = await fetch(
-				`/api/session/${$page.params.id}/group/${groupId}/join/${participant}`,
+				`/api/session/${$page.params.id}/group/${groupId}/leave/${participant}`,
 				{
 					method: 'DELETE'
 				}
