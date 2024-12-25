@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Imports
 	import { Button, Input, Textarea, Alert, Spinner } from 'flowbite-svelte';
-	import { Trash2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-svelte';
+	import { Trash2, ChevronDown, ChevronUp, ExternalLink, FileText, Upload } from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import type { Template } from '$lib/schema/template';
 	import { notifications } from '$lib/stores/notifications';
@@ -260,18 +260,24 @@
 	{#if resources.length < LIMITS.SOURCES}
 		<!-- initial state with two buttons -->
 		{#if uploadMode === 'none'}
-			<div class="flex h-48 justify-center gap-4">
+			<div class="flex h-28 justify-center gap-4">
 				<Button
-					class="h-full flex-1 bg-blue-200 text-2xl text-blue-700 hover:bg-blue-300"
+					class="h-full flex-1 rounded-lg bg-blue-200 text-xl text-blue-800 shadow-lg transition duration-300 ease-in-out hover:bg-blue-300"
 					on:click={() => (uploadMode = 'text')}
 				>
-					Click to Add Text Resource
+					<div class="flex flex-col items-center gap-2">
+						<FileText class="h-8 w-8" />
+						<span>Add Text Resource</span>
+					</div>
 				</Button>
 				<Button
-					class="h-full flex-1 bg-green-200 text-2xl text-green-700 hover:bg-green-300"
+					class="h-full flex-1 rounded-lg bg-emerald-200 text-xl text-emerald-800 shadow-lg transition duration-300 ease-in-out hover:bg-emerald-300"
 					on:click={() => (uploadMode = 'file')}
 				>
-					Click to Upload File Resource
+					<div class="flex flex-col items-center gap-2">
+						<Upload class="h-8 w-8" />
+						<span>Upload File Resource</span>
+					</div>
 				</Button>
 			</div>
 

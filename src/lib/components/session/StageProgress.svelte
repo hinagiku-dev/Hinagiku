@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { ArrowLeft, ArrowRight } from 'lucide-svelte';
-	import { Button } from 'flowbite-svelte';
+	import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-svelte';
+	import { Button, Modal } from 'flowbite-svelte';
 	import type { Session } from '$lib/schema/session';
 
 	const stages = [
@@ -15,21 +15,43 @@
 	export let onStageChange: (stage: (typeof stages)[number]['id']) => void;
 	export let showAction = true;
 
-	$: currentStageIndex = stages.findIndex((s) => s.id === session?.status);
-	$: canGoPrevious = currentStageIndex > 0;
-	$: canGoNext = currentStageIndex < stages.length - 1;
+	let loadingPrevious = false;
+	let loadingNext = false;
+	let showEndedConfirmModal = false;
 
-	function handlePrevious() {
-		console.log('handlePrevious', canGoPrevious);
+	$: currentStageIndex = stages.findIndex((s) => s.id === session?.status);
+	$: canGoPrevious = currentStageIndex > 0 && !loadingPrevious;
+	$: canGoNext = currentStageIndex < stages.length - 1 && !loadingNext;
+	$: nextStage = currentStageIndex < stages.length - 1 ? stages[currentStageIndex + 1] : null;
+
+	async function handlePrevious() {
 		if (canGoPrevious) {
-			console.log('handlePrevious', stages[currentStageIndex - 1].id);
-			onStageChange(stages[currentStageIndex - 1].id);
+			loadingPrevious = true;
+			try {
+				await onStageChange(stages[currentStageIndex - 1].id);
+			} finally {
+				loadingPrevious = false;
+			}
 		}
 	}
 
-	function handleNext() {
-		if (canGoNext) {
-			onStageChange(stages[currentStageIndex + 1].id);
+	async function handleNext() {
+		if (!canGoNext) return;
+
+		if (nextStage?.id === 'ended') {
+			showEndedConfirmModal = true;
+			return;
+		}
+
+		await proceedToNextStage();
+	}
+
+	async function proceedToNextStage() {
+		loadingNext = true;
+		try {
+			await onStageChange(stages[currentStageIndex + 1].id);
+		} finally {
+			loadingNext = false;
 		}
 	}
 </script>
@@ -69,11 +91,45 @@
 
 {#if showAction}
 	<div class="flex items-center gap-2">
-		<Button color="light" on:click={handlePrevious} disabled={!canGoPrevious}>
-			<ArrowLeft class="h-4 w-4" />
-		</Button>
-		<Button color="light" on:click={handleNext} disabled={!canGoNext}>
-			<ArrowRight class="h-4 w-4" />
+		{#if canGoPrevious}
+			<Button color="light" on:click={handlePrevious} disabled={!canGoPrevious || loadingPrevious}>
+				{#if loadingPrevious && currentStageIndex > 0}
+					<Loader2 class="h-4 w-4 animate-spin" />
+				{:else}
+					<ArrowLeft class="h-4 w-4" />
+				{/if}
+				<span class="ml-2">{stages[currentStageIndex - 1]?.name}</span>
+			</Button>
+		{/if}
+		<Button color="primary" on:click={handleNext} disabled={!canGoNext || loadingNext}>
+			<span class="ml-2">{stages[currentStageIndex + 1]?.name}</span>
+			<span class="ml-2"
+				>{#if loadingNext && currentStageIndex < stages.length - 1}
+					<Loader2 class="h-4 w-4 animate-spin" />
+				{:else}
+					<ArrowRight class="h-4 w-4" />
+				{/if}</span
+			>
 		</Button>
 	</div>
 {/if}
+
+<Modal bind:open={showEndedConfirmModal} size="sm" autoclose class="w-full">
+	<div class="text-center">
+		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-500">
+			進入 Ended Stage 將無法返回，確定要繼續嗎？
+		</h3>
+		<div class="flex justify-center gap-4">
+			<Button
+				color="red"
+				on:click={() => {
+					showEndedConfirmModal = false;
+					proceedToNextStage();
+				}}
+			>
+				確定
+			</Button>
+			<Button color="alternative" on:click={() => (showEndedConfirmModal = false)}>取消</Button>
+		</div>
+	</div>
+</Modal>

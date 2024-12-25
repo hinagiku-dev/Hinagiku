@@ -2,6 +2,22 @@
 	import { user } from '$lib/stores/auth';
 	import { Button, Card } from 'flowbite-svelte';
 	import { ArrowRight, Mic, Brain, GraduationCap, Github } from 'lucide-svelte';
+	import { onMount } from 'svelte';
+
+	let title = $state('Hinagiku');
+	let highlight = $state(0);
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			let newHighlight;
+			do {
+				newHighlight = Math.floor(Math.random() * title.length);
+			} while (newHighlight === highlight);
+			highlight = newHighlight;
+		}, 800);
+
+		return () => clearInterval(interval);
+	});
 </script>
 
 <svelte:head>
@@ -13,8 +29,18 @@
 		<div class="mx-auto max-w-6xl px-4 py-24">
 			<div class="grid items-center gap-12 lg:grid-cols-2">
 				<div class="text-left">
-					<h1 class="mb-6 text-5xl font-bold leading-tight text-gray-900">
-						Transform Educational Discussions with <span class="text-primary-600">AI-Powered</span> Insights
+					<h1 class="mb-6 font-bold leading-tight">
+						<span class="mb-4 block text-2xl text-gray-900"
+							>Transform Educational Discussions with</span
+						>
+						<span class="text-8xl text-gray-500">
+							{#each title as c, i}
+								<span
+									class="transition-colors duration-500"
+									class:text-primary-600={i === highlight}>{c}</span
+								>
+							{/each}
+						</span>
 					</h1>
 					<p class="mb-8 text-xl text-gray-600">
 						Hinagiku helps educators facilitate more engaging and productive discussions through
