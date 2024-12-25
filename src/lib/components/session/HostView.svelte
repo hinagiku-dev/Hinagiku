@@ -376,7 +376,7 @@
 				selectedParticipant = {
 					displayName: userData.displayName,
 					history: conversations[0].history.map((message) => ({
-						name: message.role === 'user' ? userData.displayName : 'AI Assistant',
+						name: message.role === 'user' ? userData.displayName : '小菊(Hinagiku)',
 						content: message.content,
 						self: message.role === 'user',
 						audio: message.audio || undefined

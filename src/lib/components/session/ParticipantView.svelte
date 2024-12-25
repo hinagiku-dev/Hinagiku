@@ -114,7 +114,7 @@
 			return [];
 		}
 		return conversationDoc.data.history.map((message) => ({
-			name: message.role === 'user' ? 'You' : 'AI Assistant',
+			name: message.role === 'user' ? 'You' : '小菊(Hinagiku)',
 			self: message.role === 'user',
 			content: message.content,
 			audio: message.audio || undefined
