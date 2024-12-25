@@ -6,7 +6,7 @@ export const ResourceTypeSchema = z.enum(['text', 'file', 'link']);
 export const ResourceSchema = z.object({
 	id: z.string().uuid(),
 	type: ResourceTypeSchema,
-	name: z.string().min(1).max(200),
+	name: z.string().min(1).max(105),
 	content: z.string().min(1).max(100_000),
 	createdAt: Timestamp,
 	ref: z.string().nullable(), // to find the raw file
