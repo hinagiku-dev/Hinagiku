@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { writable } from 'svelte/store';
+	import { writable, derived } from 'svelte/store';
 	import { Card, Button } from 'flowbite-svelte';
 	import { MessageSquarePlus } from 'lucide-svelte';
 	import {
@@ -15,10 +15,17 @@
 	import { profile } from '$lib/stores/profile';
 	import { db } from '$lib/firebase';
 	import type { Session } from '$lib/schema/session';
+	import { onMount } from 'svelte';
 
 	let { data } = $props();
 
-	let sessions = writable<[string, string, Session][]>([]);
+	let unsoredsessions = writable<[string, string, Session][]>([]);
+
+	let sessions = derived(unsoredsessions, ($unsoredsessions) =>
+		$unsoredsessions.sort(
+			(a, b) => (b[2].createdAt as Timestamp).toMillis() - (a[2].createdAt as Timestamp).toMillis()
+		)
+	);
 
 	async function getSessions() {
 		const sessionQuery = query(
@@ -29,14 +36,22 @@
 		sessionSnapshot.forEach(async (docu) => {
 			const session = await getDoc(docu.ref.parent.parent!);
 			const host = await getDoc(doc(db, 'profiles', session.data()?.host));
-			sessions.update((value) => [
+			let hoster = '';
+			if (!host.exists()) {
+				hoster = 'Unknown';
+			} else {
+				hoster = host.data()?.displayName;
+			}
+			unsoredsessions.update((value) => [
 				...value,
-				[host.data()?.displayName, session.id, session.data() as Session]
+				[hoster, session.id, session.data() as Session]
 			]);
 		});
 	}
 
-	getSessions();
+	onMount(() => {
+		getSessions();
+	});
 </script>
 
 <svelte:head>

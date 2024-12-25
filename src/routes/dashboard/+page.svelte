@@ -69,10 +69,13 @@
 		sessionSnapshot.forEach(async (docu) => {
 			const session = await getDoc(docu.ref.parent.parent!);
 			const host = await getDoc(doc(db, 'profiles', session.data()?.host));
-			sessions.update((value) => [
-				...value,
-				[host.data()?.displayName, session.id, session.data() as Session]
-			]);
+			let hoster = '';
+			if (!host.exists()) {
+				hoster = 'Unknown';
+			} else {
+				hoster = host.data()?.displayName;
+			}
+			sessions.update((value) => [...value, [hoster, session.id, session.data() as Session]]);
 		});
 	}
 
