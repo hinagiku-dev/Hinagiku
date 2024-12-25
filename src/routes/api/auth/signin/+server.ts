@@ -33,6 +33,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 				uid,
 				displayName: user.displayName || 'User',
 				email: user.email || '',
+				title: '',
+				bio: '',
 				createdAt: FieldValue.serverTimestamp(),
 				updatedAt: FieldValue.serverTimestamp()
 			};
