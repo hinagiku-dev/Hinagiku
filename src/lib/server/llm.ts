@@ -179,6 +179,7 @@ export async function chatWithLLMByDocs(
 	history: LLMChatMessage[],
 	task: string,
 	subtasks: string[],
+	subtaskCompleted: boolean[],
 	resources: Resource[],
 	temperature = 0.7
 ): Promise<{
@@ -202,8 +203,12 @@ export async function chatWithLLMByDocs(
 			})
 			.join('\n\n');
 
+		const formattedSubtasks = subtasks.map((subtask, index) => {
+			return subtaskCompleted[index] ? `(完成)${subtask}` : `(未完成)subtask`;
+		});
+
 		const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
-			.replace('{subtasks}', subtasks.join('\n'))
+			.replace('{subtasks}', formattedSubtasks.join('\n'))
 			.replace('{resources}', formatted_docs);
 
 		const [response, subtask_completed, moderation, off_topic] = await Promise.all([
@@ -394,9 +399,12 @@ export async function summarizeConcepts(
 	}
 }
 
-export async function summarizeGroupOpinions(
-	student_opinion: StudentSpeak[]
-): Promise<{ success: boolean; summary: string; keywords: string[]; error?: string }> {
+export async function summarizeGroupOpinions(student_opinion: StudentSpeak[]): Promise<{
+	success: boolean;
+	summary: string;
+	keywords: Record<string, number>;
+	error?: string;
+}> {
 	try {
 		const formatted_opinions = student_opinion
 			.filter((opinion) => opinion.role !== '摘要小幫手')
@@ -409,7 +417,12 @@ export async function summarizeGroupOpinions(
 		);
 		const summary_group_opinion_schema = z.object({
 			group_summary: z.string(),
-			group_key_points: z.array(z.string())
+			group_keywords: z.array(
+				z.object({
+					keyword: z.string(),
+					strength: z.number()
+				})
+			)
 		});
 
 		const response = await requestZodLLM(system_prompt, summary_group_opinion_schema);
@@ -419,18 +432,22 @@ export async function summarizeGroupOpinions(
 		}
 
 		const message = response.message as z.infer<typeof summary_group_opinion_schema>;
+		const formatted_keywords = message.group_keywords.reduce(
+			(acc, keyword) => ({ ...acc, [keyword.keyword]: keyword.strength }),
+			{} as Record<string, number>
+		);
 
 		return {
 			success: true,
 			summary: message.group_summary,
-			keywords: message.group_key_points
+			keywords: formatted_keywords
 		};
 	} catch (error) {
 		console.error('Error in summarizeGroupOpinions:', error);
 		return {
 			success: false,
 			summary: '',
-			keywords: [],
+			keywords: {},
 			error: 'Failed to summarize group opinions'
 		};
 	}
