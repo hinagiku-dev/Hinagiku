@@ -15,7 +15,11 @@
 </svelte:head>
 
 {#if isHost}
-	<HostView {session} />
+	<div class="mx-4">
+		<HostView {session} />
+	</div>
 {:else}
-	<ParticipantView {session} user={data.user} />
+	<div class="mx-4">
+		<ParticipantView {session} user={data.user} />
+	</div>
 {/if}
