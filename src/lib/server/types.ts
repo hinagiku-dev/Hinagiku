@@ -18,10 +18,7 @@ export interface Discussion {
 	id: string | null;
 	content: string;
 	speaker: string;
-	warning: {
-		moderation: boolean;
-		offTopic: boolean;
-	};
+	moderation: boolean;
 }
 
 export interface SummaryData {
