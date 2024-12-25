@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import { writable } from 'svelte/store';
+	import { writable, derived } from 'svelte/store';
 	import { Card, Button } from 'flowbite-svelte';
 	import { MessageSquarePlus, UserPlus, UserCog, GitFork } from 'lucide-svelte';
 	import {
@@ -56,8 +56,13 @@
 		)
 	);
 
-	// list of Sessions
-	let sessions = writable<[string, string, Session][]>([]);
+	let unsoredsessions = writable<[string, string, Session][]>([]);
+
+	let sessions = derived(unsoredsessions, ($unsoredsessions) =>
+		$unsoredsessions.sort(
+			(a, b) => (b[2].createdAt as Timestamp).toMillis() - (a[2].createdAt as Timestamp).toMillis()
+		)
+	);
 
 	async function getSessions() {
 		const sessionQuery = query(
@@ -75,7 +80,10 @@
 			} else {
 				hoster = host.data()?.displayName;
 			}
-			sessions.update((value) => [...value, [hoster, session.id, session.data() as Session]]);
+			unsoredsessions.update((value) => [
+				...value,
+				[hoster, session.id, session.data() as Session]
+			]);
 		});
 	}
 
