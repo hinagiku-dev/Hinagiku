@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		const conversations = await getConversationsFromAllParticipantsData(params.id);
 		return json(conversations);
 	} catch (err) {
-		console.error('Error fetching conversations:', err);
-		throw error(500, '無法獲取對話資料');
+		console.error('Error fetching data:', err);
+		throw error(500, '無法獲取資料');
 	}
 };
