@@ -25,7 +25,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		const group_ref = getGroupRef(id, group_number);
 		const group_data = await getGroupData(group_ref);
 
-		const intro = await chatWithLLMByDocs([], task, subtasks, resources);
+		const intro = await chatWithLLMByDocs(
+			[],
+			task,
+			subtasks,
+			new Array(subtasks.length).fill(false),
+			resources
+		);
 		if (!intro) {
 			throw error(500, 'Error generating intro message');
 		}
