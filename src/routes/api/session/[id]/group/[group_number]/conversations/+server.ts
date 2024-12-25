@@ -1,12 +1,12 @@
-import { chatWithLLMByDocs } from '$lib/server/llm';
 import {
 	createConversation,
 	getGroupData,
 	getGroupRef,
 	getSessionData,
 	getSessionRef
-} from '$lib/utils/firestore';
-import type { LLMChatMessage } from '$lib/utils/types';
+} from '$lib/server/firebase';
+import { chatWithLLMByDocs } from '$lib/server/llm';
+import type { LLMChatMessage } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 

@@ -1,5 +1,4 @@
-import { adminDb } from '$lib/server/firebase';
-import { getGroupRef } from '$lib/utils/firestore';
+import { adminDb, getGroupRef } from '$lib/server/firebase';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';

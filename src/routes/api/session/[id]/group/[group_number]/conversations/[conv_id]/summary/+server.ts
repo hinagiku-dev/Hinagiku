@@ -1,11 +1,11 @@
-import { summarizeConcepts, summarizeStudentChat } from '$lib/server/llm';
 import {
 	getConversationData,
 	getConversationRef,
 	getConversationsData,
 	getConversationsRef,
 	getGroupRef
-} from '$lib/utils/firestore';
+} from '$lib/server/firebase';
+import { summarizeConcepts, summarizeStudentChat } from '$lib/server/llm';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
 

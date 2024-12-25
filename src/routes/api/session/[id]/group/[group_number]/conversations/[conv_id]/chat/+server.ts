@@ -1,6 +1,6 @@
+import { getConversationData, getConversationRef } from '$lib/server/firebase';
 import { chatWithLLMByDocs } from '$lib/server/llm';
-import { getConversationData, getConversationRef } from '$lib/utils/firestore';
-import type { DBChatMessage, LLMChatMessage } from '$lib/utils/types';
+import type { DBChatMessage, LLMChatMessage } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';

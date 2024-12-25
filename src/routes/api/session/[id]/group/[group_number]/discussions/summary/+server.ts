@@ -1,6 +1,6 @@
+import { getGroupData, getGroupRef } from '$lib/server/firebase';
 import { summarizeGroupOpinions } from '$lib/server/llm';
-import { getGroupData, getGroupRef } from '$lib/utils/firestore';
-import type { Discussion, StudentSpeak } from '$lib/utils/types';
+import type { Discussion, StudentSpeak } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json } from '@sveltejs/kit';
 import { z } from 'zod';

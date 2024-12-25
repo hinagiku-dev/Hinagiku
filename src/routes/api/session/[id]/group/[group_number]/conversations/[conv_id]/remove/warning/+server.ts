@@ -1,4 +1,4 @@
-import { getConversationRef, getSessionData, getSessionRef } from '$lib/utils/firestore';
+import { getConversationRef, getSessionData, getSessionRef } from '$lib/server/firebase';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 

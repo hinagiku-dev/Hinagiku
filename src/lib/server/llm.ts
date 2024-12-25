@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import type { Resource } from '$lib/schema/resource';
-import type { LLMChatMessage, StudentSpeak } from '$lib/utils/types';
+import type { LLMChatMessage, StudentSpeak } from '$lib/server/types';
 import fs from 'fs/promises';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';

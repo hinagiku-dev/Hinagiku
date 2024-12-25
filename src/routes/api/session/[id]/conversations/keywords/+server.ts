@@ -1,4 +1,4 @@
-import { getGroupsData, getGroupsRef } from '$lib/utils/firestore';
+import { getGroupsData, getGroupsRef } from '$lib/server/firebase';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
