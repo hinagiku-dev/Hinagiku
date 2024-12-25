@@ -78,7 +78,11 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 				{
 					role: 'user',
 					content: content,
-					audio: audio
+					audio: audio,
+					warning: {
+						moderation: response.warning.moderation,
+						offTopic: response.warning.off_topic
+					}
 				},
 				{
 					role: 'assistant',

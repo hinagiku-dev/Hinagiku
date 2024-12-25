@@ -12,10 +12,7 @@ export const GroupSchema = z.object({
 			id: z.string().nullable(),
 			speaker: z.string(),
 			audio: z.string().nullable(), // to find the raw file
-			warning: z.object({
-				moderation: z.boolean().default(false),
-				offTopic: z.boolean().default(false)
-			})
+			moderation: z.boolean().default(false)
 		})
 	),
 	updatedAt: z.date().nullable(),

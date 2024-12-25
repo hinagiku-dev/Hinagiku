@@ -1,4 +1,6 @@
+import type { Group } from '$lib/schema/group';
 import { adminDb, getGroupRef } from '$lib/server/firebase';
+import { isHarmfulContent } from '$lib/server/llm';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -25,12 +27,13 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		const group_ref = getGroupRef(id, group_number);
 		await adminDb.runTransaction(async (t) => {
 			const doc = await t.get(group_ref);
-			const data = doc.data();
+			const data = doc.data() as Group;
 			if (!data || !data.discussions) {
 				throw error(400, 'Discussions not found');
 			}
 			const { discussions } = data;
 			const { content, speaker, audio } = await getRequestData(request);
+			const moderation = await isHarmfulContent(content);
 			t.update(group_ref, {
 				discussions: [
 					...discussions,
@@ -38,7 +41,8 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 						id: locals.user?.uid,
 						content: content,
 						speaker: speaker,
-						audio: audio
+						audio: audio,
+						moderation: moderation
 					}
 				],
 				updatedAt: new Date()

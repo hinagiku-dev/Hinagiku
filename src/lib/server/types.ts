@@ -11,7 +11,7 @@ export interface DBChatMessage {
 	warning: {
 		moderation: boolean;
 		offTopic: boolean;
-	};
+	} | null;
 }
 
 export interface Discussion {

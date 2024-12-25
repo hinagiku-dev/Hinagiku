@@ -19,7 +19,7 @@ const openai = new OpenAI({
 	baseURL: env.OPENAI_BASE_URL
 });
 
-async function isHarmfulContent(
+export async function isHarmfulContent(
 	content: string
 ): Promise<{ success: boolean; harmful: boolean; error?: string }> {
 	console.log('Checking content for harmful content:', { contentLength: content.length });

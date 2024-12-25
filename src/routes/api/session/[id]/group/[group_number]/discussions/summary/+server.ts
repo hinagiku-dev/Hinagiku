@@ -1,5 +1,6 @@
 import { getGroupData, getGroupRef } from '$lib/server/firebase';
 import { summarizeGroupOpinions } from '$lib/server/llm';
+import type { Discussion } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -27,7 +28,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 		const student_opinions = discussions.map((discussion) => {
 			discussion.speaker = discussion.speaker ? discussion.speaker : 'student';
-			return discussion;
+			return discussion as Discussion;
 		});
 
 		const response = await summarizeGroupOpinions(student_opinions);
