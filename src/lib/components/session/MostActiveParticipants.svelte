@@ -14,7 +14,6 @@
 
 	// Add user name mapping store
 	let userNames = new Map<string, string>();
-	let loading = true;
 
 	function getColorByRatio(ratio: number): string {
 		const h = 12;
@@ -24,7 +23,7 @@
 	}
 
 	async function updateChart() {
-		if (!container) return;
+		if (!container || !conversations || conversations.length === 0) return;
 
 		if (!chart) {
 			chart = echarts.init(container);
@@ -46,7 +45,6 @@
 
 		// Load user profiles if not cached
 		const userIds = Object.keys(participantData);
-		loading = true;
 
 		await Promise.all(
 			userIds.map(async (uid) => {
@@ -57,13 +55,11 @@
 			})
 		);
 
-		loading = false;
-
 		const sortedData = Object.entries(participantData)
 			.sort(([, a], [, b]) => b - a)
 			.slice(0, 5)
 			.reverse();
-
+		console.log('sortedData', sortedData);
 		const maxValue = sortedData[sortedData.length - 1][1];
 
 		chart.setOption({
@@ -111,13 +107,15 @@
 	});
 
 	$effect(() => {
-		if (!loading && conversations && chart) {
+		if (conversations && conversations.length > 0) {
 			updateChart();
 		}
 	});
 
 	onMount(() => {
-		updateChart();
+		if (conversations && conversations.length > 0) {
+			updateChart();
+		}
 	});
 
 	onDestroy(() => {
@@ -125,4 +123,8 @@
 	});
 </script>
 
-<div bind:this={container} class="h-full w-full"></div>
+<div bind:this={container} class="h-full w-full">
+	{#if !conversations || conversations.length === 0}
+		<div class="flex h-full w-full items-center justify-center text-gray-500">暫無數據</div>
+	{/if}
+</div>

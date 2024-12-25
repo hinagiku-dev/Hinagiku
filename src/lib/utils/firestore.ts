@@ -127,3 +127,36 @@ export async function getSessionData(
 
 	return session.data() as Session;
 }
+
+export async function getConversationsFromAllParticipantsData(
+	id: string
+): Promise<Array<Conversation & { groupId: string; conversationId: string }>> {
+	// 先獲取所有群組
+	const groupsRef = getGroupsRef(id);
+	const groups = await groupsRef.get();
+
+	if (groups.empty) {
+		throw error(404, 'No groups found');
+	}
+
+	// 獲取每個群組中的所有對話
+	const conversationsPromises = groups.docs.map(async (groupDoc) => {
+		const conversationsRef = getConversationsRef(id, groupDoc.id);
+		const conversations = await conversationsRef.get();
+
+		return conversations.docs.map((doc) => ({
+			...(doc.data() as Conversation),
+			groupId: groupDoc.id,
+			conversationId: doc.id
+		}));
+	});
+
+	const allConversations = await Promise.all(conversationsPromises);
+	const flattenedConversations = allConversations.flat();
+
+	if (flattenedConversations.length === 0) {
+		throw error(404, 'No conversations found');
+	}
+
+	return flattenedConversations;
+}

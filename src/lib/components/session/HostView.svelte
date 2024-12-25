@@ -74,6 +74,8 @@
 			avatar?: string;
 		}>;
 	} | null>(null);
+	let conversationsData = $state<Array<Conversation>>([]);
+	let keywordData = $state<Record<string, number>>({});
 
 	onMount(() => {
 		const unsubscribes: (() => void)[] = [];
@@ -408,6 +410,50 @@
 			notifications.error('Failed to change stage');
 		}
 	}
+
+	async function loadConversationsData() {
+		try {
+			if (!$page.params.id) return;
+
+			const response = await fetch(
+				`/api/session/${$page.params.id}/conversations/most-active-participants`
+			);
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || '無法獲取對話資料');
+			}
+
+			conversationsData = await response.json();
+			console.log(conversationsData);
+		} catch (error) {
+			console.error('無法加載對話資料:', error);
+			notifications.error('無法加載對話資料');
+		}
+	}
+
+	async function loadKeywordData() {
+		try {
+			if (!$page.params.id) return;
+
+			const response = await fetch(`/api/session/${$page.params.id}/conversations/keywords`);
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || '無法獲取關鍵字資料');
+			}
+
+			keywordData = await response.json();
+		} catch (error) {
+			console.error('無法加載關鍵字資料:', error);
+			notifications.error('無法加載關鍵字資料');
+		}
+	}
+
+	$effect(() => {
+		if ($session?.status === 'ended') {
+			loadConversationsData();
+			loadKeywordData();
+		}
+	});
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
@@ -454,14 +500,14 @@
 				<h2 class="mb-4 text-xl font-semibold">Final Summary</h2>
 				<div class="flex w-full flex-col gap-4">
 					<div class="h-96">
-						<WordCloud />
+						<WordCloud words={keywordData} />
 					</div>
 					<div class="flex w-full gap-4">
 						<div class="h-96 flex-1">
-							<MostActiveParticipants />
+							<MostActiveParticipants conversations={conversationsData} />
 						</div>
 						<div class="h-96 flex-1">
-							<MostActiveGroups />
+							<MostActiveGroups groups={$groups} />
 						</div>
 					</div>
 				</div>
