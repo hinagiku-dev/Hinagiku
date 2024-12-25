@@ -45,6 +45,8 @@
 	let pInitFFmpeg: Promise<void> | null = null;
 	let selfUser: Promise<Profile> | null = null;
 
+	let isCreatingGroup = $state(false);
+
 	onMount(() => {
 		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
 		const groupDocQuery = query(groupsRef, where('participants', 'array-contains', user.uid));
@@ -119,6 +121,9 @@
 	});
 
 	async function handleCreateGroup() {
+		if (isCreatingGroup) return;
+		isCreatingGroup = true;
+
 		try {
 			const response = await fetch(`/api/session/${$page.params.id}/group`, {
 				method: 'POST'
@@ -135,6 +140,8 @@
 		} catch (error) {
 			console.error('Error creating group:', error);
 			notifications.error('Failed to create group');
+		} finally {
+			isCreatingGroup = false;
 		}
 	}
 
@@ -612,9 +619,9 @@
 								</Button>
 							</div>
 						{:else}
-							<Button color="primary" on:click={handleCreateGroup}>
+							<Button color="primary" on:click={handleCreateGroup} disabled={isCreatingGroup}>
 								<Users class="mr-2 h-4 w-4" />
-								Create New Group
+								{isCreatingGroup ? 'Creating...' : 'Create New Group'}
 							</Button>
 						{/if}
 						<Button color="alternative" on:click={() => (creating = !creating)}>
