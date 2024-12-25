@@ -10,8 +10,8 @@
 	// Constants
 	const LIMITS = {
 		SOURCES: 10,
-		NAME_LENGTH: 30,
-		CONTENT_LENGTH: 100
+		NAME_LENGTH: 100,
+		CONTENT_LENGTH: 1000
 	};
 
 	// Props
