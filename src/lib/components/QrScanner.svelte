@@ -36,11 +36,14 @@
 					scanning = false;
 				},
 				(err) => {
-					notifications.error(err);
+					if ((err as unknown as Error).toString().includes('NotFoundException')) {
+						return;
+					}
+					notifications.error(`error during scanning: ${err}`);
 				}
 			);
 		} catch (err) {
-			notifications.error(`Error starting camera: ${err}`);
+			notifications.error(`error during starting camera: ${err}`);
 			scanning = false;
 		}
 	}
@@ -53,7 +56,15 @@
 			const result = await scanner.scanFile(file, true);
 			onScan(result);
 		} catch (err) {
-			notifications.error(`Error scanning file: ${err}`);
+			if ((err as unknown as Error).toString().includes('NotFoundException')) {
+				notifications.error(
+					'Unable to find QR code in the image. Please ensure the image is clear and contains a valid QR code.'
+				);
+			} else {
+				notifications.error(`error during scanning file: ${err}`);
+			}
+		} finally {
+			fileInput.value = '';
 		}
 	}
 </script>
