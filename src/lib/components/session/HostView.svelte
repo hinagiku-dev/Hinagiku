@@ -16,7 +16,8 @@
 		Timestamp,
 		query,
 		where,
-		limit
+		limit,
+		doc
 	} from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { writable } from 'svelte/store';
@@ -39,7 +40,7 @@
 		updatedAt: Timestamp | undefined;
 	};
 	let groups = writable<GroupWithId[]>([]);
-	let participantNames = $state(new Map<string, string>());
+	let participantNames = writable(new Map<string, string>());
 	type ParticipantProgress = {
 		displayName: string;
 		progress: number;
@@ -89,17 +90,40 @@
 					);
 					groups.set(groupsData);
 
-					groupsData.forEach(async (group) => {
-						for (const participant of group.participants) {
-							try {
-								const userData = await getUser(participant);
-								participantNames.set(participant, userData.displayName);
-							} catch (error) {
-								console.error(`無法獲取使用者 ${participant} 的資料:`, error);
-								participantNames.set(participant, '未知使用者');
-							}
-						}
+					const allParticipants = new Set<string>();
+					groupsData.forEach((group) => {
+						group.participants.forEach((participant) => {
+							allParticipants.add(participant);
+						});
+					});
 
+					allParticipants.forEach((participant) => {
+						const profileRef = doc(db, 'profiles', participant);
+						const unsubscribe = onSnapshot(
+							profileRef,
+							(doc) => {
+								const profile = doc.data();
+								if (profile) {
+									participantNames.update((names) => {
+										const newNames = new Map(names);
+										newNames.set(participant, profile.displayName);
+										return newNames;
+									});
+								}
+							},
+							(error) => {
+								console.error(`無法監聽使用者 ${participant} 的資料:`, error);
+								participantNames.update((names) => {
+									const newNames = new Map(names);
+									newNames.set(participant, '未知使用者');
+									return newNames;
+								});
+							}
+						);
+						unsubscribes.push(unsubscribe);
+					});
+
+					groupsData.forEach(async (group) => {
 						if (!groupChecked.has(group.id)) {
 							groupChecked.add(group.id);
 
@@ -552,9 +576,7 @@
 														role="button"
 														tabindex="0"
 													>
-														{#await getUser(participant) then userData}
-															{userData.displayName}
-														{/await}
+														{$participantNames.get(participant) || '載入中...'}
 													</span>
 													{#if participantProgress.has(participant)}
 														<div class="flex flex-1 items-center gap-1.5">
