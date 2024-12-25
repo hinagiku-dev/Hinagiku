@@ -1,6 +1,14 @@
 <script lang="ts">
 	import type { Group } from '$lib/schema/group';
 
+	const tagColors = [
+		'bg-blue-100 text-blue-700',
+		'bg-green-100 text-green-700',
+		'bg-purple-100 text-purple-700',
+		'bg-pink-100 text-pink-700',
+		'bg-yellow-100 text-yellow-700'
+	];
+
 	export let group: {
 		data: Group;
 		id: string;
@@ -103,11 +111,13 @@
 							/>
 						{/each}
 					{:else}
-						<ul class="list-inside list-disc space-y-2">
-							{#each summaryData.keywords as { text }}
-								<li class="text-gray-700">{text}</li>
+						<div class="flex flex-wrap gap-2">
+							{#each summaryData.keywords as { text }, i}
+								<span class="rounded-full px-3 py-1 text-sm {tagColors[i % tagColors.length]}">
+									#{text}
+								</span>
 							{/each}
-						</ul>
+						</div>
 					{/if}
 				</div>
 			{/if}
