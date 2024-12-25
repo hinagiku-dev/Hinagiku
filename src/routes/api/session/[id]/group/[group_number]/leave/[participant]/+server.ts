@@ -1,12 +1,24 @@
-import { adminDb } from '$lib/server/firebase';
+import { adminDb, checkRemoveParticipantPermission } from '$lib/server/firebase';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const DELETE: RequestHandler = async ({ params }) => {
+export const DELETE: RequestHandler = async ({ params, locals }) => {
 	try {
 		const { id, group_number, participant } = params;
+		const userId = locals.user?.uid;
+		if (!userId) {
+			throw error(401, '未登入');
+		}
+
 		if (!participant) {
 			throw error(400, '缺少參與者ID');
+		}
+
+		// 檢查權限
+		const hasPermission = await checkRemoveParticipantPermission(id, userId, participant);
+
+		if (!hasPermission) {
+			throw error(403, '您沒有權限移除此參與者');
 		}
 
 		// 找到群組

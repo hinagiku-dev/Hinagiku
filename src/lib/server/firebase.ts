@@ -183,3 +183,15 @@ export async function getConversationsFromAllParticipantsData(
 
 	return flattenedConversations;
 }
+
+export async function checkRemoveParticipantPermission(
+	sessionId: string,
+	userId: string,
+	participantToRemove: string
+): Promise<boolean> {
+	const sessionRef = getSessionRef(sessionId);
+	const session = await getSessionData(sessionRef);
+
+	// 檢查是否為 session host 或是要被移除的參與者本人
+	return session.host === userId || userId === participantToRemove;
+}
