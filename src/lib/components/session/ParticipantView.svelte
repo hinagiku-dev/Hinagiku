@@ -553,6 +553,8 @@
 					<CircleCheck class="mr-2 h-4 w-4" />
 					Confirm Group Summary
 				</Button>
+			{:else if groupStatus === 'end'}
+				<p class="text-gray-600">Please wait for the host to finish</p>
 			{/if}
 		{/if}
 	</div>

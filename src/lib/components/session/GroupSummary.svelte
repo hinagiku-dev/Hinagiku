@@ -1,33 +1,52 @@
 <script lang="ts">
 	import type { Group } from '$lib/schema/group';
 
+	const tagColors = [
+		'bg-blue-100 text-blue-700',
+		'bg-green-100 text-green-700',
+		'bg-purple-100 text-purple-700',
+		'bg-pink-100 text-pink-700',
+		'bg-yellow-100 text-yellow-700'
+	];
+
 	export let group: {
 		data: Group;
 		id: string;
 	};
 	export let loading = false;
 	export let onRefresh: () => Promise<void>;
-	export let onUpdate: (summary: string, keywords: string[]) => Promise<void>;
+	export let onUpdate: (summary: string, keywords: Record<string, number>) => Promise<void>;
 	export let readonly = false;
 
 	let isEditing = false;
 	let editedSummary = '';
-	let editedKeywords: string[] = [];
+	let editedKeywords: { text: string; weight: number }[] = [];
 
 	$: summaryData = group.data.summary
 		? {
 				summary: group.data.summary,
-				keywords: Object.entries(group.data.keywords || {}).map(([, text]) => `${text}`)
+				keywords: Object.entries(group.data.keywords || {})
+					.map(([text, weight]) => ({
+						text,
+						weight
+					}))
+					.sort((a, b) => b.weight - a.weight)
 			}
 		: null;
 
 	$: if (summaryData && !isEditing) {
 		editedSummary = summaryData.summary;
-		editedKeywords = [...summaryData.keywords];
+		editedKeywords = summaryData.keywords.map((k) => ({ text: k.text, weight: k.weight }));
 	}
 
 	async function handleUpdateSummary() {
-		await onUpdate(editedSummary, editedKeywords);
+		const keywordsObject = Object.fromEntries(
+			editedKeywords.map((k) => [
+				k.text,
+				summaryData?.keywords.find((orig) => orig.text === k.text)?.weight ?? 5
+			])
+		);
+		await onUpdate(editedSummary, keywordsObject);
 		isEditing = false;
 	}
 </script>
@@ -84,20 +103,21 @@
 				<div>
 					<h3 class="mb-2 font-medium">討論關鍵字：</h3>
 					{#if isEditing && !readonly}
-						<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
-						{#each editedKeywords as _, i}
+						{#each editedKeywords as keyword}
 							<input
 								type="text"
 								class="mb-2 w-full rounded-lg border p-2 text-gray-700"
-								bind:value={editedKeywords[i]}
+								bind:value={keyword.text}
 							/>
 						{/each}
 					{:else}
-						<ul class="list-inside list-disc space-y-2">
-							{#each summaryData.keywords as point}
-								<li class="text-gray-700">{point}</li>
+						<div class="flex flex-wrap gap-2">
+							{#each summaryData.keywords as { text }, i}
+								<span class="rounded-full px-3 py-1 text-sm {tagColors[i % tagColors.length]}">
+									#{text}
+								</span>
 							{/each}
-						</ul>
+						</div>
 					{/if}
 				</div>
 			{/if}

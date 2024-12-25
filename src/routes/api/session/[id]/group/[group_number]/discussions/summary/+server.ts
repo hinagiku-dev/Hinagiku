@@ -53,7 +53,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 // Request data format
 const requestDataFormat = z.object({
 	updated_summary: z.string(),
-	keywords: z.array(z.string())
+	keywords: z.record(z.string(), z.number())
 });
 
 export const PUT: RequestHandler = async ({ request, params, locals }) => {
