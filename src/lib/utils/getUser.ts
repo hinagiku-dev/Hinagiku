@@ -21,6 +21,7 @@ export function getUser(uid: string): Promise<Profile> {
 				bio: null
 			};
 		}
+		console.log(`取得使用者資料: ${JSON.stringify(data)}`);
 		return ProfileSchema.omit({ updatedAt: true, createdAt: true }).parse(data);
 	})();
 	cache.set(uid, user);
