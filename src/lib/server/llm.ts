@@ -417,7 +417,12 @@ export async function summarizeGroupOpinions(student_opinion: StudentSpeak[]): P
 		);
 		const summary_group_opinion_schema = z.object({
 			group_summary: z.string(),
-			group_key_points: z.record(z.string(), z.number().min(1).max(5))
+			group_keywords: z.array(
+				z.object({
+					keyword: z.string(),
+					strength: z.number()
+				})
+			)
 		});
 
 		const response = await requestZodLLM(system_prompt, summary_group_opinion_schema);
@@ -427,11 +432,15 @@ export async function summarizeGroupOpinions(student_opinion: StudentSpeak[]): P
 		}
 
 		const message = response.message as z.infer<typeof summary_group_opinion_schema>;
+		const formatted_keywords = message.group_keywords.reduce(
+			(acc, keyword) => ({ ...acc, [keyword.keyword]: keyword.strength }),
+			{} as Record<string, number>
+		);
 
 		return {
 			success: true,
 			summary: message.group_summary,
-			keywords: message.group_key_points
+			keywords: formatted_keywords
 		};
 	} catch (error) {
 		console.error('Error in summarizeGroupOpinions:', error);
