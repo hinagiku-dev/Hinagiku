@@ -15,7 +15,9 @@
 		"test": "vitest",
 		"stt": "pnpm tsx scripts/speech2text.ts",
 		"pdf": "pnpm tsx scripts/pdf2text.ts",
-		"tsx": "tsx --tsconfig tsconfig.tsx.json"
+		"tsx": "tsx --tsconfig tsconfig.tsx.json",
+		"student": "pnpm tsx scripts/createTestStudent.ts",
+		"conversation": "pnpm tsx scripts/createTestConversation.ts"
 	},
 	"devDependencies": {
 		"@aws-sdk/client-s3": "^3.717.0",

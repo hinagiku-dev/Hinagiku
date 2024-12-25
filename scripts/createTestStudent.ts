@@ -22,7 +22,8 @@ async function createTestStudents() {
 			updatedAt: Timestamp.now(),
 			createdAt: Timestamp.now()
 		};
-
+		//print out the profile
+		//console.log(profile);
 		// 驗證 profile 是否符合 schema
 		ProfileSchema.parse(profile);
 
@@ -41,11 +42,13 @@ async function createTestStudents() {
 		concept: null,
 		discussions: [],
 		summary: null,
+		updatedAt: null,
 		keywords: {} as Record<string, number>
 	}));
 
 	// 驗證每個 group 是否符合 schema 並儲存到資料庫
 	for (const group of groups) {
+		//console.log(group);
 		GroupSchema.parse(group);
 		await adminDb.collection('sessions').doc(sessionId).collection('groups').add(group);
 	}
