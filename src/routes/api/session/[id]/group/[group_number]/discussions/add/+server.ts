@@ -24,6 +24,9 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			throw error(400, 'Missing parameters');
 		}
 
+		const { content, speaker, audio } = await getRequestData(request);
+		const moderation = await isHarmfulContent(content);
+
 		const group_ref = getGroupRef(id, group_number);
 		await adminDb.runTransaction(async (t) => {
 			const doc = await t.get(group_ref);
@@ -32,8 +35,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 				throw error(400, 'Discussions not found');
 			}
 			const { discussions } = data;
-			const { content, speaker, audio } = await getRequestData(request);
-			const moderation = await isHarmfulContent(content);
+
 			t.update(group_ref, {
 				discussions: [
 					...discussions,
