@@ -42,7 +42,7 @@ async function createTestStudents() {
 		concept: null,
 		discussions: [],
 		summary: null,
-		updatedAt: null,
+		updatedAt: Timestamp.now(),
 		keywords: {} as Record<string, number>
 	}));
 
