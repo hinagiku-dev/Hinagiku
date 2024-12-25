@@ -13,8 +13,8 @@ export const GET: RequestHandler = async ({ params }) => {
 		// 遍歷所有群組的關鍵字
 		groups.forEach((group) => {
 			if (group.keywords) {
-				Object.entries(group.keywords).forEach(([, count]) => {
-					keywordFrequency[count] = (keywordFrequency[count] || 0) + 1;
+				Object.entries(group.keywords).forEach(([keyword, count]) => {
+					keywordFrequency[keyword] = (keywordFrequency[keyword] || 0) + count;
 				});
 			}
 		});
