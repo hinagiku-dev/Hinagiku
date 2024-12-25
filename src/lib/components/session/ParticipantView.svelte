@@ -598,16 +598,6 @@
 								<span class="font-medium">Group </span>
 								<span class="text-lg">#{groupDoc.data.number}</span>
 							</div>
-							{#if $session?.status === 'preparing'}
-								<Button
-									color="red"
-									size="xs"
-									onclick={() => groupDoc?.id && handleLeaveGroup(groupDoc.id, user.uid)}
-								>
-									<LogOut class="mr-2 h-4 w-4" />
-									Leave Group
-								</Button>
-							{/if}
 						</div>
 						<div>
 							<h3 class="mb-2 font-medium">Members:</h3>
@@ -631,6 +621,27 @@
 									</li>
 								{/each}
 							</ul>
+						</div>
+						<div>
+							{#if $session?.status === 'preparing'}
+								<Button
+									color="red"
+									size="xs"
+									class="hidden sm:flex"
+									onclick={() => groupDoc?.id && handleLeaveGroup(groupDoc.id, user.uid)}
+								>
+									<LogOut class="mr-2 h-4 w-4" />
+									Leave Group
+								</Button>
+								<Button
+									color="red"
+									size="xs"
+									class="sm:hidden"
+									onclick={() => groupDoc?.id && handleLeaveGroup(groupDoc.id, user.uid)}
+								>
+									<LogOut class="h-4 w-4" />
+								</Button>
+							{/if}
 						</div>
 					</div>
 				{:else if $session?.status === 'preparing'}
