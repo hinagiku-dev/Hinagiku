@@ -179,6 +179,7 @@ export async function chatWithLLMByDocs(
 	history: LLMChatMessage[],
 	task: string,
 	subtasks: string[],
+	subtaskCompleted: boolean[],
 	resources: Resource[],
 	temperature = 0.7
 ): Promise<{
@@ -202,8 +203,12 @@ export async function chatWithLLMByDocs(
 			})
 			.join('\n\n');
 
+		const formattedSubtasks = subtasks.map((subtask, index) => {
+			return subtaskCompleted[index] ? `(完成)${subtask}` : `(未完成)subtask`;
+		});
+
 		const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
-			.replace('{subtasks}', subtasks.join('\n'))
+			.replace('{subtasks}', formattedSubtasks.join('\n'))
 			.replace('{resources}', formatted_docs);
 
 		const [response, subtask_completed, moderation, off_topic] = await Promise.all([

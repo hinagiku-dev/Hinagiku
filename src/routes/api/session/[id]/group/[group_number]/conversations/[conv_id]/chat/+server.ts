@@ -26,7 +26,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			throw error(400, 'Missing parameters');
 		}
 
-		const conversation_ref = await getConversationRef(id, group_number, conv_id);
+		const conversation_ref = getConversationRef(id, group_number, conv_id);
 		console.log('Retrieved conversation reference');
 		const { userId, task, subtasks, resources, history, warning, subtaskCompleted } =
 			await getConversationData(conversation_ref);
@@ -58,6 +58,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			[...chat_history, { role: 'user', content: content }],
 			task,
 			subtasks,
+			subtaskCompleted,
 			resources
 		);
 		console.log('Received LLM response', {
