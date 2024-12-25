@@ -545,7 +545,7 @@
 											<div class="flex items-center gap-1.5">
 												<div class="flex flex-1 items-center gap-1.5">
 													<span
-														class="min-w-[50px] cursor-pointer text-xs hover:text-primary-600"
+														class="min-w-[60px] max-w-[60px] cursor-pointer truncate text-xs hover:text-primary-600"
 														onclick={() => handleParticipantClick(group.id, participant)}
 														onkeydown={(e) =>
 															e.key === 'Enter' && handleParticipantClick(group.id, participant)}
