@@ -91,7 +91,7 @@
 
 {#if showAction}
 	<div class="flex items-center gap-2">
-		{#if canGoPrevious}
+		{#if canGoPrevious || loadingPrevious}
 			<Button color="light" on:click={handlePrevious} disabled={!canGoPrevious || loadingPrevious}>
 				{#if loadingPrevious && currentStageIndex > 0}
 					<Loader2 class="h-4 w-4 animate-spin" />
