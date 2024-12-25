@@ -42,7 +42,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 						content: content,
 						speaker: speaker,
 						audio: audio,
-						moderation: moderation
+						moderation: moderation.harmful
 					}
 				],
 				updatedAt: new Date()
