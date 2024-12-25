@@ -1,6 +1,5 @@
 import { getGroupData, getGroupRef } from '$lib/server/firebase';
 import { summarizeGroupOpinions } from '$lib/server/llm';
-import type { Discussion, StudentSpeak } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -26,7 +25,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			status: 'summarize'
 		});
 
-		const student_opinions = discussion2StudentSpeak(discussions);
+		const student_opinions = discussions.map((discussion) => {
+			discussion.speaker = discussion.speaker ? discussion.speaker : 'student';
+			return discussion;
+		});
 
 		const response = await summarizeGroupOpinions(student_opinions);
 		if (!response.success) {
@@ -78,13 +80,6 @@ export const PUT: RequestHandler = async ({ request, params, locals }) => {
 		return json({ error: 'Error updating discussion summary' }, { status: 500 });
 	}
 };
-
-function discussion2StudentSpeak(discussions: Discussion[]): StudentSpeak[] {
-	return discussions.map((discussion) => ({
-		role: discussion.speaker ? discussion.speaker : 'student',
-		content: discussion.content
-	}));
-}
 
 async function getRequestData(request: Request): Promise<z.infer<typeof requestDataFormat>> {
 	const data = await request.json();

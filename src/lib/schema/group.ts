@@ -10,8 +10,12 @@ export const GroupSchema = z.object({
 		z.object({
 			content: z.string(),
 			id: z.string().nullable(),
-			speaker: z.string(), // i am not sure if this is going to be used
-			audio: z.string().nullable() // to find the raw file
+			speaker: z.string(),
+			audio: z.string().nullable(), // to find the raw file
+			warning: z.object({
+				moderation: z.boolean().default(false),
+				offTopic: z.boolean().default(false)
+			})
 		})
 	),
 	updatedAt: z.date().nullable(),

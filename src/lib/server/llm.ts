@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import type { Resource } from '$lib/schema/resource';
-import type { LLMChatMessage, StudentSpeak } from '$lib/server/types';
+import type { Discussion, LLMChatMessage } from '$lib/server/types';
 import fs from 'fs/promises';
 import { OpenAI } from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
@@ -395,12 +395,12 @@ export async function summarizeConcepts(
 }
 
 export async function summarizeGroupOpinions(
-	student_opinion: StudentSpeak[]
+	student_opinion: Discussion[]
 ): Promise<{ success: boolean; summary: string; keywords: string[]; error?: string }> {
 	try {
 		const formatted_opinions = student_opinion
-			.filter((opinion) => opinion.role !== '摘要小幫手')
-			.map((opinion) => `${opinion.role}: ${opinion.content}`)
+			.filter((opinion) => opinion.speaker !== '摘要小幫手')
+			.map((opinion) => `${opinion.speaker}: ${opinion.content}`)
 			.join('\n');
 
 		const system_prompt = GROUP_OPINION_SUMMARY_PROMPT.replace(
