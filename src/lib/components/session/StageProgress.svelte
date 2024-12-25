@@ -91,15 +91,17 @@
 
 {#if showAction}
 	<div class="flex items-center gap-2">
-		<Button color="light" on:click={handlePrevious} disabled={!canGoPrevious || loadingPrevious}>
-			{#if loadingPrevious && currentStageIndex > 0}
-				<Loader2 class="h-4 w-4 animate-spin" />
-			{:else}
-				<ArrowLeft class="h-4 w-4" />
-			{/if}
-			<span class="ml-2">{stages[currentStageIndex - 1]?.name}</span>
-		</Button>
-		<Button color="light" on:click={handleNext} disabled={!canGoNext || loadingNext}>
+		{#if canGoPrevious}
+			<Button color="light" on:click={handlePrevious} disabled={!canGoPrevious || loadingPrevious}>
+				{#if loadingPrevious && currentStageIndex > 0}
+					<Loader2 class="h-4 w-4 animate-spin" />
+				{:else}
+					<ArrowLeft class="h-4 w-4" />
+				{/if}
+				<span class="ml-2">{stages[currentStageIndex - 1]?.name}</span>
+			</Button>
+		{/if}
+		<Button color="primary" on:click={handleNext} disabled={!canGoNext || loadingNext}>
 			<span class="ml-2">{stages[currentStageIndex + 1]?.name}</span>
 			<span class="ml-2"
 				>{#if loadingNext && currentStageIndex < stages.length - 1}
