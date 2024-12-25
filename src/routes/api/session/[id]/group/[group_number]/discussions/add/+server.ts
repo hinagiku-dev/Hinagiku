@@ -45,7 +45,8 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 						moderation: moderation.harmful
 					}
 				],
-				updatedAt: new Date()
+				updatedAt: new Date(),
+				moderation: moderation.harmful || data.moderation
 			});
 		});
 

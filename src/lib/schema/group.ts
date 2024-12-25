@@ -18,7 +18,8 @@ export const GroupSchema = z.object({
 	updatedAt: z.date().nullable(),
 	status: z.enum(['discussion', 'summarize', 'end']).default('discussion'),
 	summary: z.string().nullable(), // lock on stage 2 finalize transaction
-	keywords: z.record(z.string(), z.number().min(1).max(5))
+	keywords: z.record(z.string(), z.number().min(1).max(5)),
+	moderation: z.boolean().default(false)
 });
 
 export interface GroupDiscussionMessage {
