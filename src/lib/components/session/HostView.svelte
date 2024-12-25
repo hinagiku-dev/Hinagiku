@@ -74,6 +74,7 @@
 			avatar?: string;
 		}>;
 	} | null>(null);
+	let conversationsData = $state<Array<Conversation>>([]);
 
 	onMount(() => {
 		const unsubscribes: (() => void)[] = [];
@@ -189,7 +190,7 @@
 			const failedResponse = responses.find((response) => !response.ok);
 			if (failedResponse) {
 				const data = await failedResponse.json();
-				notifications.error(data.error || '無法為部分群組的參與者創建對話');
+				notifications.error(data.error || '無法為部分群���的參與者創建對話');
 				return;
 			}
 
@@ -408,6 +409,30 @@
 			notifications.error('Failed to change stage');
 		}
 	}
+
+	async function loadConversationsData() {
+		try {
+			if (!$page.params.id) return;
+
+			const response = await fetch(`/api/session/${$page.params.id}/conversations`);
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || '無法獲取對話資料');
+			}
+
+			conversationsData = await response.json();
+			console.log(conversationsData);
+		} catch (error) {
+			console.error('無法加載對話資料:', error);
+			notifications.error('無法加載對話資料');
+		}
+	}
+
+	$effect(() => {
+		if ($session?.status === 'ended') {
+			loadConversationsData();
+		}
+	});
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
@@ -458,10 +483,10 @@
 					</div>
 					<div class="flex w-full gap-4">
 						<div class="h-96 flex-1">
-							<MostActiveParticipants />
+							<MostActiveParticipants conversations={conversationsData} />
 						</div>
 						<div class="h-96 flex-1">
-							<MostActiveGroups />
+							<MostActiveGroups groups={$groups} />
 						</div>
 					</div>
 				</div>
