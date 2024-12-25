@@ -1,4 +1,4 @@
-import { getConversationsFromAllParticipantsData } from '$lib/utils/firestore';
+import { getConversationsFromAllParticipantsData } from '$lib/server/firebase';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 

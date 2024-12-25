@@ -10,14 +10,16 @@ export const GroupSchema = z.object({
 		z.object({
 			content: z.string(),
 			id: z.string().nullable(),
-			speaker: z.string(), // i am not sure if this is going to be used
-			audio: z.string().nullable() // to find the raw file
+			speaker: z.string(),
+			audio: z.string().nullable(), // to find the raw file
+			moderation: z.boolean().default(false)
 		})
 	),
 	updatedAt: z.date().nullable(),
 	status: z.enum(['discussion', 'summarize', 'end']).default('discussion'),
 	summary: z.string().nullable(), // lock on stage 2 finalize transaction
-	keywords: z.record(z.string(), z.number().min(1).max(5))
+	keywords: z.record(z.string(), z.number().min(1).max(5)),
+	moderation: z.boolean().default(false)
 });
 
 export interface GroupDiscussionMessage {

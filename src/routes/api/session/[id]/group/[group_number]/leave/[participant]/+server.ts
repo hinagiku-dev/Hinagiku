@@ -1,5 +1,4 @@
-import { adminDb } from '$lib/server/firebase';
-import { checkRemoveParticipantPermission } from '$lib/utils/firestore';
+import { adminDb, checkRemoveParticipantPermission } from '$lib/server/firebase';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 

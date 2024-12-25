@@ -13,7 +13,13 @@ export const ConversationSchema = z.object({
 		z.object({
 			role: z.enum(['system', 'user', 'assistant']),
 			content: z.string(),
-			audio: z.string().nullable() // to find the raw file
+			audio: z.string().nullable(), // to find the raw file
+			warning: z
+				.object({
+					moderation: z.boolean().default(false),
+					offTopic: z.boolean().default(false)
+				})
+				.nullable()
 		})
 	),
 	warning: z.object({
