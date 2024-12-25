@@ -34,7 +34,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			number: groupNumber,
 			createdAt: new Date(),
 			status: 'discussion',
-			warning: { moderation: false, off_topic: false },
+			moderation: false,
 			updatedAt: new Date()
 		};
 
