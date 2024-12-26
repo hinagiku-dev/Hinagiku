@@ -83,10 +83,13 @@
 				{#if owner === $user?.uid}
 					<Button href="/template/{id}" class="flex-1">Use Template</Button>
 				{:else if $user?.uid}
-					<Button color="alternative" class="flex-1" on:click={handleForkTemplate}>
-						<GitFork class="h-4 w-4" />
-						Fork
-					</Button>
+					<div class="flex w-full gap-2">
+						<Button href="/template/{id}/view" color="alternative" class="flex-1">View</Button>
+						<Button color="alternative" class="flex-1" on:click={handleForkTemplate}>
+							<GitFork class="h-4 w-4" />
+							Fork
+						</Button>
+					</div>
 				{:else}
 					<div class="flex w-full gap-2">
 						<Button href="/template/{id}/view" color="alternative" class="flex-1">View</Button>
