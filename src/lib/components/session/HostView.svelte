@@ -182,6 +182,7 @@
 	}
 
 	async function getCode() {
+		code = 'Loading...';
 		const codeQuery = query(
 			collection(db, 'temp_codes'),
 			where('sessionId', '==', $page.params.id),
@@ -507,9 +508,11 @@
 						</div>
 					</div>
 					<div class="mt-4">
-						{#if code === ''}
+						{#if code === '' || code === 'Loading...'}
 							<div class="flex justify-center">
-								<Button color="primary" on:click={getCode}>Show Code</Button>
+								<Button color="primary" on:click={getCode} disabled={code === 'Loading...'}>
+									Show Code
+								</Button>
 							</div>
 						{:else}
 							<p class="text-center text-5xl font-bold text-orange-600">{code}</p>
