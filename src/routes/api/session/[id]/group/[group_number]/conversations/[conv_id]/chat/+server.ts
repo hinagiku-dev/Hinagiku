@@ -39,6 +39,10 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 
 		const { content, audio } = await getRequestData(request);
 		console.log('Parsed request data', { contentLength: content.length, hasAudio: !!audio });
+		if (content.length > 500) {
+			console.log('Content too long:', content.length);
+			throw error(400, 'Content too long');
+		}
 
 		await conversation_ref.update({
 			history: [

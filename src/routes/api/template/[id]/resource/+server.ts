@@ -53,6 +53,9 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		if (type === 'file') {
 			const fileProcessingStart = Date.now();
 			const file = content as File;
+			if (file.size > 10 * 1024 * 1024) {
+				return json({ error: 'File size limit exceeded' }, { status: 400 });
+			}
 			const buffer = await file.arrayBuffer();
 			const text = await pdf2Text(buffer, env.LLAMA_CLOUD_API_KEY!);
 			console.log(`PDF text extraction took ${Date.now() - fileProcessingStart}ms`);
