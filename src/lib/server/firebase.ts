@@ -44,7 +44,8 @@ export async function createConversation(
 		.doc(group_number)
 		.collection('conversations');
 
-	const existingConversations = await conversationsRef.get();
+	// 檢查是否已存在該使用者的對話
+	const existingConversations = await conversationsRef.where('userId', '==', userId).get();
 	if (!existingConversations.empty) {
 		return existingConversations.docs[0].id;
 	}
