@@ -32,6 +32,7 @@
 	import WordCloud from './WordCloud.svelte';
 	import MostActiveParticipants from './MostActiveParticipants.svelte';
 	import MostActiveGroups from './MostActiveGroups.svelte';
+	import LabelManager from './LabelManager.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -483,8 +484,19 @@
 
 <main class="mx-auto max-w-7xl px-4 py-16">
 	<div class="mb-8 flex items-center justify-between">
-		<div>
+		<div class="flex items-center gap-4">
 			<h1 class="text-3xl font-bold">{$session?.title}</h1>
+			{#if $session?.status === 'preparing'}
+				<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
+			{:else if $session?.labels?.length}
+				<div class="flex items-center gap-2">
+					{#each $session.labels as label}
+						<span class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
+							{label}
+						</span>
+					{/each}
+				</div>
+			{/if}
 		</div>
 
 		<div class="flex items-center gap-6">
