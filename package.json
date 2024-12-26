@@ -17,7 +17,8 @@
 		"pdf": "pnpm tsx scripts/pdf2text.ts",
 		"tsx": "tsx --tsconfig tsconfig.tsx.json",
 		"student": "pnpm tsx scripts/createTestStudent.ts",
-		"conversation": "pnpm tsx scripts/createTestConversation.ts"
+		"conversation": "pnpm tsx scripts/createTestConversation.ts",
+		"test1": "jest"
 	},
 	"devDependencies": {
 		"@aws-sdk/client-s3": "^3.717.0",
@@ -83,5 +84,11 @@
 			"eslint --fix"
 		]
 	},
-	"packageManager": "pnpm@9.15.1"
+	"packageManager": "pnpm@9.15.1",
+	"dependencies": {
+		"@types/jest": "^29.5.14",
+		"axios": "^1.7.9",
+		"jest": "^29.7.0",
+		"ts-jest": "^29.2.5"
+	}
 }
