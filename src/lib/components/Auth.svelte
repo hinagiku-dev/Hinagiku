@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { signInWithGoogle, signOut, user } from '$lib/stores/auth';
+	import { signInWithGoogle, user } from '$lib/stores/auth';
 	import { profile } from '$lib/stores/profile';
+	import { Button } from 'flowbite-svelte';
 </script>
 
 {#if $user}
 	<div>
 		<p class="inline-block">Welcome, {$profile?.displayName || $user.displayName}!</p>
-		<button class="rounded-lg" on:click={signOut}>Sign Out</button>
+		<Button href="/dashboard" color="primary">Dashboard</Button>
 	</div>
 {:else}
 	<button

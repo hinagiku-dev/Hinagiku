@@ -2,7 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { writable, derived } from 'svelte/store';
 	import { Card, Button } from 'flowbite-svelte';
-	import { MessageSquarePlus, UserPlus, UserCog, GitFork } from 'lucide-svelte';
+	import { MessageSquarePlus, UserPlus, UserCog } from 'lucide-svelte';
 	import {
 		collection,
 		orderBy,
@@ -24,7 +24,8 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { browser } from '$app/environment';
 	import { user } from '$lib/stores/auth';
-	import { getUser } from '$lib/utils/getUser';
+	import TemplateCard from '$lib/components/TemplateCard.svelte';
+	import SessionCard from '$lib/components/SessionCard.svelte';
 
 	let { data } = $props();
 
@@ -63,13 +64,7 @@
 			)
 		: [writable([]), { unsubscribe: () => {} }];
 
-	let unsoredsessions = writable<[string, string, Session][]>([]);
-
-	let sessions = derived(unsoredsessions, ($unsoredsessions) =>
-		$unsoredsessions.sort(
-			(a, b) => (b[2].createdAt as Timestamp).toMillis() - (a[2].createdAt as Timestamp).toMillis()
-		)
-	);
+	let sessions = writable<[string, Session][]>([]);
 
 	let selectedLabels = writable<string[]>([]);
 
@@ -105,16 +100,24 @@
 		const sessionQuery = query(
 			collectionGroup(db, 'groups'),
 			where('participants', 'array-contains', data.user.uid),
+			orderBy('createdAt', 'desc'),
 			limit(6)
 		);
 		const sessionSnapshot = await getDocs(sessionQuery);
-		sessionSnapshot.forEach(async (docu) => {
-			const session = await getDoc(docu.ref.parent.parent!);
-			const sessionData = session.data();
-			const host = await getUser(sessionData?.host);
-			const hoster = host.displayName;
-			unsoredsessions.update((value) => [...value, [hoster, session.id, sessionData as Session]]);
-		});
+		const sess: Promise<[string, Session]>[] = [];
+		for (const groupDoc of sessionSnapshot.docs) {
+			const sessionDocRef = groupDoc.ref.parent.parent;
+			if (sessionDocRef) {
+				sess.push(
+					(async () => {
+						const sessionDoc = await getDoc(sessionDocRef);
+						const session = sessionDoc.data() as Session;
+						return [sessionDoc.id, { ...session, host: session.host }];
+					})()
+				);
+			}
+		}
+		sessions.set(await Promise.all(sess));
 	}
 
 	onMount(() => {
@@ -129,25 +132,6 @@
 		} catch (error) {
 			console.error('Error creating template:', error);
 			notifications.error('Failed to create template');
-		}
-	}
-
-	async function handleForkTemplate(templateId: string) {
-		try {
-			const response = await fetch(`/api/template/${templateId}/fork`, {
-				method: 'POST'
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to fork template');
-			}
-
-			const { id } = await response.json();
-			notifications.success('Template forked successfully');
-			await goto(`/template/${id}`);
-		} catch (error) {
-			console.error('Error forking template:', error);
-			notifications.error('Failed to fork template');
 		}
 	}
 
@@ -204,40 +188,20 @@
 	<!-- Public Templates -->
 	<div class="mb-16">
 		<div class="mb-6 flex items-center justify-between">
-			<h2 class="text-2xl font-semibold text-gray-900">Popular Templates</h2>
+			<h2 class="text-2xl font-semibold text-gray-900">Public Templates</h2>
 			<Button color="alternative" href="/templates/public">View All</Button>
 		</div>
-		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $publicTemplates?.length}
 				{#each $publicTemplates as [doc, template]}
-					<Card padding="lg" class="transition-all hover:border-primary-500">
-						<div>
-							<h3 class="mb-2 line-clamp-1 text-xl font-bold">{template.title}</h3>
-							<p class="mb-4 line-clamp-2 text-gray-600">{template.task}</p>
-							<div class="mb-4 flex items-center gap-4">
-								<span class="text-sm text-gray-500">
-									{template.subtasks.length} subtasks
-								</span>
-								<span class="text-sm text-gray-500">
-									{template.resources.length} resources
-								</span>
-							</div>
-							<div class="flex gap-2">
-								{#if template.owner === $user?.uid}
-									<Button href="/template/{doc.id}" class="flex-1">Use Template</Button>
-								{:else}
-									<Button
-										color="alternative"
-										class="flex-1"
-										on:click={() => handleForkTemplate(doc.id)}
-									>
-										<GitFork class="h-4 w-4" />
-										Fork
-									</Button>
-								{/if}
-							</div>
-						</div>
-					</Card>
+					<TemplateCard
+						id={doc.id}
+						title={template.title}
+						task={template.task}
+						subtaskSize={template.subtasks.length}
+						resourceSize={template.resources.length}
+						owner={template.owner}
+					/>
 				{/each}
 			{:else}
 				<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
@@ -262,33 +226,18 @@
 			<h2 class="text-2xl font-semibold text-gray-900">Your Templates</h2>
 			<Button color="alternative" href="/templates">View All</Button>
 		</div>
-		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $templates?.length}
 				{#each $templates as [doc, template]}
-					<Card padding="lg" class="transition-all hover:border-primary-500">
-						<div>
-							<div class="mb-4 flex items-start justify-between">
-								<h3 class="line-clamp-1 text-xl font-bold">{template.title}</h3>
-								<span
-									class="rounded-full px-3 py-1 text-sm font-medium {template.public
-										? 'bg-green-100 text-green-600'
-										: 'bg-gray-100 text-gray-600'}"
-								>
-									{template.public ? 'Public' : 'Private'}
-								</span>
-							</div>
-							<p class="mb-4 line-clamp-2 text-gray-600">{template.task}</p>
-							<div class="mb-4 flex items-center gap-4">
-								<span class="text-sm text-gray-500">
-									{template.subtasks.length} subtasks
-								</span>
-								<span class="text-sm text-gray-500">
-									{template.resources.length} resources
-								</span>
-							</div>
-							<Button href="/template/{doc.id}" class="w-full">Manage Template</Button>
-						</div>
-					</Card>
+					<TemplateCard
+						id={doc.id}
+						title={template.title}
+						task={template.task}
+						subtaskSize={template.subtasks.length}
+						resourceSize={template.resources.length}
+						owner={template.owner}
+						isPublic={template.public}
+					/>
 				{/each}
 			{:else}
 				<Card class="md:col-span-2 lg:col-span-3">
@@ -324,45 +273,17 @@
 				</Button>
 			{/each}
 		</div>
-		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $filteredHostSessions?.length}
 				{#each $filteredHostSessions as [doc, session]}
-					<Card padding="lg" class="transition-all hover:border-primary-500">
-						<div>
-							<div class="mb-4 flex items-start justify-between">
-								<h3 class="line-clamp-1 text-xl font-bold">{session.title}</h3>
-								<span
-									class="rounded-full px-3 py-1 text-sm font-medium {session.status === 'preparing'
-										? 'bg-yellow-100 text-yellow-600'
-										: session.status === 'individual'
-											? 'bg-blue-100 text-blue-600'
-											: session.status === 'before-group'
-												? 'bg-purple-100 text-purple-600'
-												: session.status === 'group'
-													? 'bg-green-100 text-green-600'
-													: 'bg-gray-100 text-gray-600'}"
-								>
-									{session.status}
-								</span>
-							</div>
-							<div class="mb-4 flex min-h-[28px] flex-wrap gap-2">
-								{#if session.labels?.length}
-									{#each session.labels.sort() as label}
-										<span class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
-											{label}
-										</span>
-									{/each}
-								{/if}
-							</div>
-							<p class="mb-4 line-clamp-2 text-gray-600">{session.task}</p>
-							<div class="mb-4 flex items-center gap-4">
-								<span class="text-sm text-gray-500">
-									{(session.createdAt as Timestamp).toDate().toLocaleString()}
-								</span>
-							</div>
-							<Button href="/session/{doc.id}" class="w-full">View Session</Button>
-						</div>
-					</Card>
+					<SessionCard
+						id={doc.id}
+						title={session.title}
+						status={session.status}
+						labels={session.labels}
+						task={session.task}
+						createdAt={(session.createdAt as Timestamp).toDate()}
+					/>
 				{/each}
 			{:else}
 				<Card class="md:col-span-2 lg:col-span-3">
@@ -379,54 +300,25 @@
 	</div>
 
 	<!-- Recent participant Session-->
-	<div class="mt-16">
-		<div class="mb-6 flex items-center justify-between">
-			<h2 class="text-2xl font-semibold text-gray-900">Recent Participant Sessions</h2>
-			<Button color="alternative" href="/dashboard/recent/participant">View All</Button>
-		</div>
-		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-			{#if $sessions.length}
-				{#each $sessions as [hoster, docid, session]}
-					<Card padding="lg" class="transition-all hover:border-primary-500">
-						<div>
-							<div class="mb-4 flex items-start justify-between">
-								<h3 class="line-clamp-1 text-xl font-bold">{session.title}</h3>
-								<span
-									class="rounded-full px-3 py-1 text-sm font-medium {session.status === 'preparing'
-										? 'bg-yellow-100 text-yellow-600'
-										: session.status === 'individual'
-											? 'bg-blue-100 text-blue-600'
-											: session.status === 'before-group'
-												? 'bg-purple-100 text-purple-600'
-												: session.status === 'group'
-													? 'bg-green-100 text-green-600'
-													: 'bg-gray-100 text-gray-600'}"
-								>
-									{session.status}
-								</span>
-							</div>
-							<p class="mb-4 line-clamp-2 text-gray-600">{session.task}</p>
-							<p class="line-clamp-2 text-gray-500">Host by: {hoster}</p>
-							<div class="mb-4 flex items-center gap-4">
-								<span class="text-sm text-gray-500">
-									{(session.createdAt as Timestamp).toDate().toLocaleString()}
-								</span>
-							</div>
-							<Button href="/session/{docid}" class="w-full">View Session</Button>
-						</div>
-					</Card>
+	{#if $sessions.length}
+		<div class="mt-16">
+			<div class="mb-6 flex items-center justify-between">
+				<h2 class="text-2xl font-semibold text-gray-900">Recent Participant Sessions</h2>
+				<Button color="alternative" href="/dashboard/recent/participant">View All</Button>
+			</div>
+			<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+				{#each $sessions as [id, session]}
+					<SessionCard
+						{id}
+						title={session.title}
+						status={session.status}
+						labels={session.labels}
+						task={session.task}
+						host={session.host}
+						createdAt={(session.createdAt as Timestamp).toDate()}
+					/>
 				{/each}
-			{:else}
-				<Card class="md:col-span-2 lg:col-span-3">
-					<div class="p-8 text-center">
-						<div class="mb-4 inline-flex rounded-full bg-primary-100 p-4">
-							<MessageSquarePlus size={32} class="text-primary-600" />
-						</div>
-						<p class="mb-2 text-lg font-medium text-gray-900">No sessions joined yet</p>
-						<Button href="/join" color="primary" class="w-full">Join a session</Button>
-					</div>
-				</Card>
-			{/if}
+			</div>
 		</div>
-	</div>
+	{/if}
 </main>

@@ -1,9 +1,10 @@
 <script>
-	import { Navbar, NavBrand, Avatar, Dropdown, DropdownItem } from 'flowbite-svelte';
+	import { Navbar, NavBrand, Avatar, Dropdown, DropdownItem, Button } from 'flowbite-svelte';
 	import { LogOut, User, LayoutDashboard } from 'lucide-svelte';
 	import { signOut, user } from '$lib/stores/auth';
 	import { profile } from '$lib/stores/profile';
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 
 	let hinagiku = $state('Hinagiku');
 	let highlight = $state(0);
@@ -49,13 +50,8 @@
 					><LogOut class="mr-2 h-4 w-4" />Sign out</DropdownItem
 				>
 			</Dropdown>
-		{:else}
-			<a
-				href="/login"
-				class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:ring-4 focus:ring-primary-300"
-			>
-				Login
-			</a>
+		{:else if !page.url.pathname.startsWith('/login')}
+			<Button href="/login" class="">Login</Button>
 		{/if}
 	</div>
 </Navbar>

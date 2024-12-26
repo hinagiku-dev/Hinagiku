@@ -3,7 +3,7 @@
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
 	import QRCode from '$lib/components/QRCode.svelte';
-	import { Button } from 'flowbite-svelte';
+	import { Button, Tooltip } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { page } from '$app/stores';
 	import { Alert } from 'flowbite-svelte';
@@ -33,6 +33,7 @@
 	import MostActiveParticipants from './MostActiveParticipants.svelte';
 	import MostActiveGroups from './MostActiveGroups.svelte';
 	import LabelManager from './LabelManager.svelte';
+	import ResolveUsername from '../ResolveUsername.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -527,6 +528,9 @@
 								<Button color="primary" on:click={getCode} disabled={code === 'Loading...'}>
 									Show Code
 								</Button>
+								<Tooltip placement="bottom">
+									Show a 6-digit code for participants to join the session.
+								</Tooltip>
 							</div>
 						{:else}
 							<div class="flex justify-center">
@@ -577,6 +581,7 @@
 								>
 									Group #{group.number}
 								</button>
+								<Tooltip>Open group chat history</Tooltip>
 								<GroupStatus {group} showStatus={$session?.status === 'group'} />
 							</div>
 							{#if group.participants.length === 0}
@@ -595,8 +600,10 @@
 														role="button"
 														tabindex="0"
 													>
-														{$participantNames.get(participant) || '載入中...'}
+														<ResolveUsername id={participant} />
 													</span>
+													<Tooltip>Open chat history</Tooltip>
+
 													{#if participantProgress.has(participant)}
 														<div class="flex flex-1 items-center gap-1.5">
 															<div class="flex h-1.5 flex-1">
@@ -605,8 +612,8 @@
 																		class="h-full flex-1 border-r border-white first:rounded-l last:rounded-r last:border-r-0 {completed
 																			? 'bg-green-500'
 																			: 'bg-gray-300'}"
-																		title={$session?.subtasks[i] || `Subtask ${i + 1}`}
 																	></div>
+																	<Tooltip>{$session?.subtasks[i] || `Subtask ${i + 1}`}</Tooltip>
 																{/each}
 															</div>
 
@@ -624,7 +631,6 @@
 																			<button
 																				class="flex items-center justify-center"
 																				onclick={() => handleRemoveWarning(group.id, participant)}
-																				title="點擊移除內容警告"
 																			>
 																				<TriangleAlert
 																					class="h-3 w-3 text-white hover:text-gray-200"
@@ -637,6 +643,11 @@
 																			/>
 																		{/if}
 																	</div>
+																	{#if warning.moderation}
+																		<Tooltip>Warning: inappropriate content detected.</Tooltip>
+																	{:else if warning.offTopic >= 3}
+																		<Tooltip>Warning: many off-topic messages.</Tooltip>
+																	{/if}
 																{/if}
 															{/if}
 														</div>
@@ -645,10 +656,10 @@
 												<button
 													class="shrink-0 rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-red-500"
 													onclick={() => handleRemoveParticipant(group.id, participant)}
-													title="移除參與者"
 												>
 													<X class="h-3 w-3" />
 												</button>
+												<Tooltip>Remove participant</Tooltip>
 											</div>
 										</li>
 									{/each}

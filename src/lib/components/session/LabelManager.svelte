@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Input } from 'flowbite-svelte';
+	import { Button, Input, Tooltip } from 'flowbite-svelte';
 	import { Plus, X } from 'lucide-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { onMount } from 'svelte';
@@ -122,4 +122,5 @@
 	>
 		<Plus class="h-4 w-4" />
 	</Button>
+	<Tooltip placement="right">Add label</Tooltip>
 </div>

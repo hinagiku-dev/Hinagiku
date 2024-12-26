@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button, Input, Toggle, Textarea, Modal } from 'flowbite-svelte';
-	import { Plus, Trash2, Save, X, Play } from 'lucide-svelte';
+	import { Button, Input, Toggle, Textarea, Modal, Tooltip } from 'flowbite-svelte';
+	import { Plus, Trash2, Save, Play } from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import type { Template } from '$lib/schema/template';
 	import ResourceList from './ResourceList.svelte';
@@ -30,6 +30,17 @@
 		}
 	});
 
+	let unsavedChanges = false;
+	$: {
+		if ($template) {
+			unsavedChanges =
+				title.trim() !== $template.title ||
+				task.trim() !== $template.task ||
+				isPublic !== $template.public ||
+				subtasks.join() !== $template.subtasks.join();
+		}
+	}
+
 	// Cleanup subscription on component destroy
 	onDestroy(() => {
 		unsubscribe();
@@ -43,10 +54,10 @@
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					title,
-					task,
+					title: title.trim(),
+					task: task.trim(),
 					public: isPublic,
-					subtasks
+					subtasks: subtasks.filter((subtask) => subtask.trim())
 				})
 			});
 
@@ -126,10 +137,17 @@
 	<div class="container mx-auto max-w-4xl px-4 py-8">
 		<div class="mb-8 flex items-center justify-between">
 			<h1 class="text-3xl font-bold">Edit Template</h1>
-			<Button color="primary" on:click={startSession} disabled={isUploading}>
+			<Button color="primary" on:click={startSession} disabled={isUploading || unsavedChanges}>
 				<Play class="mr-2 h-4 w-4" />
 				Start Session
 			</Button>
+			<Tooltip placement="left">
+				{#if unsavedChanges}
+					Save changes before starting a session
+				{:else}
+					Start a discussion session with this template
+				{/if}
+			</Tooltip>
 		</div>
 
 		<form on:submit|preventDefault={saveTemplate} class="space-y-6">
@@ -193,17 +211,22 @@
 
 			<div class="flex justify-end gap-4 border-t pt-6">
 				<Button color="alternative" href="/dashboard" disabled={isUploading}>
-					<X class="mr-2 h-4 w-4" />
 					Back to Dashboard
 				</Button>
+				{#if unsavedChanges}
+					<Tooltip>You have unsaved changes!</Tooltip>
+				{/if}
 				<Button color="red" on:click={() => (showDeleteModal = true)} disabled={isUploading}>
 					<Trash2 class="mr-2 h-4 w-4" />
 					Delete this Template
 				</Button>
-				<Button type="submit" color="primary" disabled={isUploading}>
+				<Button type="submit" color="primary" disabled={isUploading || !unsavedChanges}>
 					<Save class="mr-2 h-4 w-4" />
 					Save Changes
 				</Button>
+				{#if !unsavedChanges}
+					<Tooltip>All changes saved</Tooltip>
+				{/if}
 			</div>
 		</form>
 	</div>
