@@ -32,6 +32,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			subtasks: templateData.subtasks,
 			createdAt: Timestamp.now(),
 			status: 'preparing',
+			labels: [],
 			timing: {
 				individual: {
 					start: null,
