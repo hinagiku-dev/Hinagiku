@@ -197,22 +197,16 @@
 		}
 	}
 
-	async function handleRecord() {
-		if (!conversationDoc || !groupDoc) {
-			notifications.error('No group or conversation found');
-			return async () => {};
-		}
-
+	async function createAudioHandler({
+		onMessage
+	}: {
+		onMessage: (content: string, audio: string) => Promise<void>;
+	}) {
 		const vad = await MicVAD.new({
 			model: 'v5',
 			minSpeechFrames: 16, // 0.5s
 			redemptionFrames: 32, // 1s
 			onSpeechEnd: async (audio: Float32Array) => {
-				if (!conversationDoc || !groupDoc) {
-					notifications.error('No group or conversation found');
-					return;
-				}
-
 				await pInitFFmpeg;
 				console.log('Audio recorded:', audio);
 				// remove last 8000 samples (0.5s)
@@ -224,29 +218,14 @@
 
 				if (result) {
 					try {
-						const response = await fetch(
-							`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/chat`,
-							{
-								method: 'POST',
-								headers: {
-									'Content-Type': 'application/json'
-								},
-								body: JSON.stringify({
-									content: result.transcription,
-									audio: result.url
-								})
-							}
-						);
-
-						if (!response.ok) {
-							throw new Error('Failed to send message');
-						}
+						await onMessage(result.transcription, result.url);
 					} catch (error) {
 						console.error('Error sending message:', error);
 						notifications.error('Failed to send message');
 					}
 				}
-			}
+			},
+			submitUserSpeechOnPause: true
 		});
 		vad.start();
 
@@ -254,6 +233,70 @@
 			vad.pause();
 			vad.destroy();
 		};
+	}
+
+	async function handleRecord() {
+		if (!conversationDoc || !groupDoc) {
+			notifications.error('No group or conversation found');
+			return async () => {};
+		}
+
+		return createAudioHandler({
+			onMessage: async (content, audio) => {
+				if (!conversationDoc || !groupDoc) {
+					notifications.error('No group or conversation found');
+					return;
+				}
+				const response = await fetch(
+					`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/chat`,
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({ content, audio })
+					}
+				);
+
+				if (!response.ok) {
+					throw new Error('Failed to send message');
+				}
+			}
+		});
+	}
+
+	async function handleGroupRecord() {
+		if (!groupDoc) {
+			notifications.error('找不到群組');
+			return async () => {};
+		}
+
+		return createAudioHandler({
+			onMessage: async (content, audio) => {
+				if (!groupDoc) {
+					notifications.error('找不到群組');
+					return;
+				}
+				const response = await fetch(
+					`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/add`,
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							content,
+							speaker: $authUser?.displayName || 'Unknown User',
+							audio
+						})
+					}
+				);
+
+				if (!response.ok) {
+					throw new Error('Failed to send message');
+				}
+			}
+		});
 	}
 
 	async function handleSend(text: string) {
@@ -359,66 +402,6 @@
 		}
 	}
 
-	async function handleGroupRecord() {
-		if (!groupDoc) {
-			notifications.error('找不到群組');
-			return async () => {};
-		}
-
-		const vad = await MicVAD.new({
-			model: 'v5',
-			minSpeechFrames: 16, // 0.5s
-			redemptionFrames: 32, // 1s
-			onSpeechEnd: async (audio: Float32Array) => {
-				if (!groupDoc) {
-					notifications.error('找不到群組');
-					return;
-				}
-
-				await pInitFFmpeg;
-				console.log('Audio recorded:', audio);
-				// remove last 8000 samples (0.5s)
-				const wav = float32ArrayToWav(audio.slice(0, -8000));
-				console.log('Audio converted to wav:', wav);
-				const mp3 = await wav2mp3(wav);
-				console.log('Audio converted to mp3:', mp3);
-				const result = await sendAudioToSTT(mp3);
-
-				if (result) {
-					try {
-						const response = await fetch(
-							`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/add`,
-							{
-								method: 'POST',
-								headers: {
-									'Content-Type': 'application/json'
-								},
-								body: JSON.stringify({
-									content: result.transcription,
-									speaker: $authUser?.displayName || 'Unknown User',
-									audio: result.url
-								})
-							}
-						);
-
-						if (!response.ok) {
-							throw new Error('Failed to send message');
-						}
-					} catch (error) {
-						console.error('Error sending group message:', error);
-						notifications.error('無法發送訊息');
-					}
-				}
-			}
-		});
-		vad.start();
-
-		return async () => {
-			vad.pause();
-			vad.destroy();
-		};
-	}
-
 	async function fetchGroupSummary() {
 		if (!groupDoc) {
 			notifications.error('找不到群組');
@@ -445,7 +428,7 @@
 		}
 	}
 
-	async function handleUpdateGroupSummary(summary: string, keywords: string[]) {
+	async function handleUpdateGroupSummary(summary: string, keywords: Record<string, number>) {
 		if (!groupDoc) {
 			notifications.error('找不到群組');
 			return;

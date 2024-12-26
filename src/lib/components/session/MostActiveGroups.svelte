@@ -1,15 +1,14 @@
 <script lang="ts">
 	import * as echarts from 'echarts';
-	import { onDestroy, onMount } from 'svelte';
-	import { innerWidth } from 'svelte/reactivity/window';
+	import { onMount } from 'svelte';
 	import type { Group } from '$lib/schema/group';
 	import { countWords } from '$lib/utils/countWords';
 
 	type PartialGroup = Pick<Group, 'number' | 'discussions'>;
 	let { groups = [] }: { groups?: PartialGroup[] } = $props();
 
-	let chart: echarts.EChartsType;
-	let container: HTMLElement;
+	let chart: echarts.EChartsType | null = $state(null);
+	let container: HTMLDivElement | null = $state(null);
 
 	function getColorByRatio(ratio: number): string {
 		const h = 12;
@@ -18,12 +17,25 @@
 		return `hsl(${h}, ${s}%, ${l}%)`;
 	}
 
-	async function updateChart() {
+	async function initChart() {
 		if (!container) return;
 
-		if (!chart) {
-			chart = echarts.init(container);
-		}
+		chart = echarts.init(container);
+		updateChart();
+
+		const resizeObserver = new ResizeObserver(() => {
+			chart?.resize();
+		});
+		resizeObserver.observe(container);
+
+		return () => {
+			resizeObserver.disconnect();
+			chart?.dispose();
+		};
+	}
+
+	async function updateChart() {
+		if (!chart) return;
 
 		const groupData = groups
 			.map((group) => ({
@@ -75,23 +87,13 @@
 	}
 
 	$effect(() => {
-		if (innerWidth.current && chart) {
-			chart.resize();
-		}
-	});
-
-	$effect(() => {
 		if (groups && chart) {
 			updateChart();
 		}
 	});
 
-	onMount(() => {
-		updateChart();
-	});
-
-	onDestroy(() => {
-		chart?.dispose();
+	onMount(async () => {
+		await initChart();
 	});
 </script>
 
