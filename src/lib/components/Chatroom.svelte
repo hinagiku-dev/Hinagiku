@@ -117,7 +117,7 @@
 	{#if !readonly}
 		<div class="border-t bg-white p-4">
 			<div class="flex flex-wrap gap-2">
-				<div class="flex min-w-[200px] flex-1 gap-2">
+				<div class="flex min-w-[200px] flex-1 flex-col">
 					<Textarea
 						class="max-h-32 min-h-16 flex-1"
 						placeholder="Type your message...(max 500 characters)"
