@@ -32,6 +32,7 @@
 	import WordCloud from './WordCloud.svelte';
 	import MostActiveParticipants from './MostActiveParticipants.svelte';
 	import MostActiveGroups from './MostActiveGroups.svelte';
+	import LabelManager from './LabelManager.svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -182,6 +183,7 @@
 	}
 
 	async function getCode() {
+		code = 'Loading...';
 		const codeQuery = query(
 			collection(db, 'temp_codes'),
 			where('sessionId', '==', $page.params.id),
@@ -482,8 +484,19 @@
 
 <main class="mx-auto max-w-7xl px-4 py-16">
 	<div class="mb-8 flex items-center justify-between">
-		<div>
+		<div class="flex items-center gap-4">
 			<h1 class="text-3xl font-bold">{$session?.title}</h1>
+			{#if $session?.status === 'preparing'}
+				<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
+			{:else if $session?.labels?.length}
+				<div class="flex items-center gap-2">
+					{#each $session.labels as label}
+						<span class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
+							{label}
+						</span>
+					{/each}
+				</div>
+			{/if}
 		</div>
 
 		<div class="flex items-center gap-6">
@@ -507,9 +520,11 @@
 						</div>
 					</div>
 					<div class="mt-4">
-						{#if code === ''}
+						{#if code === '' || code === 'Loading...'}
 							<div class="flex justify-center">
-								<Button color="primary" on:click={getCode}>Show Code</Button>
+								<Button color="primary" on:click={getCode} disabled={code === 'Loading...'}>
+									Show Code
+								</Button>
 							</div>
 						{:else}
 							<p class="text-center text-5xl font-bold text-orange-600">{code}</p>

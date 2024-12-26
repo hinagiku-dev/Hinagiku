@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { writable, derived } from 'svelte/store';
 	import { Card, Button } from 'flowbite-svelte';
 	import { MessageSquarePlus, UserPlus, UserCog, GitFork } from 'lucide-svelte';
@@ -11,11 +11,9 @@
 		where,
 		Timestamp,
 		collectionGroup,
-		doc,
 		getDoc,
 		getDocs
 	} from 'firebase/firestore';
-	import { user } from '$lib/stores/auth';
 	import { profile } from '$lib/stores/profile';
 	import { db } from '$lib/firebase';
 	import { subscribeAll } from '$lib/firebase/store';
@@ -24,37 +22,46 @@
 	import { goto } from '$app/navigation';
 	import { createTemplate } from './createTemplate';
 	import { notifications } from '$lib/stores/notifications';
+	import { browser } from '$app/environment';
+	import { user } from '$lib/stores/auth';
+	import { getUser } from '$lib/utils/getUser';
 
 	let { data } = $props();
 
 	// Query for user's templates
-	let [templates, { unsubscribe: unsubscribe1 }] = subscribeAll<Template>(
-		query(
-			collection(db, 'templates'),
-			where('owner', '==', data.user.uid),
-			orderBy('createdAt', 'desc'),
-			limit(6)
-		)
-	);
+	let [templates, { unsubscribe: unsubscribe1 }] = browser
+		? subscribeAll<Template>(
+				query(
+					collection(db, 'templates'),
+					where('owner', '==', data.user.uid),
+					orderBy('createdAt', 'desc'),
+					limit(6)
+				)
+			)
+		: [null, { unsubscribe: () => {} }];
 
 	// Query for public templates
-	let [publicTemplates, { unsubscribe: unsubscribe2 }] = subscribeAll<Template>(
-		query(
-			collection(db, 'templates'),
-			where('public', '==', true),
-			orderBy('createdAt', 'desc'),
-			limit(6)
-		)
-	);
+	let [publicTemplates, { unsubscribe: unsubscribe2 }] = browser
+		? subscribeAll<Template>(
+				query(
+					collection(db, 'templates'),
+					where('public', '==', true),
+					orderBy('createdAt', 'desc'),
+					limit(6)
+				)
+			)
+		: [null, { unsubscribe: () => {} }];
 
-	let [hostSessions, { unsubscribe: unsubscribe3 }] = subscribeAll<Session>(
-		query(
-			collection(db, 'sessions'),
-			where('host', '==', data.user.uid),
-			orderBy('createdAt', 'desc'),
-			limit(6)
-		)
-	);
+	let [hostSessions, { unsubscribe: unsubscribe3 }] = browser
+		? subscribeAll<Session>(
+				query(
+					collection(db, 'sessions'),
+					where('host', '==', data.user.uid),
+					orderBy('createdAt', 'desc'),
+					limit(6)
+				)
+			)
+		: [writable([]), { unsubscribe: () => {} }];
 
 	let unsoredsessions = writable<[string, string, Session][]>([]);
 
@@ -63,6 +70,36 @@
 			(a, b) => (b[2].createdAt as Timestamp).toMillis() - (a[2].createdAt as Timestamp).toMillis()
 		)
 	);
+
+	let selectedLabels = writable<string[]>([]);
+
+	let filteredHostSessions = derived(
+		[hostSessions, selectedLabels],
+		([$hostSessions, $selectedLabels]) => {
+			if (!$hostSessions || $selectedLabels.length === 0) return $hostSessions;
+			return $hostSessions.filter(([, session]) =>
+				$selectedLabels.every((label) => session.labels?.includes(label))
+			);
+		}
+	);
+
+	function handleLabelSelect(label: string) {
+		selectedLabels.update((labels) => {
+			if (labels.includes(label)) {
+				return labels.filter((l) => l !== label);
+			}
+			return [...labels, label].sort();
+		});
+	}
+
+	let availableLabels = derived(hostSessions, ($hostSessions) => {
+		if (!$hostSessions) return [];
+		const labels = new Set<string>();
+		$hostSessions.forEach(([, session]) => {
+			session.labels?.forEach((label) => labels.add(label));
+		});
+		return Array.from(labels).sort();
+	});
 
 	async function getSessions() {
 		const sessionQuery = query(
@@ -73,21 +110,16 @@
 		const sessionSnapshot = await getDocs(sessionQuery);
 		sessionSnapshot.forEach(async (docu) => {
 			const session = await getDoc(docu.ref.parent.parent!);
-			const host = await getDoc(doc(db, 'profiles', session.data()?.host));
-			let hoster = '';
-			if (!host.exists()) {
-				hoster = 'Unknown';
-			} else {
-				hoster = host.data()?.displayName;
-			}
-			unsoredsessions.update((value) => [
-				...value,
-				[hoster, session.id, session.data() as Session]
-			]);
+			const sessionData = session.data();
+			const host = await getUser(sessionData?.host);
+			const hoster = host.displayName;
+			unsoredsessions.update((value) => [...value, [hoster, session.id, sessionData as Session]]);
 		});
 	}
 
-	getSessions();
+	onMount(() => {
+		getSessions();
+	});
 
 	async function handleCreateTemplate() {
 		try {
@@ -281,12 +313,32 @@
 			<h2 class="text-2xl font-semibold text-gray-900">Recent Host Sessions</h2>
 			<Button color="alternative" href="/dashboard/recent/host">View All</Button>
 		</div>
+		<div class="mb-4 flex flex-wrap gap-2">
+			{#each $availableLabels as label}
+				<Button
+					size="xs"
+					color={$selectedLabels.includes(label) ? 'primary' : 'alternative'}
+					on:click={() => handleLabelSelect(label)}
+				>
+					{label}
+				</Button>
+			{/each}
+		</div>
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-			{#if $hostSessions?.length}
-				{#each $hostSessions as [doc, session]}
+			{#if $filteredHostSessions?.length}
+				{#each $filteredHostSessions as [doc, session]}
 					<Card padding="lg" class="transition-all hover:border-primary-500">
 						<div>
 							<h3 class="mb-2 text-xl font-bold">{session.title}</h3>
+							<div class="mb-4 flex min-h-[28px] flex-wrap gap-2">
+								{#if session.labels?.length}
+									{#each session.labels.sort() as label}
+										<span class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
+											{label}
+										</span>
+									{/each}
+								{/if}
+							</div>
 							<p class="mb-4 line-clamp-2 text-gray-600">{session.task}</p>
 							<p class="mb-4 line-clamp-2 text-blue-600">Now is in {session.status} stage.</p>
 							<div class="mb-4 flex items-center gap-4">
