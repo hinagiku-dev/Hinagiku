@@ -119,34 +119,40 @@
 			<div class="flex gap-2">
 				<Textarea
 					class="max-h-32 min-h-10 flex-1"
-					placeholder="Type your message..."
+					placeholder="Type your message...(max 500 characters)"
 					rows={1}
 					bind:value={text}
 					disabled={operating}
 					on:keydown={handleKeydown}
+					maxlength={500}
 				/>
-				<Button
-					color={recording && !operating ? 'red' : 'primary'}
-					class="gap-2"
-					disabled={operating}
-					on:click={handleRecord}
-				>
-					{#if recording && !operating}
-						<Square class="animate-pulse" />
-					{:else}
-						<Mic />
-					{/if}
-					{recording ? (operating ? 'Waiting' : 'Stop') : 'Record'}
-				</Button>
-				<Button
-					color="primary"
-					class="gap-2"
-					disabled={operating || !text.trim()}
-					on:click={handleSend}
-				>
-					<Send class={operating ? 'animate-pulse' : ''} />
-					Send
-				</Button>
+				<div class="text-right text-sm text-gray-500">
+					{text.length} / 500
+				</div>
+				<div class="flex gap-2">
+					<Button
+						color={recording && !operating ? 'red' : 'primary'}
+						class="gap-2"
+						disabled={operating}
+						on:click={handleRecord}
+					>
+						{#if recording && !operating}
+							<Square class="animate-pulse" />
+						{:else}
+							<Mic />
+						{/if}
+						{recording ? (operating ? 'Waiting' : 'Stop') : 'Record'}
+					</Button>
+					<Button
+						color="primary"
+						class="gap-2"
+						disabled={operating || !text.trim()}
+						on:click={handleSend}
+					>
+						<Send class={operating ? 'animate-pulse' : ''} />
+						Send
+					</Button>
+				</div>
 			</div>
 		</div>
 	{/if}
