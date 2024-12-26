@@ -107,7 +107,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 	} catch (error) {
 		console.error('Error processing request:', error);
 		return json(
-			{ status: 'error', message: 'Internal Server Error', error: error },
+			{ status: 'error', message: 'Internal Server Error' },
 			{ status: 500 }
 		);
 	}
