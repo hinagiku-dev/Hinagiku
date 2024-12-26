@@ -17,5 +17,5 @@ export async function transcribe(data: Buffer): Promise<string> {
 		throw new Error('Failed to transcribe audio');
 	}
 
-	return output.transcription;
+	return output.transcription.replace(/[嗶.…]+$/g, '');
 }

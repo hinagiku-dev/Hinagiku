@@ -215,7 +215,8 @@
 
 				await pInitFFmpeg;
 				console.log('Audio recorded:', audio);
-				const wav = float32ArrayToWav(audio);
+				// remove last 8000 samples (0.5s)
+				const wav = float32ArrayToWav(audio.slice(0, -8000));
 				console.log('Audio converted to wav:', wav);
 				const mp3 = await wav2mp3(wav);
 				console.log('Audio converted to mp3:', mp3);
@@ -376,7 +377,8 @@
 
 				await pInitFFmpeg;
 				console.log('Audio recorded:', audio);
-				const wav = float32ArrayToWav(audio);
+				// remove last 8000 samples (0.5s)
+				const wav = float32ArrayToWav(audio.slice(0, -8000));
 				console.log('Audio converted to wav:', wav);
 				const mp3 = await wav2mp3(wav);
 				console.log('Audio converted to mp3:', mp3);
