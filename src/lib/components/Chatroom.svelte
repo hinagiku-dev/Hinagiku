@@ -81,37 +81,43 @@
 
 <div class="flex h-full min-h-[400px] flex-col">
 	<div bind:this={messagesContainer} class="flex-1 space-y-4 overflow-y-auto p-4">
-		{#each conversations as conv}
-			<div class="flex flex-col {conv.self ? 'items-end' : 'items-start'} gap-1">
-				{#if !conv.self}
-					<div class="flex items-center gap-2 {conv.self ? 'flex-row-reverse' : ''}">
-						{#if conv.avatar}
-							<img src={conv.avatar} alt={conv.name} class="h-8 w-8 rounded-full" />
-						{:else}
-							<div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
-								{conv.name[0]}
-							</div>
-						{/if}
-						<div class="text-sm font-semibold text-gray-700">{conv.name}</div>
-					</div>
-				{/if}
-				<Card class="w-fit max-w-[80%] {conv.self ? 'bg-primary-50' : ''}">
-					<div class="-my-2">
-						<p class="prose prose-hina text-gray-600">
-							{#await renderMarkdown(conv.content)}
-								Loading ...
-							{:then content}
-								<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-								{@html content}
-							{/await}
-						</p>
-						{#if conv.audio}
-							<AudioPlayer src={conv.audio} />
-						{/if}
-					</div>
-				</Card>
+		{#if conversations.length === 0}
+			<div class="flex h-full items-center justify-center">
+				<p class="text-gray-500">請重新載入頁面</p>
 			</div>
-		{/each}
+		{:else}
+			{#each conversations as conv}
+				<div class="flex flex-col {conv.self ? 'items-end' : 'items-start'} gap-1">
+					{#if !conv.self}
+						<div class="flex items-center gap-2 {conv.self ? 'flex-row-reverse' : ''}">
+							{#if conv.avatar}
+								<img src={conv.avatar} alt={conv.name} class="h-8 w-8 rounded-full" />
+							{:else}
+								<div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
+									{conv.name[0]}
+								</div>
+							{/if}
+							<div class="text-sm font-semibold text-gray-700">{conv.name}</div>
+						</div>
+					{/if}
+					<Card class="w-fit max-w-[80%] {conv.self ? 'bg-primary-50' : ''}">
+						<div class="-my-2">
+							<p class="prose prose-hina text-gray-600">
+								{#await renderMarkdown(conv.content)}
+									Loading ...
+								{:then content}
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									{@html content}
+								{/await}
+							</p>
+							{#if conv.audio}
+								<AudioPlayer src={conv.audio} />
+							{/if}
+						</div>
+					</Card>
+				</div>
+			{/each}
+		{/if}
 	</div>
 
 	{#if !readonly}
