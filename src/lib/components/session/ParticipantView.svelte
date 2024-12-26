@@ -246,7 +246,8 @@
 						notifications.error('Failed to send message');
 					}
 				}
-			}
+			},
+			submitUserSpeechOnPause: true
 		});
 		vad.start();
 
@@ -409,7 +410,8 @@
 						notifications.error('無法發送訊息');
 					}
 				}
-			}
+			},
+			submitUserSpeechOnPause: true
 		});
 		vad.start();
 
