@@ -33,7 +33,7 @@ export const PUT: RequestHandler = async ({ request, params, locals }) => {
 
 		return json({ success: true }, { status: 200 });
 	} catch (error) {
-		console.error('Error updating discussion summary:', error);
+		console.error('Error updating session labels:', error);
 		return json({ error: 'Error updating discussion summary' }, { status: 500 });
 	}
 };
