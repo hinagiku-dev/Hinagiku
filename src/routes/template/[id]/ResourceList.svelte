@@ -11,7 +11,8 @@
 	const LIMITS = {
 		SOURCES: 10,
 		NAME_LENGTH: 100,
-		CONTENT_LENGTH: 1000
+		CONTENT_LENGTH: 1000,
+		PDF_LENGTH: 10000
 	};
 
 	// Props
@@ -97,9 +98,18 @@
 			isUploading = true;
 			success = '';
 
+			// Trim the file size representation by PDF_LENGTH limit
+			const fileContent = `${file.size} bytes`;
+			let trimmedContent = fileContent.slice(0, LIMITS.PDF_LENGTH);
+
+			// add hint message to the trimmedContent
+			if (fileContent.length > LIMITS.PDF_LENGTH) {
+				trimmedContent += '> ...' + `(${fileContent.length - LIMITS.PDF_LENGTH} more characters)`;
+			}
+
 			newResource = {
 				name: file.name,
-				content: `${file.size} bytes`,
+				content: trimmedContent,
 				type: 'file'
 			};
 			tempFile = file;
