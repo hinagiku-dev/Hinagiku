@@ -36,7 +36,7 @@ export const actions = {
 		});
 
 		if (!profile.success) {
-			return fail(400, { missing: true });
+			return fail(400, { missing: true, success: false });
 		}
 
 		try {
@@ -55,7 +55,7 @@ export const actions = {
 			return { success: true };
 		} catch (error) {
 			console.error('Error updating profile:', error);
-			return fail(500, { error: true });
+			return fail(500, { error: true, success: false });
 		}
 	}
 } satisfies Actions;

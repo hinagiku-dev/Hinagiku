@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { profile } from '$lib/stores/profile';
 	import { Button, Label, Input, Textarea, Card, Alert } from 'flowbite-svelte';
-	import { CheckCircle } from 'lucide-svelte';
+	import { CheckCircle, XCircle } from 'lucide-svelte';
 
 	let { form, data } = $props();
 	let loading = $state(false);
@@ -18,13 +18,22 @@
 		<p class="mt-2 text-gray-600">Update your personal information and preferences</p>
 	</div>
 
-	{#if form?.success}
-		<Alert color="green" class="mb-6">
-			<svelte:fragment slot="icon">
-				<CheckCircle class="h-4 w-4" />
-			</svelte:fragment>
-			Profile updated successfully!
-		</Alert>
+	{#if form}
+		{#if form.success}
+			<Alert color="green" class="mb-6">
+				<svelte:fragment slot="icon">
+					<CheckCircle class="h-4 w-4" />
+				</svelte:fragment>
+				Profile updated successfully!
+			</Alert>
+		{:else}
+			<Alert color="red" class="mb-6">
+				<svelte:fragment slot="icon">
+					<XCircle class="h-4 w-4" />
+				</svelte:fragment>
+				Cannot update profile. Please try again later.
+			</Alert>
+		{/if}
 	{/if}
 
 	{#key $profile}
