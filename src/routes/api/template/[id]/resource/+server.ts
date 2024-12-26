@@ -11,6 +11,7 @@ import { upload_object } from '$lib/server/object-storage';
 import { pdf2Text } from '$lib/server/pdf';
 
 const MAX_RESOURCES = 10;
+const PDF_CONTENT_LENGTH_LIMIT = 10000;
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const startTime = Date.now();
@@ -54,11 +55,16 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			const fileProcessingStart = Date.now();
 			const file = content as File;
 			const buffer = await file.arrayBuffer();
-			const text = await pdf2Text(buffer, env.LLAMA_CLOUD_API_KEY!);
+			let text = await pdf2Text(buffer, env.LLAMA_CLOUD_API_KEY!);
 			console.log(`PDF text extraction took ${Date.now() - fileProcessingStart}ms`);
 
 			if (!text) {
 				return json({ error: 'Error extracting text from PDF' }, { status: 400 });
+			}
+
+			if (text.length > PDF_CONTENT_LENGTH_LIMIT) {
+				text = text.slice(0, PDF_CONTENT_LENGTH_LIMIT);
+				text += '\n\n... (more contents)';
 			}
 
 			const uploadStart = Date.now();
