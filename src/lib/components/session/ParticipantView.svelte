@@ -685,7 +685,9 @@
 			</div>
 		</div>
 
-		<div class="max-h-[calc(100vh-12rem)] overflow-y-auto rounded-lg border p-6 md:col-span-3">
+		<div
+			class="max-h-[calc(100vh-12rem)] min-h-[calc(100vh-12rem)] overflow-y-auto rounded-lg border p-6 md:col-span-3"
+		>
 			{#if $session?.status === 'preparing'}
 				<div class="mt-4">
 					<h3 class="mb-2 font-medium">Waiting for session to start...</h3>

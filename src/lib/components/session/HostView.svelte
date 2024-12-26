@@ -527,7 +527,9 @@
 								</Button>
 							</div>
 						{:else}
-							<p class="text-center text-5xl font-bold text-orange-600">{code}</p>
+							<div class="flex justify-center">
+								<p class="text-center text-5xl font-bold text-orange-600">{code}</p>
+							</div>
 						{/if}
 					</div>
 				{/if}

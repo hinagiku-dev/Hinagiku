@@ -79,7 +79,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col">
+<div class="flex h-full min-h-[400px] flex-col">
 	<div bind:this={messagesContainer} class="flex-1 space-y-4 overflow-y-auto p-4">
 		{#each conversations as conv}
 			<div class="flex flex-col {conv.self ? 'items-end' : 'items-start'} gap-1">
