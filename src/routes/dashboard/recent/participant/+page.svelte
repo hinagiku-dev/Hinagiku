@@ -78,9 +78,32 @@
 				{#each $sessions as [hoster, docid, session]}
 					<Card padding="lg" class="transition-all hover:border-primary-500">
 						<div>
-							<h3 class="mb-2 text-xl font-bold">{session.title}</h3>
+							<div class="mb-4 flex items-start justify-between">
+								<h3 class="line-clamp-1 text-xl font-bold">{session.title}</h3>
+								<span
+									class="rounded-full px-3 py-1 text-sm font-medium {session.status === 'preparing'
+										? 'bg-yellow-100 text-yellow-600'
+										: session.status === 'individual'
+											? 'bg-blue-100 text-blue-600'
+											: session.status === 'before-group'
+												? 'bg-purple-100 text-purple-600'
+												: session.status === 'group'
+													? 'bg-green-100 text-green-600'
+													: 'bg-gray-100 text-gray-600'}"
+								>
+									{session.status}
+								</span>
+							</div>
+							<div class="mb-4 flex min-h-[28px] flex-wrap gap-2">
+								{#if session.labels?.length}
+									{#each session.labels.sort() as label}
+										<span class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
+											{label}
+										</span>
+									{/each}
+								{/if}
+							</div>
 							<p class="mb-4 line-clamp-2 text-gray-600">{session.task}</p>
-							<p class="mb-4 line-clamp-2 text-blue-600">Now is in {session.status} stage.</p>
 							<p class="line-clamp-2 text-gray-500">Host by: {hoster}</p>
 							<div class="mb-4 flex items-center gap-4">
 								<span class="text-sm text-gray-500">

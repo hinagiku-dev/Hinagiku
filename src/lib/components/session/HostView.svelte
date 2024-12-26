@@ -483,28 +483,30 @@
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
-	<div class="mb-8 flex items-center justify-between">
-		<div class="flex items-center gap-4">
-			<h1 class="text-3xl font-bold">{$session?.title}</h1>
-			{#if $session?.status === 'preparing'}
-				<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
-			{:else if $session?.labels?.length}
-				<div class="flex items-center gap-2">
-					{#each $session.labels as label}
-						<span class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
-							{label}
-						</span>
-					{/each}
-				</div>
-			{/if}
-		</div>
+	<div class="mb-8 flex flex-col gap-4">
+		{#if $session?.status === 'preparing'}
+			<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
+		{:else if $session?.labels?.length}
+			<div class="flex items-center gap-2">
+				{#each $session.labels as label}
+					<span class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
+						{label}
+					</span>
+				{/each}
+			</div>
+		{/if}
+		<div class="flex items-center justify-between">
+			<h1 class="text-3xl font-bold">
+				{$session?.title}
+			</h1>
 
-		<div class="flex items-center gap-6">
-			<StageProgress
-				session={$session}
-				onStageChange={handleStageChange}
-				showAction={$session && stageButton[$session.status].show}
-			/>
+			<div class="flex items-center gap-6">
+				<StageProgress
+					session={$session}
+					onStageChange={handleStageChange}
+					showAction={$session && stageButton[$session.status].show}
+				/>
+			</div>
 		</div>
 	</div>
 
