@@ -135,13 +135,7 @@
 		<form on:submit|preventDefault={saveTemplate} class="space-y-6">
 			<div>
 				<label for="title" class="mb-2 block">Title</label>
-				<Input
-					id="title"
-					bind:value={title}
-					required
-					maxlength={200}
-					placeholder="Template title"
-				/>
+				<Input id="title" bind:value={title} required maxlength={50} placeholder="Template title" />
 			</div>
 
 			<div>

@@ -212,7 +212,7 @@
 				{#each $publicTemplates as [doc, template]}
 					<Card padding="lg" class="transition-all hover:border-primary-500">
 						<div>
-							<h3 class="mb-2 text-xl font-bold">{template.title}</h3>
+							<h3 class="mb-2 line-clamp-1 text-xl font-bold">{template.title}</h3>
 							<p class="mb-4 line-clamp-2 text-gray-600">{template.task}</p>
 							<div class="mb-4 flex items-center gap-4">
 								<span class="text-sm text-gray-500">
@@ -268,7 +268,7 @@
 					<Card padding="lg" class="transition-all hover:border-primary-500">
 						<div>
 							<div class="mb-4 flex items-start justify-between">
-								<h3 class="text-xl font-bold">{template.title}</h3>
+								<h3 class="line-clamp-1 text-xl font-bold">{template.title}</h3>
 								<span
 									class="rounded-full px-3 py-1 text-sm font-medium {template.public
 										? 'bg-green-100 text-green-600'
@@ -329,7 +329,7 @@
 				{#each $filteredHostSessions as [doc, session]}
 					<Card padding="lg" class="transition-all hover:border-primary-500">
 						<div>
-							<h3 class="mb-2 text-xl font-bold">{session.title}</h3>
+							<h3 class="mb-2 line-clamp-1 text-xl font-bold">{session.title}</h3>
 							<div class="mb-4 flex min-h-[28px] flex-wrap gap-2">
 								{#if session.labels?.length}
 									{#each session.labels.sort() as label}
@@ -375,7 +375,7 @@
 				{#each $sessions as [hoster, docid, session]}
 					<Card padding="lg" class="transition-all hover:border-primary-500">
 						<div>
-							<h3 class="mb-2 text-xl font-bold">{session.title}</h3>
+							<h3 class="mb-2 line-clamp-1 text-xl font-bold">{session.title}</h3>
 							<p class="mb-4 line-clamp-2 text-gray-600">{session.task}</p>
 							<p class="mb-4 line-clamp-2 text-blue-600">Now is in {session.status} stage.</p>
 							<p class="line-clamp-2 text-gray-500">Host by: {hoster}</p>
