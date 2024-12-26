@@ -1,12 +1,11 @@
 <script lang="ts">
 	import * as echarts from 'echarts';
 	import { onMount } from 'svelte';
-	import { innerWidth } from 'svelte/reactivity/window';
 
 	let { words = {} }: { words?: Record<string, number> } = $props();
 
-	let chart: echarts.ECharts;
-	let container: HTMLDivElement;
+	let chart: echarts.ECharts | null = $state(null);
+	let container: HTMLDivElement | null = $state(null);
 
 	async function initChart() {
 		await import('echarts-wordcloud');
@@ -16,13 +15,13 @@
 		updateChart();
 
 		const resizeObserver = new ResizeObserver(() => {
-			chart.resize();
+			chart?.resize();
 		});
 		resizeObserver.observe(container);
 
 		return () => {
 			resizeObserver.disconnect();
-			chart.dispose();
+			chart?.dispose();
 		};
 	}
 
@@ -68,12 +67,6 @@
 
 		chart.setOption(option);
 	}
-
-	$effect(() => {
-		if (innerWidth.current && chart) {
-			chart.resize();
-		}
-	});
 
 	$effect(() => {
 		if (words && chart) {

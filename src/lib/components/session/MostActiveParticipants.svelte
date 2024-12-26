@@ -1,7 +1,6 @@
 <script lang="ts">
 	import * as echarts from 'echarts';
-	import { onDestroy, onMount } from 'svelte';
-	import { innerWidth } from 'svelte/reactivity/window';
+	import { onMount } from 'svelte';
 	import { getUser } from '$lib/utils/getUser';
 	import { countWords } from '$lib/utils/countWords';
 	import type { Conversation } from '$lib/schema/conversation';
@@ -9,8 +8,8 @@
 	type PartialConversation = Pick<Conversation, 'userId' | 'history'>;
 	let { conversations = [] }: { conversations?: PartialConversation[] } = $props();
 
-	let chart: echarts.EChartsType;
-	let container: HTMLElement;
+	let chart: echarts.EChartsType | null = $state(null);
+	let container: HTMLDivElement | null = $state(null);
 
 	// Add user name mapping store
 	let userNames = new Map<string, string>();
@@ -22,12 +21,25 @@
 		return `hsl(${h}, ${s}%, ${l}%)`;
 	}
 
-	async function updateChart() {
-		if (!container || !conversations || conversations.length === 0) return;
+	async function initChart() {
+		if (!container) return;
 
-		if (!chart) {
-			chart = echarts.init(container);
-		}
+		chart = echarts.init(container);
+		updateChart();
+
+		const resizeObserver = new ResizeObserver(() => {
+			chart?.resize();
+		});
+		resizeObserver.observe(container);
+
+		return () => {
+			resizeObserver.disconnect();
+			chart?.dispose();
+		};
+	}
+
+	async function updateChart() {
+		if (!chart || !conversations || conversations.length === 0) return;
 
 		const participantData = conversations.reduce(
 			(acc, conv) => {
@@ -101,25 +113,13 @@
 	}
 
 	$effect(() => {
-		if (innerWidth.current && chart) {
-			chart.resize();
-		}
-	});
-
-	$effect(() => {
 		if (conversations && conversations.length > 0) {
 			updateChart();
 		}
 	});
 
-	onMount(() => {
-		if (conversations && conversations.length > 0) {
-			updateChart();
-		}
-	});
-
-	onDestroy(() => {
-		chart?.dispose();
+	onMount(async () => {
+		await initChart();
 	});
 </script>
 
