@@ -116,20 +116,22 @@
 
 	{#if !readonly}
 		<div class="border-t bg-white p-4">
-			<div class="flex gap-2">
-				<Textarea
-					class="max-h-32 min-h-10 flex-1"
-					placeholder="Type your message...(max 500 characters)"
-					rows={1}
-					bind:value={text}
-					disabled={operating}
-					on:keydown={handleKeydown}
-					maxlength={500}
-				/>
-				<div class="text-right text-sm text-gray-500">
-					{text.length} / 500
+			<div class="flex flex-wrap gap-2">
+				<div class="flex min-w-[200px] flex-1 gap-2">
+					<Textarea
+						class="max-h-32 min-h-16 flex-1"
+						placeholder="Type your message...(max 500 characters)"
+						rows={1}
+						bind:value={text}
+						disabled={operating}
+						on:keydown={handleKeydown}
+						maxlength={500}
+					/>
+					<div class="text-right text-sm text-gray-500">
+						{text.length} / 500
+					</div>
 				</div>
-				<div class="flex gap-2">
+				<div class="ml-auto flex gap-2">
 					<Button
 						color={recording && !operating ? 'red' : 'primary'}
 						class="gap-2"
