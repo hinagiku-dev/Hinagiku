@@ -677,7 +677,7 @@
 					<p class="text-gray-600">The host will begin the session shortly.</p>
 				</div>
 			{:else if $session?.status === 'individual'}
-				<Chatroom record={handleRecord} send={handleSend} {conversations} />
+				<Chatroom record={handleRecord} send={handleSend} {conversations} isIndividual />
 			{:else if $session?.status === 'before-group'}
 				<div class="space-y-6">
 					{#if groupDoc && conversationDoc}

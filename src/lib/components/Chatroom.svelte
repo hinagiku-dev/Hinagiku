@@ -17,13 +17,15 @@
 		send,
 		conversations,
 		readonly = false,
-		autoscroll = true
+		autoscroll = true,
+		isIndividual = false
 	}: {
 		record?: () => Promise<() => Promise<void>>;
 		send?: (text: string) => Promise<void>;
 		conversations: Conversation[];
 		readonly?: boolean;
 		autoscroll?: boolean;
+		isIndividual?: boolean;
 	} = $props();
 
 	let text = $state('');
@@ -31,18 +33,19 @@
 	let recording = $state(false);
 	let stopRecording: (() => Promise<void>) | undefined = $state(undefined);
 	let messagesContainer: HTMLDivElement;
+	let dots = $state('...');
 
 	function scrollToBottom() {
 		if (!messagesContainer || !autoscroll) return;
-		messagesContainer.scrollTo({
-			top: messagesContainer.scrollHeight,
-			behavior: 'smooth'
+
+		requestAnimationFrame(() => {
+			messagesContainer.scrollTop = messagesContainer.scrollHeight;
 		});
 	}
 
 	$effect(() => {
 		if (conversations.length > 0) {
-			scrollToBottom();
+			setTimeout(scrollToBottom, 100);
 		}
 	});
 
@@ -77,10 +80,24 @@
 			handleSend();
 		}
 	}
+
+	function animateDots() {
+		const dotsStates = ['', '.', '..', '...'];
+		let index = 0;
+		return setInterval(() => {
+			dots = dotsStates[index];
+			index = (index + 1) % dotsStates.length;
+		}, 500);
+	}
+
+	$effect(() => {
+		const interval = animateDots();
+		return () => clearInterval(interval);
+	});
 </script>
 
 <div class="flex h-full min-h-[400px] flex-col">
-	<div bind:this={messagesContainer} class="flex-1 space-y-4 overflow-y-auto p-4">
+	<div bind:this={messagesContainer} class="flex-1 space-y-4 overflow-y-auto scroll-smooth p-4">
 		{#if conversations.length === 0}
 			<div class="flex h-full items-center justify-center">
 				<p class="text-gray-500">請重新載入頁面</p>
@@ -117,6 +134,30 @@
 					</Card>
 				</div>
 			{/each}
+			{#if conversations.length > 0 && isIndividual}
+				{#if conversations[conversations.length - 1].self}
+					<div class="flex items-center gap-2">
+						<div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
+							{'小'}
+						</div>
+						<div class="text-sm font-semibold text-gray-700">
+							{'小菊(Hinagiku)'}
+						</div>
+					</div>
+					<Card class="w-fit max-w-[80%]">
+						<div class="-my-2">
+							<p class="prose prose-hina text-gray-600">
+								{#await renderMarkdown(`正在思考${dots}`)}
+									Loading ...
+								{:then content}
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									{@html content}
+								{/await}
+							</p>
+						</div>
+					</Card>
+				{/if}
+			{/if}
 		{/if}
 	</div>
 
@@ -125,7 +166,7 @@
 			<div class="flex flex-wrap gap-2">
 				<div class="flex min-w-[200px] flex-1 flex-col">
 					<Textarea
-						class="max-h-32 min-h-16 flex-1"
+						class="max-h-32 min-h-14 flex-1"
 						placeholder="Type your message...(max 500 characters)"
 						rows={1}
 						bind:value={text}
