@@ -39,7 +39,7 @@
 					if ((err as unknown as Error).toString().includes('NotFoundException')) {
 						return;
 					}
-					notifications.error(`error during scanning: ${err}`);
+					// notifications.error(`error during scanning: ${err}`);
 				}
 			);
 		} catch (err) {
