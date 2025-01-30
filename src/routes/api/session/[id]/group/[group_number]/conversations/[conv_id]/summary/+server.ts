@@ -5,7 +5,7 @@ import {
 	getConversationsRef,
 	getGroupRef
 } from '$lib/server/firebase';
-import { summarizeConcepts, summarizeStudentChat } from '$lib/server/llm';
+import { summarizeConcepts, summarizeStudentChat } from '$lib/server/openai';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
 

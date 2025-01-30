@@ -5,7 +5,7 @@ import {
 	getSessionData,
 	getSessionRef
 } from '$lib/server/firebase';
-import { chatWithLLMByDocs } from '$lib/server/llm';
+import { chatWithLLMByDocs } from '$lib/server/openai';
 import type { LLMChatMessage } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';

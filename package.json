@@ -83,5 +83,8 @@
 			"eslint --fix"
 		]
 	},
-	"packageManager": "pnpm@9.15.1"
+	"packageManager": "pnpm@9.15.1",
+	"dependencies": {
+		"@google/generative-ai": "^0.21.0"
+	}
 }
