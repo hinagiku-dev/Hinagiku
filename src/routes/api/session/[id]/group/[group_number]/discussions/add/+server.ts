@@ -1,6 +1,6 @@
 import type { Group } from '$lib/schema/group';
 import { adminDb, getGroupRef } from '$lib/server/firebase';
-import { isHarmfulContent } from '$lib/server/openai';
+import { isHarmfulContent } from '$lib/server/gemini';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';

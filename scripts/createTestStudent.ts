@@ -6,7 +6,7 @@ import { GroupSchema } from '../src/lib/schema/group';
 import { ProfileSchema } from '../src/lib/schema/profile';
 import { adminDb } from '../src/lib/server/firebase'; // 假設有一個 Firebase store 模組
 
-const sessionId = 'QMTXcFCAIQu3EeDRv8kD';
+const sessionId = 'ByoPlqZnDihr0M4mXU0B';
 const numberOfStudents = 40;
 const numberOfGroups = 8;
 

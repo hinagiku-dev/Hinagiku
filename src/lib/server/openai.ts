@@ -81,7 +81,7 @@ async function isOffTopic(
 	}
 }
 
-export async function checkFileContent(
+export async function isHarmfulFileContent(
 	filePath: string
 ): Promise<{ success: boolean; message: string; error?: string }> {
 	console.log('Checking file content:', { filePath });

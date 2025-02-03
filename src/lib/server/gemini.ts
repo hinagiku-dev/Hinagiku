@@ -1,198 +1,145 @@
-import { env } from '$env/dynamic/private';
+import { GoogleGeminiFlash, z } from '$lib/ai';
 import type { Resource } from '$lib/schema/resource';
 import type { Discussion, LLMChatMessage } from '$lib/server/types';
-import type { ResponseSchema } from '@google/generative-ai';
-import {
-	BlockReason,
-	GoogleGenerativeAI,
-	HarmBlockThreshold,
-	HarmCategory,
-	SchemaType
-} from '@google/generative-ai';
 import fs from 'fs/promises';
-import { DOCS_CONTEXT_SYSTEM_PROMPT, OFF_TOPIC_DETECTION_PROMPT } from './prompt';
+import {
+	CHAT_SUMMARY_PROMPT,
+	CONCEPT_SUMMARY_PROMPT,
+	DOCS_CONTEXT_SYSTEM_PROMPT,
+	GROUP_OPINION_SUMMARY_PROMPT,
+	HARMFUL_CONTENT_DETECTION_PROMPT,
+	OFF_TOPIC_DETECTION_PROMPT,
+	SUBTASKS_COMPLETED_PROMPT
+} from './prompt';
 
-const genAI = new GoogleGenerativeAI(env.GOOGLE_GENERATIVE_AI_API_KEY!);
-
-export async function requestChatLLM(system_prompt: string, history: LLMChatMessage[]) {
-	console.log('Requesting chat LLM:', {
-		systemPromptLength: system_prompt.length,
-		historyLength: history.length
-	});
+export async function requestLLM(
+	system_prompt: string,
+	history: LLMChatMessage[],
+	schema: z.ZodSchema
+) {
 	try {
-		const model = genAI.getGenerativeModel({
-			model: 'gemini-1.5-pro',
-			systemInstruction: system_prompt
-		});
-		const msg = history[history.length - 1].content;
-		const gemini_history = history.slice(0, history.length - 1).map((log) => ({
-			role: log.role == 'user' ? 'user' : 'model',
-			parts: [{ text: log.content }]
-		}));
-		const chat = model.startChat({ history: gemini_history });
+		const { output } = await GoogleGeminiFlash.generate({
+			system: system_prompt,
+			prompt:
+				history?.map((message) => ({
+					role: message.role === 'user' ? 'user' : 'model',
+					text: message.content
+				})) ?? [],
 
-		const result = await chat.sendMessage(msg);
-		if (!result) {
-			throw new Error('Failed to parse response');
+			output: {
+				schema: schema
+			},
+			config: { temperature: 0.1 }
+		});
+		const result = output as z.infer<typeof schema>;
+
+		if (!output) {
+			throw new Error('Failed to generate response');
 		}
 
 		return {
 			success: true,
-			message: result.response.text()
+			result: result,
+			error: ''
 		};
 	} catch (error) {
+		console.error('Error in requestLLM:', error);
 		return {
 			success: false,
-			message: '',
-			error: error
-		};
-	}
-}
-
-async function requestZodLLM(prompt: string, schema: ResponseSchema) {
-	try {
-		const model = genAI.getGenerativeModel({
-			model: 'gemini-1.5-pro',
-			generationConfig: {
-				responseMimeType: 'application/json',
-				responseSchema: schema
-			}
-		});
-		const result = await model.generateContent(prompt);
-		console.log('Received response from LLM', {
-			result,
-			result_format: schema
-		});
-
-		const text = result.response.text();
-		const json = JSON.parse(text);
-		if (!text) {
-			throw new Error('Failed to parse response');
-		}
-
-		return {
-			success: true,
-			message: json
-		};
-	} catch (error) {
-		return {
-			success: false,
-			message: '',
-			error: error
-		};
-	}
-}
-
-export async function checkFileContent(
-	filePath: string
-): Promise<{ success: boolean; message: string; error?: string }> {
-	console.log('Checking file content:', { filePath });
-	try {
-		const content = await fs.readFile(filePath, 'utf-8');
-		console.log('File content read successfully:', { contentLength: content.length });
-		if (await isHarmfulContent(content)) {
-			console.warn('Harmful content detected in file');
-			return {
-				success: false,
-				message: '',
-				error: 'Harmful content detected in the uploaded file'
-			};
-		}
-		return {
-			success: true,
-			message: 'File content is appropriate'
-		};
-	} catch (error) {
-		console.error('Error in checkFileContent:', error);
-		return {
-			success: false,
-			message: '',
-			error: 'Error reading the file'
+			result: null,
+			error: 'Error in requestLLM'
 		};
 	}
 }
 
 export async function isHarmfulContent(content: string) {
+	const system_prompt = HARMFUL_CONTENT_DETECTION_PROMPT;
+	const history = [
+		{
+			role: 'user' as const,
+			content: content
+		}
+	];
 	try {
-		const safetySettings = [
-			{
-				category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-				threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
-			},
-			{
-				category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-				threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
-			},
-			{
-				category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-				threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
-			},
-			{
-				category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-				threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
-			},
-			{
-				category: HarmCategory.HARM_CATEGORY_UNSPECIFIED,
-				threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
-			}
-		];
-		const model = genAI.getGenerativeModel({
-			model: 'gemini-1.5-pro',
-			safetySettings: safetySettings
-		});
-		const result = await model.generateContent(content);
-		// check all result is illegal
-		const harmful = result.response.promptFeedback?.blockReason == BlockReason.SAFETY;
+		const schema = z.object({ isHarmful: z.boolean() });
+		const { result } = await requestLLM(system_prompt, history, schema);
 		return {
 			success: true,
-			harmful: harmful
+			result: result.isHarmful,
+			error: ''
 		};
 	} catch (error) {
+		console.error('Error in isHarmfulContent:', error);
 		return {
 			success: false,
-			harmful: false,
-			error: error
+			result: false,
+			error: 'Error in isHarmfulContent'
 		};
 	}
 }
 
-async function isOffTopic(
-	history: LLMChatMessage[],
-	prompt: string
-): Promise<{ success: boolean; off_topic: boolean; error?: string }> {
-	console.log('Checking if off topic:', { historyLength: history.length });
-	if (history.length < 1) {
-		return { success: true, off_topic: false };
-	}
+export async function isOffTopic(history: LLMChatMessage[], topic: string) {
+	const system_prompt = OFF_TOPIC_DETECTION_PROMPT.replace('{topic}', topic);
 	try {
-		const llm_message = history.length > 1 ? history[history.length - 2].content : prompt;
-		const student_message = history[history.length - 1].content;
-		const system_prompt = OFF_TOPIC_DETECTION_PROMPT.replace('{llmMessage}', llm_message).replace(
-			'{studentMessage}',
-			student_message
+		const { result } = await requestLLM(
+			system_prompt,
+			history,
+			z.object({ isOffTopic: z.boolean() })
 		);
-
-		const response = await requestZodLLM(system_prompt, {
-			description: 'Detect off topic response',
-			type: SchemaType.BOOLEAN
-		});
-
-		if (!response.success) {
-			throw new Error('Failed to detect off topic response');
-		}
-
 		return {
 			success: true,
-			off_topic: response.message,
+			result: result.isOffTopic,
 			error: ''
 		};
 	} catch (error) {
 		console.error('Error in isOffTopic:', error);
 		return {
 			success: false,
-			off_topic: false,
-			error: 'Failed to detect off topic'
+			result: false,
+			error: 'Error in isOffTopic'
 		};
+	}
+}
+
+async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string[]) {
+	const subtasks_prompt = SUBTASKS_COMPLETED_PROMPT.replace('{subtasks}', subtasks.join('\n'));
+
+	try {
+		const { result } = await requestLLM(
+			subtasks_prompt,
+			history,
+			z.object({
+				satisfied: z.object(Object.fromEntries(subtasks.map((subtask) => [subtask, z.boolean()]))),
+				satisfied_subtasks: z.array(z.string())
+			})
+		);
+
+		const completed = subtasks.map((subtask) => result.satisfied[subtask]);
+		return {
+			success: true,
+			completed: completed
+		};
+	} catch (error) {
+		console.error('Error in checkSubtaskCompleted:', error);
+		return {
+			success: false,
+			completed: [],
+			error: 'Error in checkSubtaskCompleted'
+		};
+	}
+}
+
+export async function isHarmfulFileContent(filePath: string) {
+	const content = await fs.readFile(filePath, 'utf-8');
+	try {
+		if (await isHarmfulContent(content)) {
+			console.warn('Harmful content detected in file');
+			return false;
+		}
+		return true;
+	} catch (error) {
+		console.error('Error in isHarmfulFileContent:', error);
+		return false;
 	}
 }
 
@@ -202,41 +149,28 @@ export async function chatWithLLMByDocs(
 	subtasks: string[],
 	subtaskCompleted: boolean[],
 	resources: Resource[]
-): Promise<{
-	success: boolean;
-	message: string;
-	subtask_completed: boolean[];
-	warning: { off_topic: boolean; moderation: boolean };
-	error?: string;
-}> {
-	console.log('Chat with LLM by docs:', {
-		historyLength: history.length,
-		task,
-		subtasks,
-		subtaskCompleted,
-		resourcesLength: resources.length
+) {
+	const formatted_docs = resources
+		.map((doc, index) => {
+			const title = doc.name || `Document ${index + 1}`;
+			return `[${title}]:\n${doc.content}`;
+		})
+		.join('\n\n');
+
+	const formattedSubtasks = subtasks.map((subtask, index) => {
+		return subtaskCompleted[index] ? `(完成)${subtask}` : `(未完成)subtask`;
 	});
+
+	const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
+		.replace('{subtasks}', formattedSubtasks.join('\n'))
+		.replace('{resources}', formatted_docs);
+
 	try {
-		const formatted_docs = resources
-			.map((doc, index) => {
-				const title = doc.name || `Document ${index + 1}`;
-				return `[${title}]:\n${doc.content}`;
-			})
-			.join('\n\n');
-
-		const formattedSubtasks = subtasks.map((subtask, index) => {
-			return subtaskCompleted[index] ? `(完成)${subtask}` : `(未完成)subtask`;
-		});
-
-		const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
-			.replace('{subtasks}', formattedSubtasks.join('\n'))
-			.replace('{resources}', formatted_docs);
-
 		const [response, subtask_completed, moderation, off_topic] = await Promise.all([
-			requestChatLLM(system_prompt, history),
+			requestLLM(system_prompt, history, z.object({ response: z.string() })),
 			checkSubtaskCompleted(history, subtasks),
 			isHarmfulContent(history.length > 0 ? history[history.length - 1].content : ''),
-			isOffTopic(history, system_prompt)
+			isOffTopic(history, task)
 		]);
 
 		if (
@@ -250,103 +184,55 @@ export async function chatWithLLMByDocs(
 
 		return {
 			success: true,
-			message: response.message,
+			response: response.result.response,
 			subtask_completed: subtask_completed.completed,
 			warning: {
-				moderation: moderation.harmful,
-				off_topic: off_topic.off_topic
-			}
+				moderation: moderation.result,
+				off_topic: off_topic.result
+			},
+			error: ''
 		};
 	} catch (error) {
 		console.error('Error in chatWithLLMByDocs:', error);
 		return {
 			success: false,
-			message: '',
+			response: '',
 			subtask_completed: [],
-			warning: { moderation: false, off_topic: false },
-			error: 'Failed to chat with LLM by docs'
+			warning: {
+				moderation: false,
+				off_topic: false
+			},
+			error: 'Error in chatWithLLMByDocs'
 		};
 	}
 }
 
-async function checkSubtaskCompleted(
-	history: LLMChatMessage[],
-	subtasks: string[]
-): Promise<{ success: boolean; completed: boolean[]; error?: string }> {
-	console.log('Checking subtask completed:', { historyLength: history.length, subtasks });
-	if (history.length < 1) {
-		return { success: true, completed: subtasks.map(() => false) };
-	}
-	try {
-		const llm_message = history.length > 1 ? history[history.length - 2].content : '';
-		const student_message = history[history.length - 1].content;
-		const system_prompt = `Task: Check subtask completed\n\nSubtasks: ${subtasks.join(
-			'\n'
-		)}\n\nLLM Message: ${llm_message}\n\nStudent Message: ${student_message}`;
-
-		const response = await requestZodLLM(system_prompt, {
-			description: 'Check subtask completed',
-			type: SchemaType.ARRAY,
-			items: {
-				description: 'Subtask completed',
-				type: SchemaType.BOOLEAN
-			}
-		});
-
-		if (!response.success) {
-			throw new Error('Failed to check subtask completed');
+export async function summarizeStudentChat(history: LLMChatMessage[]) {
+	const formatted_history = [
+		{
+			role: 'user' as const,
+			content: history
+				.filter((msg) => msg.role === 'user')
+				.map((msg) => msg.content)
+				.join('\n')
 		}
+	];
+
+	try {
+		const { result } = await requestLLM(
+			CHAT_SUMMARY_PROMPT,
+			formatted_history,
+			z.object({
+				student_summary: z.string(),
+				student_key_points: z.array(z.string())
+			})
+		);
 
 		return {
 			success: true,
-			completed: response.message
-		};
-	} catch (error) {
-		console.error('Error in checkSubtaskCompleted:', error);
-		return {
-			success: false,
-			completed: subtasks.map(() => false),
-			error: 'Failed to check subtask completed'
-		};
-	}
-}
-
-export async function summarizeStudentChat(history: LLMChatMessage[]): Promise<{
-	success: boolean;
-	summary: string;
-	key_points: string[];
-	error?: string;
-}> {
-	console.log('Summarizing student chat:', { historyLength: history.length });
-	try {
-		const systemPrompt = history.map((log) => log.content).join('\n');
-		const response = await requestZodLLM(systemPrompt, {
-			description: 'Summarize student chat',
-			type: SchemaType.OBJECT,
-			properties: {
-				summary: {
-					description: 'Summary of the chat',
-					type: SchemaType.STRING
-				},
-				keyPoints: {
-					description: 'Key points of the chat',
-					type: SchemaType.ARRAY,
-					items: {
-						description: 'Key point',
-						type: SchemaType.STRING
-					}
-				}
-			}
-		});
-
-		if (!response.success) {
-			throw new Error('Failed to summarize student chat');
-		}
-
-		return {
-			success: true,
-			summary: response.message.summary,
-			key_points: response.message.keyPoints
+			summary: result.student_summary,
+			key_points: result.student_key_points,
+			error: ''
 		};
 	} catch (error) {
 		console.error('Error in summarizeStudentChat:', error);
@@ -354,59 +240,33 @@ export async function summarizeStudentChat(history: LLMChatMessage[]): Promise<{
 			success: false,
 			summary: '',
 			key_points: [],
-			error: 'Failed to summarize student chat'
+			error: 'Error in summarizeStudentChat'
 		};
 	}
 }
 
 export async function summarizeConcepts(
 	student_opinion: { summary: string; keyPoints: string[] }[]
-): Promise<{
-	success: boolean;
-	similar_view_points: string[];
-	different_view_points: string[];
-	students_summary: string;
-	error?: string;
-}> {
-	console.log('Summarizing concepts:', { student_opinionLength: student_opinion.length });
+) {
+	const history = student_opinion.map((opinion) => ({
+		role: 'user' as const,
+		content: `摘要：${opinion.summary}\n關鍵字：${opinion.keyPoints.join(',')}`
+	}));
 	try {
-		const systemPrompt = student_opinion.map((opinion) => opinion.summary).join('\n');
-		const response = await requestZodLLM(systemPrompt, {
-			description: 'Summarize concepts',
-			type: SchemaType.OBJECT,
-			properties: {
-				similarViewPoints: {
-					description: 'Similar view points',
-					type: SchemaType.ARRAY,
-					items: {
-						description: 'Similar view point',
-						type: SchemaType.STRING
-					}
-				},
-				differentViewPoints: {
-					description: 'Different view points',
-					type: SchemaType.ARRAY,
-					items: {
-						description: 'Different view point',
-						type: SchemaType.STRING
-					}
-				},
-				studentsSummary: {
-					description: 'Summary of student opinions',
-					type: SchemaType.STRING
-				}
-			}
-		});
-
-		if (!response.success) {
-			throw new Error('Failed to summarize concepts');
-		}
-
+		const { result } = await requestLLM(
+			CONCEPT_SUMMARY_PROMPT,
+			history,
+			z.object({
+				similar_view_points: z.array(z.string()),
+				different_view_points: z.array(z.string()),
+				students_summary: z.string()
+			})
+		);
 		return {
 			success: true,
-			similar_view_points: response.message.similarViewPoints,
-			different_view_points: response.message.differentViewPoints,
-			students_summary: response.message.studentsSummary
+			similar_view_points: result.similar_view_points,
+			different_view_points: result.different_view_points,
+			students_summary: result.students_summary
 		};
 	} catch (error) {
 		console.error('Error in summarizeConcepts:', error);
@@ -414,44 +274,52 @@ export async function summarizeConcepts(
 			success: false,
 			similar_view_points: [],
 			different_view_points: [],
-			students_summary: '',
-			error: 'Failed to summarize concepts'
+			students_summary: ''
 		};
 	}
 }
 
-export async function summarizeGroupOpinions(student_opinion: Discussion[]): Promise<{
-	success: boolean;
-	summary: string;
-	keywords: Record<string, number>;
-	error?: string;
-}> {
-	console.log('Summarizing group opinions:', { student_opinionLength: student_opinion.length });
-	try {
-		const systemPrompt = student_opinion.map((opinion) => opinion.content).join('\n');
-		const response = await requestZodLLM(systemPrompt, {
-			description: 'Summarize group opinions',
-			type: SchemaType.OBJECT,
-			properties: {
-				summary: {
-					description: 'Summary of group opinions',
-					type: SchemaType.STRING
-				},
-				keywords: {
-					description: 'Keywords of group opinions',
-					type: SchemaType.OBJECT
-				}
-			}
-		});
-
-		if (!response.success) {
-			throw new Error('Failed to summarize group opinions');
+export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
+	const formatted_opinions = student_opinion
+		.filter((opinion) => opinion.speaker !== '摘要小幫手')
+		.map((opinion) => `${opinion.speaker}: ${opinion.content}`)
+		.join('\n');
+	const history = [
+		{
+			role: 'user' as const,
+			content: formatted_opinions
 		}
+	];
+
+	try {
+		const system_prompt = GROUP_OPINION_SUMMARY_PROMPT;
+		const { result } = await requestLLM(
+			system_prompt,
+			history,
+			z.object({
+				group_summary: z.string(),
+				group_keywords: z.array(
+					z.object({
+						keyword: z.string(),
+						strength: z.number()
+					})
+				)
+			})
+		);
+
+		const summary = result.group_summary;
+		const keywords = result.group_keywords.reduce(
+			(acc: Record<string, number>, keyword: { keyword: string; strength: number }) => ({
+				...acc,
+				[keyword.keyword]: keyword.strength
+			}),
+			{} as Record<string, number>
+		);
 
 		return {
 			success: true,
-			summary: response.message.summary,
-			keywords: response.message.keywords
+			summary: summary,
+			keywords: keywords
 		};
 	} catch (error) {
 		console.error('Error in summarizeGroupOpinions:', error);
@@ -459,7 +327,7 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]): Pro
 			success: false,
 			summary: '',
 			keywords: {},
-			error: 'Failed to summarize group opinions'
+			error: 'Error in summarizeGroupOpinions'
 		};
 	}
 }

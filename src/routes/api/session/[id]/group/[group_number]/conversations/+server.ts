@@ -5,7 +5,7 @@ import {
 	getSessionData,
 	getSessionRef
 } from '$lib/server/firebase';
-import { chatWithLLMByDocs } from '$lib/server/openai';
+import { chatWithLLMByDocs } from '$lib/server/gemini';
 import type { LLMChatMessage } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
@@ -25,17 +25,18 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		const group_ref = getGroupRef(id, group_number);
 		const group_data = await getGroupData(group_ref);
 
-		const intro = await chatWithLLMByDocs(
-			[],
+		const { response } = await chatWithLLMByDocs(
+			[{ role: 'user', content: '請介紹一下你自己' }],
 			task,
 			subtasks,
 			new Array(subtasks.length).fill(false),
 			resources
 		);
-		if (!intro) {
+
+		if (!response) {
 			throw error(500, 'Error generating intro message');
 		}
-		const history: LLMChatMessage[] = [{ role: 'assistant', content: intro.message }];
+		const history: LLMChatMessage[] = [{ role: 'assistant', content: response }];
 
 		await Promise.all(
 			group_data.participants.map(async (participant) =>
