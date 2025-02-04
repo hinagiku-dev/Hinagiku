@@ -28,6 +28,7 @@ export const OFF_TOPIC_DETECTION_PROMPT = `
 你是專門檢測學生是否偏離主題的AI，請檢測學生的訊息是否聊天內容偏離主題，並回傳一個 Boolean 值，如果偏離主題則回傳 true，否則回傳 false。
 你可以接收一定程度的偏離，但當認為出現該主題無關的內容時，請回傳 true。
 主題是：{topic}
+子主題是：{subtopic}
 `;
 
 export const SUBTASKS_COMPLETED_PROMPT = `

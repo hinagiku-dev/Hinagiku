@@ -1,7 +1,6 @@
 import { GoogleGeminiFlash, z } from '$lib/ai';
 import type { Resource } from '$lib/schema/resource';
 import type { Discussion, LLMChatMessage } from '$lib/server/types';
-import fs from 'fs/promises';
 import {
 	CHAT_SUMMARY_PROMPT,
 	CONCEPT_SUMMARY_PROMPT,
@@ -63,39 +62,41 @@ export async function isHarmfulContent(content: string) {
 	try {
 		const schema = z.object({ isHarmful: z.boolean() });
 		const { result } = await requestLLM(system_prompt, history, schema);
+		const parsed_result = schema.parse(result);
 		return {
 			success: true,
-			result: result.isHarmful,
+			harmfulContent: parsed_result.isHarmful,
 			error: ''
 		};
 	} catch (error) {
 		console.error('Error in isHarmfulContent:', error);
 		return {
 			success: false,
-			result: false,
+			harmfulContent: false,
 			error: 'Error in isHarmfulContent'
 		};
 	}
 }
 
-export async function isOffTopic(history: LLMChatMessage[], topic: string) {
-	const system_prompt = OFF_TOPIC_DETECTION_PROMPT.replace('{topic}', topic);
+export async function isOffTopic(history: LLMChatMessage[], topic: string, subtasks: string[]) {
+	const system_prompt = OFF_TOPIC_DETECTION_PROMPT.replace('{topic}', topic).replace(
+		'{subtopic}',
+		subtasks.join('\n')
+	);
 	try {
-		const { result } = await requestLLM(
-			system_prompt,
-			history,
-			z.object({ isOffTopic: z.boolean() })
-		);
+		const schema = z.object({ isOffTopic: z.boolean() });
+		const { result } = await requestLLM(system_prompt, history, schema);
+		const parsed_result = schema.parse(result);
 		return {
 			success: true,
-			result: result.isOffTopic,
+			offTopic: parsed_result.isOffTopic,
 			error: ''
 		};
 	} catch (error) {
 		console.error('Error in isOffTopic:', error);
 		return {
 			success: false,
-			result: false,
+			offTopic: false,
 			error: 'Error in isOffTopic'
 		};
 	}
@@ -105,16 +106,14 @@ async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string
 	const subtasks_prompt = SUBTASKS_COMPLETED_PROMPT.replace('{subtasks}', subtasks.join('\n'));
 
 	try {
-		const { result } = await requestLLM(
-			subtasks_prompt,
-			history,
-			z.object({
-				satisfied: z.object(Object.fromEntries(subtasks.map((subtask) => [subtask, z.boolean()]))),
-				satisfied_subtasks: z.array(z.string())
-			})
-		);
+		const schema = z.object({
+			satisfied: z.object(Object.fromEntries(subtasks.map((subtask) => [subtask, z.boolean()]))),
+			satisfied_subtasks: z.array(z.string())
+		});
+		const { result } = await requestLLM(subtasks_prompt, history, schema);
+		const parsed_result = schema.parse(result);
 
-		const completed = subtasks.map((subtask) => result.satisfied[subtask]);
+		const completed = subtasks.map((subtask) => parsed_result.satisfied[subtask]);
 		return {
 			success: true,
 			completed: completed
@@ -126,20 +125,6 @@ async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string
 			completed: [],
 			error: 'Error in checkSubtaskCompleted'
 		};
-	}
-}
-
-export async function isHarmfulFileContent(filePath: string) {
-	const content = await fs.readFile(filePath, 'utf-8');
-	try {
-		if (await isHarmfulContent(content)) {
-			console.warn('Harmful content detected in file');
-			return false;
-		}
-		return true;
-	} catch (error) {
-		console.error('Error in isHarmfulFileContent:', error);
-		return false;
 	}
 }
 
@@ -170,7 +155,7 @@ export async function chatWithLLMByDocs(
 			requestLLM(system_prompt, history, z.object({ response: z.string() })),
 			checkSubtaskCompleted(history, subtasks),
 			isHarmfulContent(history.length > 0 ? history[history.length - 1].content : ''),
-			isOffTopic(history, task)
+			isOffTopic(history, task, subtasks)
 		]);
 
 		if (
@@ -187,8 +172,8 @@ export async function chatWithLLMByDocs(
 			response: response.result.response,
 			subtask_completed: subtask_completed.completed,
 			warning: {
-				moderation: moderation.result,
-				off_topic: off_topic.result
+				moderation: moderation.harmfulContent,
+				off_topic: off_topic.offTopic
 			},
 			error: ''
 		};
@@ -208,30 +193,18 @@ export async function chatWithLLMByDocs(
 }
 
 export async function summarizeStudentChat(history: LLMChatMessage[]) {
-	const formatted_history = [
-		{
-			role: 'user' as const,
-			content: history
-				.filter((msg) => msg.role === 'user')
-				.map((msg) => msg.content)
-				.join('\n')
-		}
-	];
-
 	try {
-		const { result } = await requestLLM(
-			CHAT_SUMMARY_PROMPT,
-			formatted_history,
-			z.object({
-				student_summary: z.string(),
-				student_key_points: z.array(z.string())
-			})
-		);
+		const schema = z.object({
+			student_summary: z.string(),
+			student_key_points: z.array(z.string())
+		});
+		const { result } = await requestLLM(CHAT_SUMMARY_PROMPT, history, schema);
+		const parsed_result = schema.parse(result);
 
 		return {
 			success: true,
-			summary: result.student_summary,
-			key_points: result.student_key_points,
+			summary: parsed_result.student_summary,
+			key_points: parsed_result.student_key_points,
 			error: ''
 		};
 	} catch (error) {
@@ -253,20 +226,18 @@ export async function summarizeConcepts(
 		content: `摘要：${opinion.summary}\n關鍵字：${opinion.keyPoints.join(',')}`
 	}));
 	try {
-		const { result } = await requestLLM(
-			CONCEPT_SUMMARY_PROMPT,
-			history,
-			z.object({
-				similar_view_points: z.array(z.string()),
-				different_view_points: z.array(z.string()),
-				students_summary: z.string()
-			})
-		);
+		const schema = z.object({
+			similar_view_points: z.array(z.string()),
+			different_view_points: z.array(z.string()),
+			students_summary: z.string()
+		});
+		const { result } = await requestLLM(CONCEPT_SUMMARY_PROMPT, history, schema);
+		const parsed_result = schema.parse(result);
 		return {
 			success: true,
-			similar_view_points: result.similar_view_points,
-			different_view_points: result.different_view_points,
-			students_summary: result.students_summary
+			similar_view_points: parsed_result.similar_view_points,
+			different_view_points: parsed_result.different_view_points,
+			students_summary: parsed_result.students_summary
 		};
 	} catch (error) {
 		console.error('Error in summarizeConcepts:', error);
@@ -290,25 +261,23 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 			content: formatted_opinions
 		}
 	];
+	const system_prompt = GROUP_OPINION_SUMMARY_PROMPT;
 
 	try {
-		const system_prompt = GROUP_OPINION_SUMMARY_PROMPT;
-		const { result } = await requestLLM(
-			system_prompt,
-			history,
-			z.object({
-				group_summary: z.string(),
-				group_keywords: z.array(
-					z.object({
-						keyword: z.string(),
-						strength: z.number()
-					})
-				)
-			})
-		);
+		const schema = z.object({
+			group_summary: z.string(),
+			group_keywords: z.array(
+				z.object({
+					keyword: z.string(),
+					strength: z.number()
+				})
+			)
+		});
+		const { result } = await requestLLM(system_prompt, history, schema);
+		const parsed_result = schema.parse(result);
 
-		const summary = result.group_summary;
-		const keywords = result.group_keywords.reduce(
+		const summary = parsed_result.group_summary;
+		const keywords = parsed_result.group_keywords.reduce(
 			(acc: Record<string, number>, keyword: { keyword: string; strength: number }) => ({
 				...acc,
 				[keyword.keyword]: keyword.strength
