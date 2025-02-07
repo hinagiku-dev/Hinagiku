@@ -52,7 +52,6 @@ export async function requestLLM(
 }
 
 export async function isHarmfulContent(content: string) {
-	const system_prompt = HARMFUL_CONTENT_DETECTION_PROMPT;
 	const history = [
 		{
 			role: 'user' as const,
@@ -61,7 +60,7 @@ export async function isHarmfulContent(content: string) {
 	];
 	try {
 		const schema = z.object({ isHarmful: z.boolean() });
-		const { result } = await requestLLM(system_prompt, history, schema);
+		const { result } = await requestLLM(HARMFUL_CONTENT_DETECTION_PROMPT, history, schema);
 		const parsed_result = schema.parse(result);
 		return {
 			success: true,
