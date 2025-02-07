@@ -143,7 +143,7 @@ export async function chatWithLLMByDocs(
 		.join('\n\n');
 
 	const formattedSubtasks = subtasks.map((subtask, index) => {
-		return subtaskCompleted[index] ? `(完成)${subtask}` : `(未完成)subtask`;
+		return subtaskCompleted[index] ? `(完成)${subtask}` : `(未完成)${subtask}`;
 	});
 
 	const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
