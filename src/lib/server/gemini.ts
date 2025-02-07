@@ -102,14 +102,14 @@ export async function isOffTopic(history: LLMChatMessage[], topic: string, subta
 }
 
 async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string[]) {
-	const subtasks_prompt = SUBTASKS_COMPLETED_PROMPT.replace('{subtasks}', subtasks.join('\n'));
+	const system_prompt = SUBTASKS_COMPLETED_PROMPT.replace('{subtasks}', subtasks.join('\n'));
 
 	try {
 		const schema = z.object({
 			satisfied: z.object(Object.fromEntries(subtasks.map((subtask) => [subtask, z.boolean()]))),
 			satisfied_subtasks: z.array(z.string())
 		});
-		const { result } = await requestLLM(subtasks_prompt, history, schema);
+		const { result } = await requestLLM(system_prompt, history, schema);
 		const parsed_result = schema.parse(result);
 
 		const completed = subtasks.map((subtask) => parsed_result.satisfied[subtask]);
