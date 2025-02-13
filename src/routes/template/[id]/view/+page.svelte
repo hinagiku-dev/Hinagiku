@@ -2,9 +2,31 @@
 	import { Badge, Accordion, AccordionItem } from 'flowbite-svelte';
 	import { Link, FileText, File } from 'lucide-svelte';
 	import type { ResourceType } from '$lib/schema/resource';
+	import { language } from '$lib/stores/language'; // Import the global language store
 
 	export let data;
 	const { template } = data;
+
+	const translations = {
+		en: {
+			taskDescription: 'Task Description',
+			subtasks: 'Subtasks',
+			resources: 'Resources',
+			noResources: 'No resources available',
+			public: 'Public',
+			private: 'Private',
+			lastUpdated: 'Last updated'
+		},
+		zh: {
+			taskDescription: '任務描述',
+			subtasks: '子任務',
+			resources: '資源',
+			noResources: '沒有可用資源',
+			public: '公開',
+			private: '私人',
+			lastUpdated: '最後更新時間'
+		}
+	};
 
 	function getResourceIcon(type: ResourceType) {
 		switch (type) {
@@ -30,11 +52,12 @@
 		<div class="mb-4 flex items-start justify-between">
 			<h1 class="text-4xl font-bold text-gray-900">{template.title}</h1>
 			<Badge color={template.public ? 'green' : 'none'} class="mt-2">
-				{template.public ? 'Public' : 'Private'}
+				{template.public ? translations[$language].public : translations[$language].private}
 			</Badge>
 		</div>
 		<div class="text-sm text-gray-500">
-			Last updated {new Date(template.updatedAt).toLocaleDateString()}
+			{translations[$language].lastUpdated}
+			{new Date(template.updatedAt).toLocaleDateString()}
 		</div>
 	</header>
 
@@ -42,7 +65,9 @@
 	<main class="space-y-8">
 		<!-- Task Description Section -->
 		<section>
-			<h2 class="mb-4 text-2xl font-semibold text-gray-800">Task Description</h2>
+			<h2 class="mb-4 text-2xl font-semibold text-gray-800">
+				{translations[$language].taskDescription}
+			</h2>
 			<div class="prose prose-gray max-w-none">
 				<p class="whitespace-pre-wrap leading-relaxed text-gray-700">
 					{template.task}
@@ -53,7 +78,9 @@
 		<!-- Subtasks Section -->
 		{#if template.subtasks && template.subtasks.length > 0}
 			<section class="border-t border-gray-100 pt-8">
-				<h2 class="mb-4 text-2xl font-semibold text-gray-800">Subtasks</h2>
+				<h2 class="mb-4 text-2xl font-semibold text-gray-800">
+					{translations[$language].subtasks}
+				</h2>
 				<ul class="space-y-3">
 					{#each template.subtasks as subtask, index}
 						<li class="flex items-start">
@@ -67,7 +94,7 @@
 
 		<!-- Resources Section -->
 		<section class="border-t border-gray-100 pt-8">
-			<h2 class="mb-4 text-2xl font-semibold text-gray-800">Resources</h2>
+			<h2 class="mb-4 text-2xl font-semibold text-gray-800">{translations[$language].resources}</h2>
 			{#if template.resources && template.resources.length > 0}
 				<div class="rounded-lg bg-gray-50">
 					<Accordion class="divide-y divide-gray-200">
@@ -114,7 +141,7 @@
 					</Accordion>
 				</div>
 			{:else}
-				<p class="italic text-gray-500">No resources available</p>
+				<p class="italic text-gray-500">{translations[$language].noResources}</p>
 			{/if}
 		</section>
 	</main>
