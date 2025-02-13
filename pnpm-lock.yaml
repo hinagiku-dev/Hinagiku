@@ -6,10 +6,6 @@ settings:
 
 importers:
   .:
-    dependencies:
-      '@google/generative-ai':
-        specifier: ^0.21.0
-        version: 0.21.0
     devDependencies:
       '@aws-sdk/client-s3':
         specifier: ^3.717.0
@@ -23,6 +19,9 @@ importers:
       '@genkit-ai/googleai':
         specifier: ^0.9.12
         version: 0.9.12(encoding@0.1.13)(genkit@0.9.12)
+      '@google/generative-ai':
+        specifier: ^0.21.0
+        version: 0.21.0
       '@hinagiku/ffmpeg-core':
         specifier: 0.12.6-pcm-mpeg-only
         version: 0.12.6-pcm-mpeg-only
