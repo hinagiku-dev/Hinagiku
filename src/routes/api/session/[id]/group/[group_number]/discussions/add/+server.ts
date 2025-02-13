@@ -1,6 +1,6 @@
 import type { Group } from '$lib/schema/group';
 import { adminDb, getGroupRef } from '$lib/server/firebase';
-import { isHarmfulContent } from '$lib/server/llm';
+import { isHarmfulContent } from '$lib/server/gemini';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -25,7 +25,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		}
 
 		const { content, speaker, audio } = await getRequestData(request);
-		const moderation = await isHarmfulContent(content);
+		const { harmfulContent } = await isHarmfulContent(content);
 
 		const group_ref = getGroupRef(id, group_number);
 		await adminDb.runTransaction(async (t) => {
@@ -44,11 +44,11 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 						content: content,
 						speaker: speaker,
 						audio: audio,
-						moderation: moderation.harmful
+						moderation: harmfulContent || data.moderation
 					}
 				],
 				updatedAt: new Date(),
-				moderation: moderation.harmful || data.moderation
+				moderation: harmfulContent || data.moderation
 			});
 		});
 

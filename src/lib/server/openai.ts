@@ -81,7 +81,7 @@ async function isOffTopic(
 	}
 }
 
-export async function checkFileContent(
+export async function isHarmfulFileContent(
 	filePath: string
 ): Promise<{ success: boolean; message: string; error?: string }> {
 	console.log('Checking file content:', { filePath });
@@ -399,9 +399,12 @@ export async function summarizeConcepts(
 	}
 }
 
-export async function summarizeGroupOpinions(
-	student_opinion: Discussion[]
-): Promise<{ success: boolean; summary: string; keywords: string[]; error?: string }> {
+export async function summarizeGroupOpinions(student_opinion: Discussion[]): Promise<{
+	success: boolean;
+	summary: string;
+	keywords: Record<string, number>;
+	error?: string;
+}> {
 	try {
 		const formatted_opinions = student_opinion
 			.filter((opinion) => opinion.speaker !== '摘要小幫手')

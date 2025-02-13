@@ -14,11 +14,15 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!session) {
 		throw error(404, 'Session not found');
 	}
-	if (!(locals.user.uid in session.participants)) {
-		throw redirect(303, '/session');
+
+	const groupRef = sessionRef
+		.collection('groups')
+		.where('participants', 'array-contains', locals.user.uid);
+	if ((await groupRef.get()).empty) {
+		throw error(401, 'Unauthorized');
 	}
 
-	if (session.stage === 'individual') {
+	if (session.status === 'individual') {
 		const conversationRef = adminDb.collection('conversation').doc();
 		await conversationRef.set({
 			sessionId: params.id,

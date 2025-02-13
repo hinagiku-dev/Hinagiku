@@ -1,5 +1,5 @@
 import { getConversationData, getConversationRef } from '$lib/server/firebase';
-import { chatWithLLMByDocs } from '$lib/server/llm';
+import { chatWithLLMByDocs } from '$lib/server/gemini';
 import type { DBChatMessage, LLMChatMessage } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
@@ -27,7 +27,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		}
 
 		const conversation_ref = getConversationRef(id, group_number, conv_id);
-		console.log('Retrieved conversation reference');
+		console.log('Retrieved conversation reference', conversation_ref);
 		const { userId, task, subtasks, resources, history, warning, subtaskCompleted } =
 			await getConversationData(conversation_ref);
 		console.log('Retrieved conversation data', { userId, task, subtasksCount: subtasks.length });
@@ -91,7 +91,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 				},
 				{
 					role: 'assistant',
-					content: response.message
+					content: response.response
 				}
 			],
 			warning: {
@@ -103,7 +103,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			)
 		});
 
-		return json({ success: true, message: response.message });
+		return json({ success: true, message: response.response });
 	} catch (error) {
 		console.error('Error processing request:', error);
 		return json({ status: 'error', message: 'Internal Server Error' }, { status: 500 });

@@ -64,7 +64,7 @@
 			placeholder="Enter code"
 			maxlength="6"
 			pattern="\d{6}"
-			class="w-full rounded-lg border px-6 py-2"
+			class="w-full rounded-lg border py-2"
 			bind:value={code}
 			required
 		/>

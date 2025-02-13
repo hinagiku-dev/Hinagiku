@@ -6,6 +6,10 @@ settings:
 
 importers:
   .:
+    dependencies:
+      '@google/generative-ai':
+        specifier: ^0.21.0
+        version: 0.21.0
     devDependencies:
       '@aws-sdk/client-s3':
         specifier: ^3.717.0

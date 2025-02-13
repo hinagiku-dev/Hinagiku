@@ -5,7 +5,7 @@ import {
 	getConversationsRef,
 	getGroupRef
 } from '$lib/server/firebase';
-import { summarizeConcepts, summarizeStudentChat } from '$lib/server/llm';
+import { summarizeConcepts, summarizeStudentChat } from '$lib/server/gemini';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
 
@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			throw error(400, 'Missing parameters');
 		}
 
-		const conversation_ref = await getConversationRef(id, group_number, conv_id);
+		const conversation_ref = getConversationRef(id, group_number, conv_id);
 		const { userId, history } = await getConversationData(conversation_ref);
 
 		if (userId !== locals.user.uid) {
@@ -55,6 +55,12 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 					keyPoints: conversation.keyPoints as string[]
 				}))
 			);
+		console.log(
+			'summarized concepts',
+			similar_view_points,
+			different_view_points,
+			students_summary
+		);
 
 		const groupRef = getGroupRef(id, group_number);
 		await groupRef.update({
