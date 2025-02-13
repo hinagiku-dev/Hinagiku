@@ -3,9 +3,35 @@
 	import { Button, Card } from 'flowbite-svelte';
 	import { ArrowRight, Mic, Brain, GraduationCap, Github } from 'lucide-svelte';
 	import { onMount } from 'svelte';
+	import { language } from '$lib/stores/language'; // Import the global language store
 
 	let title = $state('Hinagiku');
 	let highlight = $state(0);
+	let lang = language; // Use the global language store directly
+
+	const translations = {
+		en: {
+			intro:
+				'Hinagiku helps educators facilitate more engaging and productive discussions through real-time transcription and intelligent analysis.',
+			welcome: 'Welcome to Hinagiku!',
+			profile: 'Profile',
+			dashboard: 'Go to Dashboard',
+			signOut: 'Sign out',
+			login: 'Login',
+			started: 'Get Started',
+			learn: 'Learn More'
+		},
+		zh: {
+			intro: 'Hinagiku透過即時轉錄和智慧分析幫助教育工作者促進更具吸引力和生產力的討論。',
+			welcome: '歡迎來到Hinagiku!',
+			profile: '個人资料',
+			dashboard: '儀表板',
+			signOut: '登出',
+			login: '登入',
+			started: '開始使用',
+			learn: '了解更多'
+		}
+	};
 
 	onMount(() => {
 		const interval = setInterval(() => {
@@ -43,21 +69,20 @@
 						</span>
 					</h1>
 					<p class="mb-8 text-xl text-gray-600">
-						Hinagiku helps educators facilitate more engaging and productive discussions through
-						real-time transcription and intelligent analysis.
+						{translations[$lang].intro}
 					</p>
 					<div class="flex gap-4">
 						{#if $user}
 							<Button size="xl" class="gap-2" href="/dashboard">
-								Go to Dashboard
+								{translations[$lang].dashboard}
 								<ArrowRight size={20} />
 							</Button>
 						{:else}
 							<Button size="xl" class="gap-2" href="/login">
-								Get Started
+								{translations[$lang].started}
 								<ArrowRight size={20} />
 							</Button>
-							<Button size="xl" color="light" href="#features">Learn More</Button>
+							<Button size="xl" color="light" href="#features">{translations[$lang].learn}</Button>
 						{/if}
 					</div>
 				</div>
