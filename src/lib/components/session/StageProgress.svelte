@@ -7,7 +7,7 @@
 	const stages = [
 		{ id: 'preparing', name: '準備階段', color: 'bg-yellow-500' },
 		{ id: 'individual', name: '個人階段', color: 'bg-blue-500' },
-		{ id: 'before-group', name: '團體套論前階段', color: 'bg-purple-500' },
+		{ id: 'before-group', name: '團體討論前階段', color: 'bg-purple-500' },
 		{ id: 'group', name: '團體討論階段', color: 'bg-green-500' },
 		{ id: 'ended', name: '總結階段', color: 'bg-gray-500' }
 	] as const;
@@ -33,7 +33,7 @@
 			cancel: 'Cancel'
 		},
 		zh: {
-			confirmEndStage: '進入 Ended Stage 將無法返回，確定要繼續嗎？',
+			confirmEndStage: '進入總結階段將無法返回，確定要繼續嗎？',
 			confirm: '確定',
 			cancel: '取消'
 		}

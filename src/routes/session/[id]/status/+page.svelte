@@ -27,7 +27,7 @@
 		},
 		zh: {
 			dashboardTitle: '參與者狀態儀表板',
-			loadingGroups: '加載小組...',
+			loadingGroups: '載入小組...',
 			noParticipants: '此小組中沒有參與者。'
 		}
 	};

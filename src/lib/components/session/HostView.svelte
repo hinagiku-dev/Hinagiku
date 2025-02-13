@@ -116,7 +116,7 @@
 			openChatHistory: '打開聊天記錄',
 			openGroupChatHistory: '打開小組聊天記錄',
 			warningInappropriate: '警告：檢測到不適當內容。',
-			warningOffTopic: '警告：許多離題消息。'
+			warningOffTopic: '警告：許多離題訊息。'
 		}
 	};
 

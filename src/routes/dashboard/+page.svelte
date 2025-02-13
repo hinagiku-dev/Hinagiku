@@ -170,7 +170,7 @@
 		},
 		zh: {
 			welcome: '歡迎來到Hinagiku!',
-			profile: '個人资料',
+			profile: '個人資料',
 			dashboard: '儀表板',
 			signOut: '登出',
 			login: '登入',
