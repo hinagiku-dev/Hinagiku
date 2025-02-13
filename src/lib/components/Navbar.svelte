@@ -39,9 +39,8 @@
 		return () => clearInterval(interval);
 	});
 
-	function toggleLanguage() {
-		language.update((value) => (value === 'en' ? 'zh' : 'en'));
-		console.log('Language:', $language);
+	function setLanguage(lang: 'en' | 'zh') {
+		language.set(lang);
 	}
 </script>
 
@@ -56,9 +55,6 @@
 		</span>
 	</NavBrand>
 	<div class="ml-auto flex items-center">
-		<Button on:click={toggleLanguage} class="mr-2">
-			{$language === 'en' ? 'English' : '中文'}
-		</Button>
 		{#if $user}
 			<Avatar id="user-menu" src={$user.photoURL || ''} alt="User" class="cursor-pointer" />
 			<Dropdown triggeredBy="#user-menu" class="w-48">
@@ -79,5 +75,23 @@
 		{:else if !page.url.pathname.startsWith('/login')}
 			<Button href="/login" class="">{translations[$language].login}</Button>
 		{/if}
+
+		<!-- Remove the old toggle button and add a dropdown for language selection(PM requested) -->
+		<Avatar
+			id="language-menu"
+			src={$language === 'en' ? '/icons/flag-us.png' : '/icons/flag-zh.jpg'}
+			alt="Lang"
+			class="ml-2 cursor-pointer"
+		/>
+		<Dropdown triggeredBy="#language-menu" class="w-36">
+			<DropdownItem class="flex items-center" on:click={() => setLanguage('en')}>
+				<img src="/icons/flag-us.png" alt="English" class="mr-2 h-4 w-4" />
+				English
+			</DropdownItem>
+			<DropdownItem class="flex items-center" on:click={() => setLanguage('zh')}>
+				<img src="/icons/flag-zh.jpg" alt="中文" class="mr-2 h-4 w-4" />
+				繁體中文
+			</DropdownItem>
+		</Dropdown>
 	</div>
 </Navbar>
