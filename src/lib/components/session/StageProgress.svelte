@@ -2,13 +2,14 @@
 	import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-svelte';
 	import { Button, Modal } from 'flowbite-svelte';
 	import type { Session } from '$lib/schema/session';
+	import { language } from '$lib/stores/language'; // Import the global language store
 
 	const stages = [
-		{ id: 'preparing', name: 'Preparing Stage', color: 'bg-yellow-500' },
-		{ id: 'individual', name: 'Individual Stage', color: 'bg-blue-500' },
-		{ id: 'before-group', name: 'Before Group Stage', color: 'bg-purple-500' },
-		{ id: 'group', name: 'Group Stage', color: 'bg-green-500' },
-		{ id: 'ended', name: 'Ended Stage', color: 'bg-gray-500' }
+		{ id: 'preparing', name: '準備階段', color: 'bg-yellow-500' },
+		{ id: 'individual', name: '個人階段', color: 'bg-blue-500' },
+		{ id: 'before-group', name: '團體套論前階段', color: 'bg-purple-500' },
+		{ id: 'group', name: '團體討論階段', color: 'bg-green-500' },
+		{ id: 'ended', name: '總結階段', color: 'bg-gray-500' }
 	] as const;
 
 	export let session: Session | undefined;
@@ -23,6 +24,20 @@
 	$: canGoPrevious = currentStageIndex > 0 && !loadingPrevious;
 	$: canGoNext = currentStageIndex < stages.length - 1 && !loadingNext;
 	$: nextStage = currentStageIndex < stages.length - 1 ? stages[currentStageIndex + 1] : null;
+
+	const translations = {
+		en: {
+			confirmEndStage:
+				'Entering the Ended Stage is irreversible. Are you sure you want to proceed?',
+			confirm: 'Confirm',
+			cancel: 'Cancel'
+		},
+		zh: {
+			confirmEndStage: '進入 Ended Stage 將無法返回，確定要繼續嗎？',
+			confirm: '確定',
+			cancel: '取消'
+		}
+	};
 
 	async function handlePrevious() {
 		if (canGoPrevious) {
@@ -117,7 +132,7 @@
 <Modal bind:open={showEndedConfirmModal} size="sm" autoclose class="w-full">
 	<div class="text-center">
 		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-500">
-			進入 Ended Stage 將無法返回，確定要繼續嗎？
+			{translations[$language].confirmEndStage}
 		</h3>
 		<div class="flex justify-center gap-4">
 			<Button
@@ -127,9 +142,11 @@
 					proceedToNextStage();
 				}}
 			>
-				確定
+				{translations[$language].confirm}
 			</Button>
-			<Button color="alternative" on:click={() => (showEndedConfirmModal = false)}>取消</Button>
+			<Button color="alternative" on:click={() => (showEndedConfirmModal = false)}
+				>{translations[$language].cancel}</Button
+			>
 		</div>
 	</div>
 </Modal>
