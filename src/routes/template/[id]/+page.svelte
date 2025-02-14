@@ -10,6 +10,7 @@
 	import { subscribe } from '$lib/firebase/store';
 	import { goto } from '$app/navigation';
 	import { notifications } from '$lib/stores/notifications';
+	import { language } from '$lib/stores/language'; // Import the global language store
 
 	let title = '';
 	let task = '';
@@ -127,50 +128,105 @@
 			notifications.error('Failed to delete template');
 		}
 	}
+
+	const translations = {
+		en: {
+			editTemplate: 'Edit Template',
+			startSession: 'Start Session',
+			saveChanges: 'Save changes before starting a session',
+			startDiscussion: 'Start a discussion session with this template',
+			title: 'Title',
+			templateTitle: 'Template title',
+			mainTask: 'Main Task',
+			mainTaskDesc: 'Main task description',
+			subtasks: 'Subtasks',
+			subtaskDesc: 'Subtask description',
+			addSubtask: 'Add Subtask',
+			makePublic: 'Make template public',
+			backToDashboard: 'Back to Dashboard',
+			unsavedChanges: 'You have unsaved changes!',
+			deleteTemplate: 'Delete this Template',
+			saveChangesButton: 'Save Changes',
+			allChangesSaved: 'All changes saved',
+			deleteConfirmation: 'Are you sure you want to delete this template?',
+			yesDelete: 'Yes, delete it',
+			noCancel: 'No, cancel',
+			loadingTemplate: 'Loading template...'
+		},
+		zh: {
+			editTemplate: '編輯模板',
+			startSession: '開始會話',
+			saveChanges: '保存更改後再開始會話',
+			startDiscussion: '使用此模板開始討論會話',
+			title: '標題',
+			templateTitle: '模板標題',
+			mainTask: '主要任務',
+			mainTaskDesc: '主要任務描述',
+			subtasks: '子任務',
+			subtaskDesc: '子任務描述',
+			addSubtask: '添加子任務',
+			makePublic: '將模板設為公開',
+			backToDashboard: '返回儀表板',
+			unsavedChanges: '您有未保存的更改！',
+			deleteTemplate: '刪除此模板',
+			saveChangesButton: '保存更改',
+			allChangesSaved: '所有更改已保存',
+			deleteConfirmation: '您確定要刪除此模板嗎？',
+			yesDelete: '是的，刪除它',
+			noCancel: '不，取消',
+			loadingTemplate: '加載模板...'
+		}
+	};
 </script>
 
 <svelte:head>
-	<title>Edit Template | Hinagiku</title>
+	<title>{translations[$language].editTemplate} | Hinagiku</title>
 </svelte:head>
 
 {#if template}
 	<div class="container mx-auto max-w-4xl px-4 py-8">
 		<div class="mb-8 flex items-center justify-between">
-			<h1 class="text-3xl font-bold">Edit Template</h1>
+			<h1 class="text-3xl font-bold">{translations[$language].editTemplate}</h1>
 			<Button color="primary" on:click={startSession} disabled={isUploading || unsavedChanges}>
 				<Play class="mr-2 h-4 w-4" />
-				Start Session
+				{translations[$language].startSession}
 			</Button>
 			<Tooltip placement="left">
 				{#if unsavedChanges}
-					Save changes before starting a session
+					{translations[$language].saveChanges}
 				{:else}
-					Start a discussion session with this template
+					{translations[$language].startDiscussion}
 				{/if}
 			</Tooltip>
 		</div>
 
 		<form on:submit|preventDefault={saveTemplate} class="space-y-6">
 			<div>
-				<label for="title" class="mb-2 block">Title</label>
-				<Input id="title" bind:value={title} required maxlength={50} placeholder="Template title" />
+				<label for="title" class="mb-2 block">{translations[$language].title}</label>
+				<Input
+					id="title"
+					bind:value={title}
+					required
+					maxlength={50}
+					placeholder={translations[$language].templateTitle}
+				/>
 			</div>
 
 			<div>
-				<label for="task" class="mb-2 block">Main Task</label>
+				<label for="task" class="mb-2 block">{translations[$language].mainTask}</label>
 				<Textarea
 					id="task"
 					bind:value={task}
 					required
 					maxlength={200}
 					rows={3}
-					placeholder="Main task description"
+					placeholder={translations[$language].mainTaskDesc}
 				/>
 			</div>
 
 			<div>
 				<!-- svelte-ignore a11y_label_has_associated_control -->
-				<label class="mb-4 block">Subtasks</label>
+				<label class="mb-4 block">{translations[$language].subtasks}</label>
 				<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 				{#each subtasks as subtask, i}
 					<div class="mb-2 flex gap-2">
@@ -178,7 +234,7 @@
 							bind:value={subtasks[i]}
 							required
 							maxlength={200}
-							placeholder="Subtask description"
+							placeholder={translations[$language].subtaskDesc}
 						/>
 						<Button color="red" on:click={() => removeSubtask(i)} disabled={subtasks.length <= 1}>
 							<Trash2 class="h-4 w-4" />
@@ -192,13 +248,13 @@
 					class="mt-2"
 				>
 					<Plus class="mr-2 h-4 w-4" />
-					Add Subtask
+					{translations[$language].addSubtask}
 				</Button>
 			</div>
 
 			<div class="flex items-center gap-2">
 				<Toggle bind:checked={isPublic} />
-				<label for="public">Make template public</label>
+				<label for="public">{translations[$language].makePublic}</label>
 			</div>
 
 			<div class="border-t pt-6">
@@ -211,39 +267,41 @@
 
 			<div class="flex justify-end gap-4 border-t pt-6">
 				<Button color="alternative" href="/dashboard" disabled={isUploading}>
-					Back to Dashboard
+					{translations[$language].backToDashboard}
 				</Button>
 				{#if unsavedChanges}
-					<Tooltip>You have unsaved changes!</Tooltip>
+					<Tooltip>{translations[$language].unsavedChanges}</Tooltip>
 				{/if}
 				<Button color="red" on:click={() => (showDeleteModal = true)} disabled={isUploading}>
 					<Trash2 class="mr-2 h-4 w-4" />
-					Delete this Template
+					{translations[$language].deleteTemplate}
 				</Button>
 				<Button type="submit" color="primary" disabled={isUploading || !unsavedChanges}>
 					<Save class="mr-2 h-4 w-4" />
-					Save Changes
+					{translations[$language].saveChangesButton}
 				</Button>
 				{#if !unsavedChanges}
-					<Tooltip>All changes saved</Tooltip>
+					<Tooltip>{translations[$language].allChangesSaved}</Tooltip>
 				{/if}
 			</div>
 		</form>
 	</div>
 {:else}
 	<div class="container mx-auto px-4 py-8">
-		<div class="text-center text-gray-500">Loading template...</div>
+		<div class="text-center text-gray-500">{translations[$language].loadingTemplate}</div>
 	</div>
 {/if}
 
 <Modal bind:open={showDeleteModal} size="xs" autoclose>
 	<div class="text-center">
 		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-			Are you sure you want to delete this template?
+			{translations[$language].deleteConfirmation}
 		</h3>
 		<div class="flex justify-center gap-4">
-			<Button color="red" on:click={deleteTemplate}>Yes, delete it</Button>
-			<Button color="alternative" on:click={() => (showDeleteModal = false)}>No, cancel</Button>
+			<Button color="red" on:click={deleteTemplate}>{translations[$language].yesDelete}</Button>
+			<Button color="alternative" on:click={() => (showDeleteModal = false)}
+				>{translations[$language].noCancel}</Button
+			>
 		</div>
 	</div>
 </Modal>

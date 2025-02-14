@@ -3,6 +3,7 @@
 	import { Mic, Send, Square } from 'lucide-svelte'; // Added Square icon import
 	import AudioPlayer from './AudioPlayer.svelte';
 	import { renderMarkdown } from '$lib/utils/renderMarkdown';
+	import { language } from '$lib/stores/language'; // Import the global language store
 
 	interface Conversation {
 		name: string;
@@ -34,6 +35,25 @@
 	let stopRecording: (() => Promise<void>) | undefined = $state(undefined);
 	let messagesContainer: HTMLDivElement;
 	let dots = $state('...');
+
+	const translations = {
+		en: {
+			placeholder: 'Type your message...(max 500 characters)',
+			send: 'Send',
+			record: 'Record',
+			waiting: 'Waiting',
+			stop: 'Stop',
+			thinking: 'Thinking'
+		},
+		zh: {
+			placeholder: '手動輸入文字...(最多500個字元)',
+			send: '送出',
+			record: '錄音',
+			waiting: '等待',
+			stop: '停止',
+			thinking: '正在思考'
+		}
+	};
 
 	function scrollToBottom() {
 		if (!messagesContainer || !autoscroll) return;
@@ -147,7 +167,7 @@
 					<Card class="w-fit max-w-[80%]">
 						<div class="-my-2">
 							<p class="prose prose-hina text-gray-600">
-								{#await renderMarkdown(`正在思考${dots}`)}
+								{#await renderMarkdown(`${translations[$language].thinking}${dots}`)}
 									Loading ...
 								{:then content}
 									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
@@ -167,7 +187,7 @@
 				<div class="flex min-w-[200px] flex-1 flex-col">
 					<Textarea
 						class="max-h-32 min-h-14 flex-1"
-						placeholder="Type your message...(max 500 characters)"
+						placeholder={translations[$language].placeholder}
 						rows={1}
 						bind:value={text}
 						disabled={operating}
@@ -190,7 +210,11 @@
 						{:else}
 							<Mic />
 						{/if}
-						{recording ? (operating ? 'Waiting' : 'Stop') : 'Record'}
+						{recording
+							? operating
+								? translations[$language].waiting
+								: translations[$language].stop
+							: translations[$language].record}
 					</Button>
 					<Button
 						color="primary"
@@ -199,7 +223,7 @@
 						on:click={handleSend}
 					>
 						<Send class={operating ? 'animate-pulse' : ''} />
-						Send
+						{translations[$language].send}
 					</Button>
 				</div>
 			</div>

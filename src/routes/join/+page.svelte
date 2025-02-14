@@ -4,6 +4,7 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { getDoc, doc } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
+	import { language } from '$lib/stores/language'; // Import the global language store
 
 	async function handleScan(code: string) {
 		try {
@@ -40,6 +41,23 @@
 			console.error(e);
 		}
 	}
+
+	const translations = {
+		en: {
+			joinSession: 'Join Discussion Session',
+			scanQr: 'Scan the QR code provided by your session host to join the discussion.',
+			enterCode: 'Or please enter the 6-digits code to join.',
+			joinButton: 'Join Session',
+			enterCodePlaceholder: 'Enter code'
+		},
+		zh: {
+			joinSession: '加入討論會話',
+			scanQr: '掃描會話主持人提供的二維碼以加入討論。',
+			enterCode: '或者請輸入6位數的代碼以加入。',
+			joinButton: '加入會話',
+			enterCodePlaceholder: '輸入代碼'
+		}
+	};
 </script>
 
 <svelte:head>
@@ -47,21 +65,21 @@
 </svelte:head>
 
 <main class="mx-auto max-w-2xl px-4 py-16">
-	<h1 class="mb-8 text-3xl font-bold">Join Discussion Session</h1>
+	<h1 class="mb-8 text-3xl font-bold">{translations[$language].joinSession}</h1>
 
 	<div class="space-y-6">
 		<p class="text-gray-600">
-			Scan the QR code provided by your session host to join the discussion.
+			{translations[$language].scanQr}
 		</p>
 
 		<QrScanner onScan={handleScan} />
 	</div>
 	<!--Input Code-->
 	<div class="mt-8 flex flex-col gap-4">
-		<p class="text-gray-600">Or please enter the 6-digits code to join.</p>
+		<p class="text-gray-600">{translations[$language].enterCode}</p>
 		<input
 			type="text"
-			placeholder="Enter code"
+			placeholder={translations[$language].enterCodePlaceholder}
 			maxlength="6"
 			pattern="\d{6}"
 			class="w-full rounded-lg border py-2"
@@ -73,7 +91,7 @@
 			class="w-full rounded-lg border px-6 py-2 hover:bg-gray-50"
 			onclick={joinwithcode}
 		>
-			Join Session
+			{translations[$language].joinButton}
 		</button>
 	</div>
 </main>
