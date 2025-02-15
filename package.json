@@ -24,6 +24,7 @@
 		"@ffmpeg/ffmpeg": "^0.12.12",
 		"@ffmpeg/util": "^0.12.1",
 		"@genkit-ai/googleai": "^0.9.12",
+		"@google-cloud/storage": "^7.15.1",
 		"@google/generative-ai": "^0.21.0",
 		"@hinagiku/ffmpeg-core": "0.12.6-pcm-mpeg-only",
 		"@ricky0123/vad-web": "^0.0.22",

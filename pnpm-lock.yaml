@@ -19,6 +19,9 @@ importers:
       '@genkit-ai/googleai':
         specifier: ^0.9.12
         version: 0.9.12(encoding@0.1.13)(genkit@0.9.12)
+      '@google-cloud/storage':
+        specifier: ^7.15.1
+        version: 7.15.1(encoding@0.1.13)
       '@google/generative-ai':
         specifier: ^0.21.0
         version: 0.21.0
@@ -1675,10 +1678,10 @@ packages:
       }
     engines: { node: '>=14' }
 
-  '@google-cloud/storage@7.14.0':
+  '@google-cloud/storage@7.15.1':
     resolution:
       {
-        integrity: sha512-H41bPL2cMfSi4EEnFzKvg7XSb7T67ocSXrmF7MPjfgFB0L6CKGzfIYJheAZi1iqXjz6XaCT1OBf6HCG5vDBTOQ==
+        integrity: sha512-2bOD6d2D8b0FCV/By/VVRSvtagTllXFcRAv6F/9XUDY3r54VMQ0gM/B1emMdqnuVDX5mWJrrxlelHBZ9u6r6CA==
       }
     engines: { node: '>=14' }
 
@@ -8332,15 +8335,12 @@ snapshots:
     dependencies:
       arrify: 2.0.1
       extend: 3.0.2
-    optional: true
 
-  '@google-cloud/projectify@4.0.0':
-    optional: true
+  '@google-cloud/projectify@4.0.0': {}
 
-  '@google-cloud/promisify@4.0.0':
-    optional: true
+  '@google-cloud/promisify@4.0.0': {}
 
-  '@google-cloud/storage@7.14.0(encoding@0.1.13)':
+  '@google-cloud/storage@7.15.1(encoding@0.1.13)':
     dependencies:
       '@google-cloud/paginator': 5.0.2
       '@google-cloud/projectify': 4.0.0
@@ -8360,7 +8360,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    optional: true
 
   '@google/generative-ai@0.21.0': {}
 
@@ -9139,16 +9138,14 @@ snapshots:
       postcss-selector-parser: 6.0.10
       tailwindcss: 3.4.17
 
-  '@tootallnate/once@2.0.0':
-    optional: true
+  '@tootallnate/once@2.0.0': {}
 
   '@types/body-parser@1.19.5':
     dependencies:
       '@types/connect': 3.4.38
       '@types/node': 22.10.2
 
-  '@types/caseless@0.12.5':
-    optional: true
+  '@types/caseless@0.12.5': {}
 
   '@types/connect@3.4.38':
     dependencies:
@@ -9230,7 +9227,6 @@ snapshots:
       '@types/node': 22.10.2
       '@types/tough-cookie': 4.0.5
       form-data: 2.5.2
-    optional: true
 
   '@types/resolve@1.20.2': {}
 
@@ -9249,8 +9245,7 @@ snapshots:
 
   '@types/shimmer@1.2.0': {}
 
-  '@types/tough-cookie@4.0.5':
-    optional: true
+  '@types/tough-cookie@4.0.5': {}
 
   '@types/trusted-types@2.0.7':
     optional: true
@@ -9427,7 +9422,6 @@ snapshots:
       debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   agent-base@7.1.1:
     dependencies:
@@ -9500,8 +9494,7 @@ snapshots:
 
   array-flatten@1.1.1: {}
 
-  arrify@2.0.1:
-    optional: true
+  arrify@2.0.1: {}
 
   assertion-error@2.0.1: {}
 
@@ -9512,7 +9505,6 @@ snapshots:
   async-retry@1.3.3:
     dependencies:
       retry: 0.13.1
-    optional: true
 
   async-sema@3.1.1: {}
 
@@ -9762,7 +9754,6 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
       stream-shift: 1.0.3
-    optional: true
 
   eastasianwidth@0.2.0: {}
 
@@ -9801,7 +9792,6 @@ snapshots:
   end-of-stream@1.4.4:
     dependencies:
       once: 1.4.0
-    optional: true
 
   environment@1.1.0: {}
 
@@ -10106,7 +10096,6 @@ snapshots:
   fast-xml-parser@4.5.0:
     dependencies:
       strnum: 1.0.5
-    optional: true
 
   fastq@1.17.1:
     dependencies:
@@ -10170,7 +10159,7 @@ snapshots:
       uuid: 10.0.0
     optionalDependencies:
       '@google-cloud/firestore': 7.10.0(encoding@0.1.13)
-      '@google-cloud/storage': 7.14.0(encoding@0.1.13)
+      '@google-cloud/storage': 7.15.1(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -10255,7 +10244,6 @@ snapshots:
       combined-stream: 1.0.8
       mime-types: 2.1.35
       safe-buffer: 5.2.1
-    optional: true
 
   form-data@4.0.1:
     dependencies:
@@ -10449,8 +10437,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  html-entities@2.5.2:
-    optional: true
+  html-entities@2.5.2: {}
 
   html5-qrcode@2.3.8: {}
 
@@ -10471,7 +10458,6 @@ snapshots:
       debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   https-proxy-agent@5.0.1:
     dependencies:
@@ -10479,7 +10465,6 @@ snapshots:
       debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   https-proxy-agent@7.0.5:
     dependencies:
@@ -10804,8 +10789,7 @@ snapshots:
 
   mime@1.6.0: {}
 
-  mime@3.0.0:
-    optional: true
+  mime@3.0.0: {}
 
   mimic-fn@4.0.0: {}
 
@@ -11168,7 +11152,6 @@ snapshots:
       inherits: 2.0.4
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
-    optional: true
 
   readdirp@3.6.0:
     dependencies:
@@ -11215,10 +11198,8 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    optional: true
 
-  retry@0.13.1:
-    optional: true
+  retry@0.13.1: {}
 
   reusify@1.0.4: {}
 
@@ -11374,10 +11355,8 @@ snapshots:
   stream-events@1.0.5:
     dependencies:
       stubs: 3.0.0
-    optional: true
 
-  stream-shift@1.0.3:
-    optional: true
+  stream-shift@1.0.3: {}
 
   string-argv@0.3.2: {}
 
@@ -11402,7 +11381,6 @@ snapshots:
   string_decoder@1.3.0:
     dependencies:
       safe-buffer: 5.2.1
-    optional: true
 
   strip-ansi@6.0.1:
     dependencies:
@@ -11418,8 +11396,7 @@ snapshots:
 
   strnum@1.0.5: {}
 
-  stubs@3.0.0:
-    optional: true
+  stubs@3.0.0: {}
 
   sucrase@3.35.0:
     dependencies:
@@ -11555,7 +11532,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    optional: true
 
   thenify-all@1.6.0:
     dependencies:
@@ -11663,8 +11639,7 @@ snapshots:
 
   uuid@11.0.3: {}
 
-  uuid@8.3.2:
-    optional: true
+  uuid@8.3.2: {}
 
   uuid@9.0.1: {}
 
