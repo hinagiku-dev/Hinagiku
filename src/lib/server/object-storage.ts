@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
+import { storageBucket } from '$lib/firebase';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { Storage } from '@google-cloud/storage';
+import { getDownloadURL, ref, updateMetadata, uploadBytes } from 'firebase/storage';
 import rfc2047 from 'rfc2047';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -20,20 +21,7 @@ const client = new S3Client({
 	}
 });
 
-const GCP_PROJECT_ID = env.GCP_PROJECT_ID;
-const GCP_KEY_FILENAME = env.GCP_KEY_FILENAME;
-const GCP_BUCKET_NAME = env.GCP_BUCKET_NAME;
-const GCP_PUBLIC_URL = env.GCP_PUBLIC_URL;
-const USE_GCP = env.USE_GCP;
-if (!GCP_PROJECT_ID || !GCP_KEY_FILENAME || !GCP_BUCKET_NAME || !GCP_PUBLIC_URL) {
-	throw new Error('GCP project ID, key filename, bucket name, and public URL are required');
-}
-
-const storage = new Storage({
-	projectId: GCP_PROJECT_ID,
-	keyFilename: GCP_KEY_FILENAME
-});
-const bucket = storage.bucket(GCP_BUCKET_NAME);
+const STORAGE_USE_FIREBASE = env.STORAGE_USE_FIREBASE;
 
 const EXT = {
 	'audio/wav': 'wav',
@@ -65,8 +53,8 @@ export async function upload_object(
 		metadata[k] = rfc2047.encode(v);
 	}
 
-	if (USE_GCP === 'true') {
-		return upload_object_gcp(object, type, metadata);
+	if (STORAGE_USE_FIREBASE === 'true') {
+		return upload_object_firebase(object, type, metadata);
 	}
 
 	const command = new PutObjectCommand({
@@ -83,7 +71,7 @@ export async function upload_object(
 	return url;
 }
 
-export async function upload_object_gcp(
+export async function upload_object_firebase(
 	object: Buffer,
 	type: keyof typeof EXT,
 	metadata: Record<string, string> = {}
@@ -94,31 +82,16 @@ export async function upload_object_gcp(
 	}
 
 	const key = `${uuidv4()}.${ext}`;
+	const storageRef = ref(storageBucket, key);
 
-	const file = bucket.file(key);
-	const stream = file.createWriteStream({
-		metadata: {
-			contentType: type,
-			metadata: metadata
-		}
-	});
+	await uploadBytes(storageRef, object, { contentType: type });
+	console.log('File uploaded successfully');
 
-	return new Promise((resolve, reject) => {
-		stream.on('error', (err) => {
-			reject(err);
-		});
+	await updateMetadata(storageRef, { customMetadata: metadata });
+	console.log('Metadata updated successfully');
 
-		stream.on('finish', async () => {
-			try {
-				await file.makePublic();
-				const url = `${GCP_PUBLIC_URL}/${key}`;
-				console.log(`Uploaded object to ${url}`);
-				resolve(url);
-			} catch (err) {
-				reject(err);
-			}
-		});
+	const url = await getDownloadURL(storageRef);
+	console.log(`Uploaded object to ${url}`);
 
-		stream.end(object);
-	});
+	return url;
 }

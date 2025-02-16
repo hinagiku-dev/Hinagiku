@@ -1,6 +1,6 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-import { upload_object, upload_object_gcp } from '$lib/server/object-storage';
+import { upload_object, upload_object_firebase } from '$lib/server/object-storage';
 import { transcribe } from '$lib/stt/gemini';
 
 // curl -X POST http://localhost:5173/api/stt -H "Content-Type: multipart/form-data" -H "Origin: http://localhost:5173" -F "file=@test.wav"
@@ -26,9 +26,9 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		const transcription = await transcribe(audio_buffer);
 		const url =
-			process.env.USE_GCP === 'true'
-				? await upload_object(audio_buffer, 'audio/mpeg', { transcription })
-				: await upload_object_gcp(audio_buffer, 'audio/mpeg', { transcription });
+			process.env.STORAGE_USE_FIREBASE === 'true'
+				? await upload_object_firebase(audio_buffer, 'audio/mpeg', { transcription })
+				: await upload_object(audio_buffer, 'audio/mpeg', { transcription });
 		return json({ status: 'success', transcription, url });
 	} catch (error) {
 		console.error('Error processing request:', error);
