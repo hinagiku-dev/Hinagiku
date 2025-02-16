@@ -20,11 +20,20 @@ const client = new S3Client({
 	}
 });
 
+const GCP_PROJECT_ID = env.GCP_PROJECT_ID;
+const GCP_KEY_FILENAME = env.GCP_KEY_FILENAME;
+const GCP_BUCKET_NAME = env.GCP_BUCKET_NAME;
+const GCP_PUBLIC_URL = env.GCP_PUBLIC_URL;
+const USE_GCP = env.USE_GCP;
+if (!GCP_PROJECT_ID || !GCP_KEY_FILENAME || !GCP_BUCKET_NAME || !GCP_PUBLIC_URL) {
+	throw new Error('GCP project ID, key filename, bucket name, and public URL are required');
+}
+
 const storage = new Storage({
-	projectId: env.GCP_PROJECT_ID,
-	keyFilename: env.GCP_KEY_FILENAME
+	projectId: GCP_PROJECT_ID,
+	keyFilename: GCP_KEY_FILENAME
 });
-const bucket = storage.bucket(env.GCP_BUCKET_NAME);
+const bucket = storage.bucket(GCP_BUCKET_NAME);
 
 const EXT = {
 	'audio/wav': 'wav',
@@ -56,7 +65,7 @@ export async function upload_object(
 		metadata[k] = rfc2047.encode(v);
 	}
 
-	if (env.USE_GCP === 'true') {
+	if (USE_GCP === 'true') {
 		return upload_object_gcp(object, type, metadata);
 	}
 
@@ -99,10 +108,15 @@ export async function upload_object_gcp(
 			reject(err);
 		});
 
-		stream.on('finish', () => {
-			const url = `https://storage.googleapis.com/${env.GCP_BUCKET_NAME}/${key}`;
-			console.log(`Uploaded object to ${url}`);
-			resolve(url);
+		stream.on('finish', async () => {
+			try {
+				await file.makePublic();
+				const url = `${GCP_PUBLIC_URL}/${key}`;
+				console.log(`Uploaded object to ${url}`);
+				resolve(url);
+			} catch (err) {
+				reject(err);
+			}
 		});
 
 		stream.end(object);

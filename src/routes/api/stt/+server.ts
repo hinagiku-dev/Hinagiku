@@ -27,8 +27,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		const transcription = await transcribe(audio_buffer);
 		const url =
 			process.env.USE_GCP === 'true'
-				? await upload_object_gcp(audio_buffer, 'audio/mpeg', { transcription })
-				: await upload_object(audio_buffer, 'audio/mpeg', { transcription });
+				? await upload_object(audio_buffer, 'audio/mpeg', { transcription })
+				: await upload_object_gcp(audio_buffer, 'audio/mpeg', { transcription });
 		return json({ status: 'success', transcription, url });
 	} catch (error) {
 		console.error('Error processing request:', error);
