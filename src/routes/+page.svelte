@@ -133,6 +133,9 @@
 
 		return () => clearInterval(interval);
 	});
+	//for i18n support
+	// import * as m from '$lib/paraglide/messages.js'
+	// import { languageTag } from '$lib/paraglide/runtime.js'
 </script>
 
 <svelte:head>
