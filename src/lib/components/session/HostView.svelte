@@ -102,7 +102,7 @@
 		},
 		zh: {
 			joinSession: '加入會話',
-			joinSessionDesc: '請掃描二維碼或輸入代碼以加入會話。',
+			joinSessionDesc: '請掃描QRcode或輸入代碼以加入會話。',
 			showCode: '顯示代碼',
 			showCodeDesc: '顯示一個6位數的代碼供參與者加入會話。',
 			finalSummary: '最終總結',

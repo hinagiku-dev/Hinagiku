@@ -95,7 +95,7 @@
 			preparation: '1. 準備',
 			preparationDesc: '教師創建討論模板並設置動態時間表以進行結構化學習會話。',
 			joinSession: '2. 加入會話',
-			joinSessionDesc: '學生通過掃描會話二維碼輕鬆加入討論，然後組建或加入小組。',
+			joinSessionDesc: '學生通過掃描會話QRcode輕鬆加入討論，然後組建或加入小組。',
 			discussion: '3. 討論',
 			discussionDesc: 'AI協助指導個人反思、小組討論，並幫助保持對主題的關注。',
 			analysis: '4. 分析',

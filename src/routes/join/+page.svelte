@@ -52,7 +52,7 @@
 		},
 		zh: {
 			joinSession: '加入討論會話',
-			scanQr: '掃描會話主持人提供的二維碼以加入討論。',
+			scanQr: '掃描會話主持人提供的QRcode以加入討論。',
 			enterCode: '或者請輸入6位數的代碼以加入。',
 			joinButton: '加入會話',
 			enterCodePlaceholder: '輸入代碼'
