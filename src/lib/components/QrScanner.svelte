@@ -26,11 +26,11 @@
 		zh: {
 			stopCamera: '停止相機',
 			startCamera: '啟動相機',
-			uploadQrImage: '上傳二維碼圖片',
+			uploadQrImage: '上傳QRcode圖片',
 			errorScanning: '掃描過程中出錯：',
 			errorStartingCamera: '啟動相機過程中出錯：',
 			errorScanningFile: '掃描文件過程中出錯：',
-			unableToFindQr: '無法在圖像中找到二維碼。請確保圖像清晰並包含有效的二維碼。'
+			unableToFindQr: '無法在圖像中找到QRcode。請確保圖像清晰並包含有效的QRcode。'
 		}
 	};
 
