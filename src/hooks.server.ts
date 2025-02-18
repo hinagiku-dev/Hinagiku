@@ -1,7 +1,9 @@
+import { i18n } from '$lib/i18n';
 import { adminAuth } from '$lib/server/firebase';
-import { type Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 
-export const handle: Handle = async ({ event, resolve }) => {
+const authHandle: Handle = async ({ event, resolve }) => {
 	const sessionCookie = event.cookies.get('session');
 
 	// No session cookie, user is not authenticated
@@ -35,3 +37,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	return resolve(event);
 };
+
+export const handle = sequence(i18n.handle(), authHandle);

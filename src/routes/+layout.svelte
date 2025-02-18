@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { ParaglideJS } from '@inlang/paraglide-sveltekit';
+	import { i18n } from '$lib/i18n';
+
 	import '../app.css';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Notifications from '$lib/components/Notifications.svelte';
@@ -9,11 +12,13 @@
 	let { children } = $props();
 </script>
 
-<main>
-	<Navbar />
-	{@render children()}
-	<Notifications />
-</main>
+<ParaglideJS {i18n}>
+	<main>
+		<Navbar />
+		{@render children()}
+		<Notifications />
+	</main>
+</ParaglideJS>
 
 <style>
 	main {

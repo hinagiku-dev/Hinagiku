@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { language } from '$lib/stores/language'; // Import the global language store
+	import { browser } from '$app/environment';
 
 	let hinagiku = $state('Hinagiku');
 	let highlight = $state(0);
@@ -26,6 +27,16 @@
 			login: '登入'
 		}
 	};
+
+	import { derived } from 'svelte/store';
+
+	const flagSrc = derived(language, ($language) => {
+		return browser
+			? $language === 'zh'
+				? '/icons/flag-zh.jpg'
+				: '/icons/flag-us.png'
+			: '/icons/flag-us.png';
+	});
 
 	onMount(() => {
 		const interval = setInterval(() => {
@@ -77,12 +88,7 @@
 		{/if}
 
 		<!-- Remove the old toggle button and add a dropdown for language selection(PM requested) -->
-		<Avatar
-			id="language-menu"
-			src={$language === 'en' ? '/icons/flag-us.png' : '/icons/flag-zh.jpg'}
-			alt="Lang"
-			class="ml-2 cursor-pointer"
-		/>
+		<Avatar id="language-menu" src={$flagSrc} alt="$language" class="ml-2 cursor-pointer" />
 		<Dropdown triggeredBy="#language-menu" class="w-36">
 			<DropdownItem class="flex items-center" on:click={() => setLanguage('en')}>
 				<img src="/icons/flag-us.png" alt="English" class="mr-2 h-4 w-4" />

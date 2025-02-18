@@ -77,7 +77,8 @@
 		"vite": "^5.4.14",
 		"vite-plugin-static-copy": "^2.2.0",
 		"vitest": "^2.1.9",
-		"zod": "^3.24.2"
+		"zod": "^3.24.2",
+		"@inlang/paraglide-js": "1.11.8"
 	},
 	"lint-staged": {
 		"*.{yml,yaml,json,js,ts,css,html,svelte}": [
@@ -85,5 +86,8 @@
 			"eslint --fix"
 		]
 	},
-	"packageManager": "pnpm@9.15.1"
+	"packageManager": "pnpm@9.15.1",
+	"dependencies": {
+		"@inlang/paraglide-sveltekit": "0.15.5"
+	}
 }
