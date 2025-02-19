@@ -55,8 +55,8 @@
 		if (lang === 'zh' && !window.location.pathname.startsWith('/zh')) {
 			window.location.assign('/zh' + window.location.pathname + window.location.search);
 		} else if (lang === 'en' && window.location.pathname.startsWith('/zh')) {
-			console.log('goto', window.location.pathname.replace('/zh', '') + window.location.search);
-			window.location.assign(window.location.pathname.replace('/zh', '') + window.location.search);
+			console.log('gotoen', window.location.pathname.replace('/zh', ''));
+			window.location.assign(window.location.pathname.replace('zh', '') + window.location.search);
 		}
 	}
 </script>
