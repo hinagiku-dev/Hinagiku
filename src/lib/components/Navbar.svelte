@@ -6,27 +6,11 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { language } from '$lib/stores/language'; // Import the global language store
+	import * as m from '$lib/paraglide/messages.js';
 
 	let hinagiku = $state('Hinagiku');
 	let highlight = $state(0);
 	let hydrated = $state(false);
-
-	const translations = {
-		en: {
-			welcome: 'Welcome to Hinagiku!',
-			profile: 'Profile',
-			dashboard: 'Dashboard',
-			signOut: 'Sign out',
-			login: 'Login'
-		},
-		zh: {
-			welcome: '歡迎來到 Hinagiku!',
-			profile: '個人資料',
-			dashboard: '儀表板',
-			signOut: '登出',
-			login: '登入'
-		}
-	};
 
 	import { derived } from 'svelte/store';
 
@@ -50,12 +34,20 @@
 
 	function setLanguage(lang: 'en' | 'zh') {
 		language.set(lang);
+		console.log('set language to', lang);
+		console.log('current pathname:', window.location.pathname);
+		if (lang === 'zh' && !window.location.pathname.startsWith('zh')) {
+			window.location.assign('/zh' + window.location.pathname + window.location.search);
+		} else if (lang === 'en' && window.location.pathname.startsWith('/zh')) {
+			console.log('gotoen', window.location.pathname.replace('/zh', ''));
+			window.location.assign(window.location.pathname.replace('/zh', '') + window.location.search);
+		}
 	}
 </script>
 
 <Navbar class="fixed left-0 top-0 z-50 w-full shadow-sm">
 	<NavBrand href="/">
-		<img src="/Icon.png" class="mr-3 h-8" alt={translations[$language].welcome} />
+		<img src="/Icon.png" class="mr-3 h-8" alt={m.welcome()} />
 		<span class="self-center whitespace-nowrap text-2xl font-bold">
 			{#each hinagiku as c, i}<span
 					class="transition-colors duration-500"
@@ -72,17 +64,17 @@
 					<p class="truncate text-sm font-medium text-gray-500">{$user.email}</p>
 				</div>
 				<DropdownItem href="/profile" class="flex items-center">
-					<User class="mr-2 h-4 w-4" />{translations[$language].profile}
+					<User class="mr-2 h-4 w-4" />{m.profile()}
 				</DropdownItem>
 				<DropdownItem href="/dashboard" class="flex items-center">
-					<LayoutDashboard class="mr-2 h-4 w-4" />{translations[$language].dashboard}
+					<LayoutDashboard class="mr-2 h-4 w-4" />{m.dashboard()}
 				</DropdownItem>
 				<DropdownItem on:click={() => signOut()} class="flex items-center">
-					<LogOut class="mr-2 h-4 w-4" />{translations[$language].signOut}
+					<LogOut class="mr-2 h-4 w-4" />{m.signOut()}
 				</DropdownItem>
 			</Dropdown>
 		{:else if !page.url.pathname.startsWith('/login')}
-			<Button href="/login" class="">{translations[$language].login}</Button>
+			<Button href="/login" class="">{m.login()}</Button>
 		{/if}
 
 		<!-- Remove the old toggle button and add a dropdown for language selection(PM requested) -->
