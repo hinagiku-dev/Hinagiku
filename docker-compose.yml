@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  app:
+    image: ghcr.io/hinagiku-dev/hinagiku
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    volumes:
+      - ./service-account-file.json:/app/service-account-file.json
+    restart: unless-stopped
