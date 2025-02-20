@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { language } from '$lib/stores/language'; // Import the global language store
+	import * as m from '$lib/paraglide/messages.js';
 
 	let messages = $state([{ sender: 'Support', text: 'Hello! How can I assist you today?' }]);
 	let inputText = $state('');
@@ -9,19 +9,6 @@
 	};
 	const sendMessage = () => {
 		console.log('Sending message...');
-	};
-
-	const translations = {
-		en: {
-			typeMessage: 'Type your message...',
-			send: 'Send',
-			waitResponse: 'Please wait for a response...'
-		},
-		zh: {
-			typeMessage: '輸入您的消息...',
-			send: '發送',
-			waitResponse: '請等待回應...'
-		}
 	};
 </script>
 
@@ -60,15 +47,15 @@
 				class="inline-block"
 				type="text"
 				bind:value={inputText}
-				placeholder={translations[$language].typeMessage}
+				placeholder={m.typeMessage()}
 				onkeyup={(e) => e.key === 'Enter' && sendMessage()}
 			/>
 			<button disabled={messages[messages.length - 1].sender === 'me'} onclick={sendMessage}>
-				{translations[$language].send}
+				{m.send()}
 			</button>
 			<div class="w-full"></div>
 			{#if messages[messages.length - 1].sender === 'me'}
-				<div>{translations[$language].waitResponse}</div>
+				<div>{m.waitResponse()}</div>
 			{/if}
 		</div>
 	</div>

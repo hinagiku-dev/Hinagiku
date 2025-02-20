@@ -36,11 +36,11 @@
 		language.set(lang);
 		console.log('set language to', lang);
 		console.log('current pathname:', window.location.pathname);
-		if (lang === 'zh' && !window.location.pathname.startsWith('/zh')) {
+		if (lang === 'zh' && !window.location.pathname.startsWith('zh')) {
 			window.location.assign('/zh' + window.location.pathname + window.location.search);
 		} else if (lang === 'en' && window.location.pathname.startsWith('/zh')) {
 			console.log('gotoen', window.location.pathname.replace('/zh', ''));
-			window.location.assign(window.location.pathname.replace('zh', '') + window.location.search);
+			window.location.assign(window.location.pathname.replace('/zh', '') + window.location.search);
 		}
 	}
 </script>
