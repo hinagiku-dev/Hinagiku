@@ -18,3 +18,15 @@ if (browser) {
 		localStorage.setItem('language', value);
 	});
 }
+
+export function getLocalizedHref(href: string) {
+	let currentLang: 'en' | 'zh';
+	language.subscribe((value) => (currentLang = value))();
+
+	if (currentLang === 'zh' && !href.startsWith('/zh')) {
+		return '/zh' + href;
+	} else if (currentLang === 'en' && href.startsWith('/zh')) {
+		return href.replace('/zh', '');
+	}
+	return href;
+}

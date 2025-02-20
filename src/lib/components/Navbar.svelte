@@ -32,15 +32,28 @@
 		return () => clearInterval(interval);
 	});
 
+	let canSwitchLanguage = true;
+
 	function setLanguage(lang: 'en' | 'zh') {
+		if (!canSwitchLanguage) {
+			alert('Please wait before switching languages again.');
+			return;
+		}
+		canSwitchLanguage = false;
+		setTimeout(() => {
+			canSwitchLanguage = true;
+		}, 5000);
+
 		language.set(lang);
 		console.log('set language to', lang);
 		console.log('current pathname:', window.location.pathname);
 		if (lang === 'zh' && !window.location.pathname.startsWith('zh')) {
+			alert('Changing language to Traditional Chinese');
 			window.location.assign('/zh' + window.location.pathname + window.location.search);
 		} else if (lang === 'en' && window.location.pathname.startsWith('/zh')) {
-			console.log('gotoen', window.location.pathname.replace('/zh', ''));
-			window.location.assign(window.location.pathname.replace('/zh', '') + window.location.search);
+			const newPath = window.location.pathname.replace('/zh', '') || '/';
+			alert('Changing language to English');
+			window.location.assign(newPath + window.location.search);
 		}
 	}
 </script>
