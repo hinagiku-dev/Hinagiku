@@ -27,7 +27,7 @@
 	import TemplateCard from '$lib/components/TemplateCard.svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 
-	import * as m from '$lib/paraglide/messages.js';
+	import { language } from '$lib/stores/language'; // Import the global language store
 
 	let { data } = $props();
 
@@ -142,6 +142,57 @@
 		unsubscribe2();
 		unsubscribe3();
 	});
+
+	const translations = {
+		en: {
+			welcome: 'Welcome to Hinagiku!',
+			profile: 'Profile',
+			dashboard: 'Dashboard',
+			signOut: 'Sign out',
+			login: 'Login',
+			welcomeDashboard: 'Welcome to your dashboard',
+			stats: 'Statistics',
+			recentActivity: 'Recent Activity',
+			createTemplate: 'Create Template',
+			createTemplateDesc: 'Create a new discussion template',
+			joinSession: 'Join Session',
+			joinSessionDesc: 'Join an existing discussion session',
+			editProfile: 'Edit Profile',
+			editProfileDesc: 'Update your profile settings',
+			publicTemplates: 'Public Templates',
+			viewAll: 'View All',
+			yourTemplates: 'Your Templates',
+			noTemplates: 'No templates created yet',
+			createFirstTemplate: 'Create your first template to get started',
+			createTemplateButton: 'Create Your First Template',
+			noSessions: 'No sessions created yet',
+			createSession: 'Create a new session with template'
+		},
+		zh: {
+			welcome: '歡迎來到Hinagiku!',
+			profile: '個人資料',
+			dashboard: '儀表板',
+			signOut: '登出',
+			login: '登入',
+			welcomeDashboard: '歡迎來到您的儀表板',
+			stats: '統計數據',
+			recentActivity: '最近活動',
+			createTemplate: '創建模板',
+			createTemplateDesc: '創建一個新的討論模板',
+			joinSession: '加入會話',
+			joinSessionDesc: '加入現有的討論會話',
+			editProfile: '編輯個人資料',
+			editProfileDesc: '更新您的個人資料設置',
+			publicTemplates: '公開模板',
+			viewAll: '查看全部',
+			yourTemplates: '您的模板',
+			noTemplates: '尚未創建模板',
+			createFirstTemplate: '創建您的第一個模板以開始',
+			createTemplateButton: '創建您的第一個模板',
+			noSessions: '尚未創建會話',
+			createSession: '使用模板創建新會話'
+		}
+	};
 </script>
 
 <svelte:head>
@@ -150,9 +201,9 @@
 
 <main class="mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-12">
-		<h1 class="text-3xl font-bold text-gray-900">{m.dashboard()}</h1>
+		<h1 class="text-3xl font-bold text-gray-900">{translations[$language].dashboard}</h1>
 		<p class="mt-2 text-gray-600">
-			{m.welcomeDashboard()}, {$profile?.displayName || $user?.displayName}
+			{translations[$language].welcomeDashboard}, {$profile?.displayName || $user?.displayName}
 		</p>
 	</div>
 
@@ -164,9 +215,9 @@
 					<MessageSquarePlus size={32} class="text-primary-600" />
 				</div>
 				<h2 class="mb-2 text-xl font-semibold text-gray-900">
-					{m.createTemplate()}
+					{translations[$language].createTemplate}
 				</h2>
-				<p class="text-gray-600">{m.createTemplateDesc()}</p>
+				<p class="text-gray-600">{translations[$language].createTemplateDesc}</p>
 			</button>
 		</Card>
 
@@ -176,9 +227,9 @@
 					<UserPlus size={32} class="text-primary-600" />
 				</div>
 				<h2 class="mb-2 text-xl font-semibold text-gray-900">
-					{m.dashjoinSession()}
+					{translations[$language].joinSession}
 				</h2>
-				<p class="text-gray-600">{m.dashjoinSessionDesc()}</p>
+				<p class="text-gray-600">{translations[$language].joinSessionDesc}</p>
 			</a>
 		</Card>
 
@@ -188,9 +239,9 @@
 					<UserCog size={32} class="text-primary-600" />
 				</div>
 				<h2 class="mb-2 text-xl font-semibold text-gray-900">
-					{m.editProfile()}
+					{translations[$language].editProfile}
 				</h2>
-				<p class="text-gray-600">{m.editProfileDesc()}</p>
+				<p class="text-gray-600">{translations[$language].editProfileDesc}</p>
 			</a>
 		</Card>
 	</div>
@@ -199,9 +250,10 @@
 	<div class="mb-16">
 		<div class="mb-6 flex items-center justify-between">
 			<h2 class="text-2xl font-semibold text-gray-900">
-				{m.publicTemplates()}
+				{translations[$language].publicTemplates}
 			</h2>
-			<Button color="alternative" href="/templates/public">{m.viewAll()}</Button>
+			<Button color="alternative" href="/templates/public">{translations[$language].viewAll}</Button
+			>
 		</div>
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $publicTemplates?.length}
@@ -222,9 +274,11 @@
 						<div class="text-center">
 							<h3 class="mb-2 text-xl font-bold">Example Template</h3>
 							<p class="mb-4 text-gray-600">
-								{m.createFirstTemplate()}
+								{translations[$language].createFirstTemplate}
 							</p>
-							<Button href="/create" class="w-full">{m.createTemplateButton()}</Button>
+							<Button href="/create" class="w-full"
+								>{translations[$language].createTemplateButton}</Button
+							>
 						</div>
 					</Card>
 				{/each}
@@ -235,8 +289,8 @@
 	<!-- Your Templates -->
 	<div>
 		<div class="mb-6 flex items-center justify-between">
-			<h2 class="text-2xl font-semibold text-gray-900">{m.yourTemplates()}</h2>
-			<Button color="alternative" href="/templates">{m.viewAll()}</Button>
+			<h2 class="text-2xl font-semibold text-gray-900">{translations[$language].yourTemplates}</h2>
+			<Button color="alternative" href="/templates">{translations[$language].viewAll}</Button>
 		</div>
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $templates?.length}
@@ -258,11 +312,11 @@
 							<MessageSquarePlus size={32} class="text-primary-600" />
 						</div>
 						<p class="mb-2 text-lg font-medium text-gray-900">
-							{m.noTemplates()}
+							{translations[$language].noTemplates}
 						</p>
-						<p class="mb-4 text-gray-600">{m.createFirstTemplate()}</p>
+						<p class="mb-4 text-gray-600">{translations[$language].createFirstTemplate}</p>
 						<Button onclick={handleCreateTemplate} color="primary"
-							>{m.createTemplateButton()}</Button
+							>{translations[$language].createTemplateButton}</Button
 						>
 					</div>
 				</Card>
@@ -273,8 +327,10 @@
 	<!-- Recent Session -->
 	<div class="mt-16">
 		<div class="mb-6 flex items-center justify-between">
-			<h2 class="text-2xl font-semibold text-gray-900">{m.recentActivity()}</h2>
-			<Button color="alternative" href="/dashboard/recent/host">{m.viewAll()}</Button>
+			<h2 class="text-2xl font-semibold text-gray-900">{translations[$language].recentActivity}</h2>
+			<Button color="alternative" href="/dashboard/recent/host"
+				>{translations[$language].viewAll}</Button
+			>
 		</div>
 		<div class="mb-4 flex flex-wrap gap-2">
 			{#each $availableLabels as label}
@@ -306,9 +362,9 @@
 							<MessageSquarePlus size={32} class="text-primary-600" />
 						</div>
 						<p class="mb-2 text-lg font-medium text-gray-900">
-							{m.noSessions()}
+							{translations[$language].noSessions}
 						</p>
-						<p class="mb-4 text-gray-600">{m.createSession()}</p>
+						<p class="mb-4 text-gray-600">{translations[$language].createSession}</p>
 					</div>
 				</Card>
 			{/if}
@@ -320,9 +376,11 @@
 		<div class="mt-16">
 			<div class="mb-6 flex items-center justify-between">
 				<h2 class="text-2xl font-semibold text-gray-900">
-					{m.recentActivity()}
+					{translations[$language].recentActivity}
 				</h2>
-				<Button color="alternative" href="/dashboard/recent/participant">{m.viewAll()}</Button>
+				<Button color="alternative" href="/dashboard/recent/participant"
+					>{translations[$language].viewAll}</Button
+				>
 			</div>
 			<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 				{#each $sessions as [id, session]}

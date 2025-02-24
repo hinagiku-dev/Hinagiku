@@ -2,7 +2,7 @@
 	import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-svelte';
 	import { Button, Modal } from 'flowbite-svelte';
 	import type { Session } from '$lib/schema/session';
-	import * as m from '$lib/paraglide/messages.js';
+	import { language } from '$lib/stores/language'; // Import the global language store
 
 	const stages = [
 		{ id: 'preparing', name: '準備階段', color: 'bg-yellow-500' },
@@ -24,6 +24,20 @@
 	$: canGoPrevious = currentStageIndex > 0 && !loadingPrevious;
 	$: canGoNext = currentStageIndex < stages.length - 1 && !loadingNext;
 	$: nextStage = currentStageIndex < stages.length - 1 ? stages[currentStageIndex + 1] : null;
+
+	const translations = {
+		en: {
+			confirmEndStage:
+				'Entering the Ended Stage is irreversible. Are you sure you want to proceed?',
+			confirm: 'Confirm',
+			cancel: 'Cancel'
+		},
+		zh: {
+			confirmEndStage: '進入總結階段將無法返回，確定要繼續嗎？',
+			confirm: '確定',
+			cancel: '取消'
+		}
+	};
 
 	async function handlePrevious() {
 		if (canGoPrevious) {
@@ -118,7 +132,7 @@
 <Modal bind:open={showEndedConfirmModal} size="sm" autoclose class="w-full">
 	<div class="text-center">
 		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-500">
-			{m.confirmEndStage()}
+			{translations[$language].confirmEndStage}
 		</h3>
 		<div class="flex justify-center gap-4">
 			<Button
@@ -128,10 +142,10 @@
 					proceedToNextStage();
 				}}
 			>
-				{m.confirm()}
+				{translations[$language].confirm}
 			</Button>
 			<Button color="alternative" on:click={() => (showEndedConfirmModal = false)}
-				>{m.cancel()}</Button
+				>{translations[$language].cancel}</Button
 			>
 		</div>
 	</div>
