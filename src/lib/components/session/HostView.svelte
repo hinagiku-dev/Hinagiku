@@ -34,7 +34,7 @@
 	import MostActiveGroups from './MostActiveGroups.svelte';
 	import LabelManager from './LabelManager.svelte';
 	import ResolveUsername from '../ResolveUsername.svelte';
-	import * as m from '$lib/paraglide/messages.js';
+	import { language } from '$lib/stores/language'; // Import the global language store
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -80,6 +80,45 @@
 	} | null>(null);
 	let conversationsData = $state<Array<Conversation>>([]);
 	let keywordData = $state<Record<string, number>>({});
+
+	const translations = {
+		en: {
+			joinSession: 'Join Session',
+			joinSessionDesc: 'Please scan the QR code or enter the code to join the session.',
+			showCode: 'Show Code',
+			showCodeDesc: 'Show a 6-digit code for participants to join the session.',
+			finalSummary: 'Final Summary',
+			mainTask: 'Main Task',
+			subtasks: 'Subtasks:',
+			resources: 'Resources',
+			noResources: 'No resources available',
+			waitingForParticipants: 'Waiting for participants to join groups...',
+			noParticipants: 'No participants',
+			removeParticipant: 'Remove participant',
+			openChatHistory: 'Open chat history',
+			openGroupChatHistory: 'Open group chat history',
+			warningInappropriate: 'Warning: inappropriate content detected.',
+			warningOffTopic: 'Warning: many off-topic messages.'
+		},
+		zh: {
+			joinSession: '加入會話',
+			joinSessionDesc: '請掃描QRcode或輸入代碼以加入會話。',
+			showCode: '顯示代碼',
+			showCodeDesc: '顯示一個6位數的代碼供參與者加入會話。',
+			finalSummary: '最終總結',
+			mainTask: '主要任務',
+			subtasks: '子任務:',
+			resources: '資源',
+			noResources: '沒有可用資源',
+			waitingForParticipants: '等待參與者加入小組...',
+			noParticipants: '沒有參與者',
+			removeParticipant: '移除參與者',
+			openChatHistory: '打開聊天記錄',
+			openGroupChatHistory: '打開小組聊天記錄',
+			warningInappropriate: '警告：檢測到不適當內容。',
+			warningOffTopic: '警告：許多離題訊息。'
+		}
+	};
 
 	onMount(() => {
 		const unsubscribes: (() => void)[] = [];
@@ -192,6 +231,7 @@
 			limit(1)
 		);
 		const codeDoc = (await getDocs(codeQuery)).docs[0];
+		//console.log(codeDoc.data());
 
 		if (!codeDoc || Timestamp.now().toMillis() - codeDoc.data()?.createTime.toMillis() > 3600000) {
 			code = await genCode();
@@ -451,6 +491,7 @@
 			}
 
 			conversationsData = await response.json();
+			console.log(conversationsData);
 		} catch (error) {
 			console.error('無法加載對話資料:', error);
 			notifications.error('無法加載對話資料');
@@ -514,10 +555,10 @@
 		{#if $session?.status && $session.status === 'preparing'}
 			<div class="rounded-lg border p-6">
 				<h2 class="mb-4 text-xl font-semibold">
-					{m.joinSessionHost()}
+					{$language === 'zh' ? translations.zh.joinSession : translations.en.joinSession}
 				</h2>
 				<p class="text-gray-700">
-					{m.joinSessionDescHost()}
+					{$language === 'zh' ? translations.zh.joinSessionDesc : translations.en.joinSessionDesc}
 				</p>
 				{#if $session?.status === 'preparing'}
 					<div class="mt-4">
@@ -529,10 +570,10 @@
 						{#if code === '' || code === 'Loading...'}
 							<div class="flex justify-center">
 								<Button color="primary" on:click={getCode} disabled={code === 'Loading...'}>
-									{m.showCode()}
+									{$language === 'zh' ? translations.zh.showCode : translations.en.showCode}
 								</Button>
 								<Tooltip placement="bottom">
-									{m.showCodeDesc()}
+									{$language === 'zh' ? translations.zh.showCodeDesc : translations.en.showCodeDesc}
 								</Tooltip>
 							</div>
 						{:else}
@@ -548,7 +589,7 @@
 		{#if $session?.status === 'ended'}
 			<div class="col-span-4 rounded-lg border p-6">
 				<h2 class="mb-4 text-xl font-semibold">
-					{m.finalSummary()}
+					{$language === 'zh' ? translations.zh.finalSummary : translations.en.finalSummary}
 				</h2>
 				<div class="flex w-full flex-col gap-4">
 					<div class="h-96">
@@ -573,7 +614,11 @@
 		>
 			<h2 class="mb-4 text-xl font-semibold">Groups</h2>
 			{#if $groups.length === 0}
-				<Alert>{m.waitingForParticipants()}</Alert>
+				<Alert
+					>{$language === 'zh'
+						? translations.zh.waitingForParticipants
+						: translations.en.waitingForParticipants}</Alert
+				>
 			{:else}
 				<div class="grid grid-cols-3 gap-4">
 					{#each [...$groups].sort((a, b) => a.number - b.number) as group}
@@ -586,12 +631,18 @@
 								>
 									Group #{group.number}
 								</button>
-								<Tooltip>{m.openGroupChatHistory()}</Tooltip>
+								<Tooltip
+									>{$language === 'zh'
+										? translations.zh.openGroupChatHistory
+										: translations.en.openGroupChatHistory}</Tooltip
+								>
 								<GroupStatus {group} showStatus={$session?.status === 'group'} />
 							</div>
 							{#if group.participants.length === 0}
 								<p class="text-xs text-gray-500">
-									{m.noParticipants()}
+									{$language === 'zh'
+										? translations.zh.noParticipants
+										: translations.en.noParticipants}
 								</p>
 							{:else}
 								<ul class="space-y-1.5">
@@ -609,7 +660,11 @@
 													>
 														<ResolveUsername id={participant} />
 													</span>
-													<Tooltip>{m.openChatHistory()}</Tooltip>
+													<Tooltip
+														>{$language === 'zh'
+															? translations.zh.openChatHistory
+															: translations.en.openChatHistory}</Tooltip
+													>
 
 													{#if participantProgress.has(participant)}
 														<div class="flex flex-1 items-center gap-1.5">
@@ -651,9 +706,17 @@
 																		{/if}
 																	</div>
 																	{#if warning.moderation}
-																		<Tooltip>{m.warningInappropriate()}</Tooltip>
+																		<Tooltip
+																			>{$language === 'zh'
+																				? translations.zh.warningInappropriate
+																				: translations.en.warningInappropriate}</Tooltip
+																		>
 																	{:else if warning.offTopic >= 3}
-																		<Tooltip>{m.warningOffTopic()}</Tooltip>
+																		<Tooltip
+																			>{$language === 'zh'
+																				? translations.zh.warningOffTopic
+																				: translations.en.warningOffTopic}</Tooltip
+																		>
 																	{/if}
 																{/if}
 															{/if}
@@ -666,7 +729,11 @@
 												>
 													<X class="h-3 w-3" />
 												</button>
-												<Tooltip>{m.removeParticipant()}</Tooltip>
+												<Tooltip
+													>{$language === 'zh'
+														? translations.zh.removeParticipant
+														: translations.en.removeParticipant}</Tooltip
+												>
 											</div>
 										</li>
 									{/each}
@@ -681,14 +748,14 @@
 		<!-- Task Section -->
 		<div class="col-span-4 rounded-lg border p-6">
 			<h2 class="mb-4 text-xl font-semibold">
-				{m.mainTask()}
+				{$language === 'zh' ? translations.zh.mainTask : translations.en.mainTask}
 			</h2>
 			<p class="text-gray-700">{$session?.task}</p>
 
 			{#if $session?.subtasks.length > 0}
 				<div class="mt-4">
 					<h3 class="mb-2 font-medium">
-						{m.subtasks()}
+						{$language === 'zh' ? translations.zh.subtasks : translations.en.subtasks}
 					</h3>
 					<ul class="list-inside list-disc space-y-2">
 						{#each $session?.subtasks as subtask}
@@ -702,11 +769,11 @@
 		<!-- Resources Section -->
 		<div class="col-span-4 rounded-lg border p-6">
 			<h2 class="mb-4 text-xl font-semibold">
-				{m.resources()}
+				{$language === 'zh' ? translations.zh.resources : translations.en.resources}
 			</h2>
 			{#if $session?.resources.length === 0}
 				<p class="text-gray-600">
-					{m.noResources()}
+					{$language === 'zh' ? translations.zh.noResources : translations.en.noResources}
 				</p>
 			{:else}
 				<div class="space-y-4">
