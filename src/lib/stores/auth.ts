@@ -10,6 +10,7 @@ export const user = writable<User | null>(null);
 
 // Listen to auth state changes
 auth.onAuthStateChanged((newUser) => {
+	console.log('Auth state changed:', newUser);
 	user.set(newUser);
 });
 
@@ -45,7 +46,9 @@ export async function signInWithGoogle() {
 // Sign out function
 export async function signOut(f: typeof fetch = fetch) {
 	try {
-		await auth.signOut();
+		if (auth.currentUser) {
+			await auth.signOut();
+		}
 		// Clear the session cookie
 		await f('/api/auth/signout', { method: 'POST' });
 		// Redirect to home page
