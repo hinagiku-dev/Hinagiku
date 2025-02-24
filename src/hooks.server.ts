@@ -25,6 +25,7 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	if (
 		event.url.pathname.startsWith('/api') &&
 		!event.url.pathname.startsWith('/api/auth/signin') &&
+		!event.url.pathname.startsWith('/api/auth/signout') &&
 		!event.locals.user
 	) {
 		return new Response(JSON.stringify({ error: 'Unauthorized' }), {

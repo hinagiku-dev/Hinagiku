@@ -5,7 +5,7 @@
 </script>
 
 {#if $user}
-	<div>
+	<div class="flex items-center space-x-4">
 		<p class="inline-block">Welcome, {$profile?.displayName || $user.displayName}!</p>
 		<Button href="/dashboard" color="primary">Dashboard</Button>
 	</div>
