@@ -6,9 +6,13 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Notifications from '$lib/components/Notifications.svelte';
 	import debug from 'debug';
+	import { setLanguageTag } from '$lib/paraglide/runtime';
+	import { language } from '$lib/stores/language';
 
 	debug.enable('app:*');
 
+	setLanguageTag($language);
+	console.log('layout language tag', $language);
 	let { children } = $props();
 </script>
 

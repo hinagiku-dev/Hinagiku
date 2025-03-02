@@ -6,8 +6,9 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { language } from '$lib/stores/language'; // Import the global language store
+	import { languageTag } from '$lib/paraglide/runtime.js';
+	import { setLanguageTag } from '$lib/paraglide/runtime.js';
 	import * as m from '$lib/paraglide/messages.js';
-
 	let hinagiku = $state('Hinagiku');
 	let highlight = $state(0);
 	let hydrated = $state(false);
@@ -29,19 +30,38 @@
 			highlight = newHighlight;
 		}, 800);
 		hydrated = true;
+
+		//set the language tag
+		if ($language === 'zh') {
+			setLanguageTag('zh');
+			console.log('current language tag', languageTag());
+			//window.location.assign('/zh' + window.location.pathname + window.location.search);
+		} else if ($language === 'en') {
+			setLanguageTag('en');
+			console.log('current language tag', languageTag());
+			//reload the page
+			// console.log('gotoen', window.location.pathname.replace('/zh', ''));
+			// window.location.assign(window.location.pathname.replace('/zh', '') + window.location.search);
+		}
 		return () => clearInterval(interval);
 	});
 
 	function setLanguage(lang: 'en' | 'zh') {
 		language.set(lang);
 		console.log('set language to', lang);
-		console.log('current pathname:', window.location.pathname);
-		if (lang === 'zh' && !window.location.pathname.startsWith('zh')) {
-			window.location.assign('/zh' + window.location.pathname + window.location.search);
-		} else if (lang === 'en' && window.location.pathname.startsWith('/zh')) {
-			console.log('gotoen', window.location.pathname.replace('/zh', ''));
-			window.location.assign(window.location.pathname.replace('/zh', '') + window.location.search);
+		//console.log('current pathname:', window.location.pathname);
+		if (lang === 'zh') {
+			setLanguageTag('zh');
+			console.log('current language tag', languageTag());
+			//window.location.assign('/zh' + window.location.pathname + window.location.search);
+		} else if (lang === 'en') {
+			setLanguageTag('en');
+			console.log('current language tag', languageTag());
+			//reload the page
+			// console.log('gotoen', window.location.pathname.replace('/zh', ''));
+			// window.location.assign(window.location.pathname.replace('/zh', '') + window.location.search);
 		}
+		//window.location.reload();
 	}
 </script>
 

@@ -38,4 +38,17 @@ const authHandle: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
+// import type { AvailableLanguageTag } from '$lib/paraglide/runtime'
+// const handleLang: Handle = async ({ event, resolve }) => {
+// 	const userLanguage = 'zh';//event.cookies.get('lang') || 'zh';
+
+// 	return await resolve(event, {
+// 		transformPageChunk({ done, html }) {
+// 		if (done) {
+// 			return html.replace('%lang%', userLanguage as AvailableLanguageTag)
+// 		}
+// 		},
+// 	})
+// }
+
 export const handle = sequence(i18n.handle(), authHandle);
