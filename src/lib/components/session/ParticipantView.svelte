@@ -19,7 +19,7 @@
 	import GroupSummary from '$lib/components/session/GroupSummary.svelte';
 	import { initFFmpeg, float32ArrayToWav, wav2mp3 } from '$lib/utils/wav2mp3';
 	import EndedView from '$lib/components/session/EndedView.svelte';
-	import { language } from '$lib/stores/language'; // Import the global language store
+	import * as m from '$lib/paraglide/messages.js';
 
 	interface ChatroomConversation {
 		name: string;
@@ -133,15 +133,15 @@
 
 			if (!response.ok) {
 				await response.json(); // ignore result
-				notifications.error(translations[$language].failedCreateGroup);
+				notifications.error(m.failedCreateGroup());
 				return;
 			}
 
-			notifications.success(translations[$language].successCreateGroup);
+			notifications.success(m.successCreateGroup());
 			creating = false;
 		} catch (error) {
 			console.error('Error creating group:', error);
-			notifications.error(translations[$language].failedCreateGroup);
+			notifications.error(m.failedCreateGroup());
 		} finally {
 			isCreatingGroup = false;
 		}
@@ -149,9 +149,7 @@
 
 	async function handleJoinGroup() {
 		if (!groupNumber || !/^(?:[1-9]|[1-4][0-9]|50)$/.test(groupNumber)) {
-			notifications.error(
-				translations[$language].invalidGroupNumber || 'Please enter a valid group number (1-50)'
-			);
+			notifications.error(m.invalidGroupNumber() || 'Please enter a valid group number (1-50)');
 			return;
 		}
 
@@ -162,15 +160,15 @@
 
 			if (!response.ok) {
 				await response.json(); // ignore result
-				notifications.error(translations[$language].failedJoinGroup);
+				notifications.error(m.failedJoinGroup());
 				return;
 			}
 
-			notifications.success(translations[$language].successJoinGroup);
+			notifications.success(m.successJoinGroup());
 			creating = false;
 		} catch (error) {
 			console.error('Error joining group:', error);
-			notifications.error(translations[$language].failedJoinGroup);
+			notifications.error(m.failedJoinGroup());
 		}
 	}
 
@@ -514,95 +512,17 @@
 
 			if (!response.ok) {
 				await response.json();
-				throw new Error(translations[$language].failedLeaveGroup);
+				throw new Error(m.failedLeaveGroup());
 			}
 
-			notifications.success(translations[$language].successLeaveGroup);
+			notifications.success(m.successLeaveGroup());
 			groupDoc = null;
 			conversationDoc = null;
 		} catch (error) {
 			console.error('Error leaving group:', error);
-			notifications.error(translations[$language].failedLeaveGroup);
+			notifications.error(m.failedLeaveGroup());
 		}
 	}
-
-	const translations = {
-		en: {
-			confirmEndGroup:
-				'Entering the Ended Stage is irreversible. Are you sure you want to proceed?',
-			confirm: 'Confirm',
-			cancel: 'Cancel',
-			confirmEndSummarize: 'Are you sure you want to confirm the group summary?',
-			finishgroup: 'Finish Group Discussion',
-			groupInfo: 'Group Information',
-			groupManagement: 'Group Management',
-			createNewGroup: 'Create New Group',
-			jointGroup: 'Join Group',
-			waitStart: 'Waiting for session to start...',
-			end: 'Please wait for the host to end the session.',
-			status: 'Session Status',
-			individual: 'Work on your individual contributions',
-			beforeGroup: 'Get ready to collaborate with your group.',
-			group: 'Collaborate with your group members.',
-			ended: 'Ended',
-			member: 'Members: ',
-			groupNum: 'Group Number',
-			notInGroup: 'You are not in a group yet.',
-			leaveGroup: 'Leave Group',
-			hostBeginShortly: 'The host will begin the session shortly.',
-			unknownUser: 'Unknown User',
-			loadingProfile: 'Loading...',
-			you: 'You',
-			leader: ' (Leader)',
-			creatingGroup: 'Creating...',
-			joinExistingGroup: 'Join Existing Group',
-			enterGroupNumber: 'Enter group number (1-50)',
-			successCreateGroup: 'Group created successfully',
-			failedCreateGroup: 'Failed to create group',
-			successJoinGroup: 'Joined group successfully',
-			failedJoinGroup: 'Failed to join group',
-			successLeaveGroup: 'Successfully left group',
-			failedLeaveGroup: 'Failed to leave group',
-			invalidGroupNumber: 'Please enter a valid group number (1-50)'
-		},
-		zh: {
-			confirmEndGroup: '進入 Ended Stage 將無法返回，確定要繼續嗎？',
-			confirm: '確定',
-			cancel: '取消',
-			finishgroup: '結束群組討論',
-			confirmEndSummarize: '確定要確認群組總結嗎？',
-			groupInfo: '群組資訊',
-			groupManagement: '群組管理',
-			createNewGroup: '建立新群組',
-			jointGroup: '加入群組',
-			waitStart: '等待會議開始...',
-			end: '請等待主持人結束會議。',
-			status: '會議狀態',
-			individual: '進行個人觀念發想',
-			beforeGroup: '準備好與您的小組合作',
-			group: '與您的小組成員合作討論',
-			ended: '已結束',
-			member: '成員：',
-			groupNum: '小組編號',
-			notInGroup: '您還沒有加入任何群組。',
-			leaveGroup: '退出群組',
-			hostBeginShortly: '主持人即將開始會議。',
-			unknownUser: '未知使用者',
-			loadingProfile: '載入中...',
-			you: '您',
-			leader: '（組長）',
-			creatingGroup: '正在建立...',
-			joinExistingGroup: '加入現有群組',
-			enterGroupNumber: '請輸入群組編號 (1-50)',
-			successCreateGroup: '成功建立群組',
-			failedCreateGroup: '無法建立群組',
-			successJoinGroup: '成功加入群組',
-			failedJoinGroup: '無法加入群組',
-			successLeaveGroup: '成功退出群組',
-			failedLeaveGroup: '無法退出群組',
-			invalidGroupNumber: '請輸入有效的群組編號 (1-50)'
-		}
-	};
 </script>
 
 <main class="mx-auto max-w-7xl px-2 py-8">
@@ -612,15 +532,15 @@
 			{#if groupStatus === 'discussion'}
 				<Button color="green" on:click={handleEndGroup}>
 					<CircleCheck class="mr-2 h-4 w-4" />
-					{translations[$language].finishgroup}
+					{m.finishgroup()}
 				</Button>
 			{:else if groupStatus === 'summarize'}
 				<Button color="green" on:click={handleEndSummarize}>
 					<CircleCheck class="mr-2 h-4 w-4" />
-					{translations[$language].confirmEndSummarize}
+					{m.confirmEndSummarize()}
 				</Button>
 			{:else if groupStatus === 'end'}
-				<p class="text-gray-600">{translations[$language].end}</p>
+				<p class="text-gray-600">{m.end()}</p>
 			{/if}
 		{/if}
 	</div>
@@ -629,7 +549,7 @@
 		<div class="space-y-8 md:col-span-1">
 			<!-- Status Section -->
 			<div class="rounded-lg border p-6">
-				<h2 class="mb-4 text-xl font-semibold">{translations[$language].status}</h2>
+				<h2 class="mb-4 text-xl font-semibold">{m.status()}</h2>
 				<div class="space-y-4">
 					<div class="flex items-center gap-2">
 						<!-- svelte-ignore element_invalid_self_closing_tag -->
@@ -647,18 +567,18 @@
 						<span class="capitalize">{$session?.status}</span>
 					</div>
 					{#if $session?.status === 'individual'}
-						<p class="text-gray-600">{translations[$language].individual}</p>
+						<p class="text-gray-600">{m.individual()}</p>
 					{:else if $session?.status === 'before-group'}
-						<p class="text-gray-600">{translations[$language].beforeGroup}</p>
+						<p class="text-gray-600">{m.beforeGroup()}</p>
 					{:else if $session?.status === 'group'}
-						<p class="text-gray-600">{translations[$language].group}</p>
+						<p class="text-gray-600">{m.group()}</p>
 					{/if}
 				</div>
 			</div>
 
 			<!-- Group Section -->
 			<div class="rounded-lg border p-6">
-				<h2 class="mb-4 text-xl font-semibold">{translations[$language].groupInfo}</h2>
+				<h2 class="mb-4 text-xl font-semibold">{m.groupInfo()}</h2>
 				{#if groupDoc}
 					<div class="space-y-4">
 						<div class="flex items-center justify-between">
@@ -668,24 +588,21 @@
 							</div>
 						</div>
 						<div>
-							<h3 class="mb-2 font-medium">{translations[$language].member}</h3>
+							<h3 class="mb-2 font-medium">{m.member()}</h3>
 							<ul class="space-y-2">
 								{#each groupDoc.data.participants as participant, index}
 									<li class="flex items-center gap-2">
 										<User class="h-4 w-4" />
 										<span>
 											{#if participant === user.uid}
-												{translations[$language].you}{index === 0
-													? translations[$language].leader
-													: ''}
+												{m.you()}{index === 0 ? m.leader() : ''}
 											{:else}
 												{#await getUser(participant)}
-													<span class="text-gray-500">{translations[$language].loadingProfile}</span
-													>
+													<span class="text-gray-500">{m.loadingProfile()}</span>
 												{:then profile}
-													{profile.displayName}{index === 0 ? translations[$language].leader : ''}
+													{profile.displayName}{index === 0 ? m.leader() : ''}
 												{:catch}
-													<span class="text-red-500">{translations[$language].unknownUser}</span>
+													<span class="text-red-500">{m.unknownUser()}</span>
 												{/await}
 											{/if}
 										</span>
@@ -702,7 +619,7 @@
 									onclick={() => groupDoc?.id && handleLeaveGroup(groupDoc.id, user.uid)}
 								>
 									<LogOut class="mr-2 h-4 w-4" />
-									{translations[$language].leaveGroup}
+									{m.leaveGroup()}
 								</Button>
 								<Button
 									color="red"
@@ -717,41 +634,37 @@
 					</div>
 				{:else if $session?.status === 'preparing'}
 					<div class="mt-6 space-y-4">
-						<h3 class="font-medium">{translations[$language].groupManagement}</h3>
+						<h3 class="font-medium">{m.groupManagement()}</h3>
 						{#if creating}
 							<div class="space-y-4">
 								<div class="flex items-center gap-2">
-									<Label for="groupNumber">{translations[$language].groupNum}</Label>
+									<Label for="groupNumber">{m.groupNum()}</Label>
 									<Input
 										id="groupNumber"
 										type="number"
 										bind:value={groupNumber}
 										min="1"
 										max="50"
-										placeholder={translations[$language].enterGroupNumber}
+										placeholder={m.enterGroupNumber()}
 									/>
 								</div>
 								<Button color="primary" on:click={handleJoinGroup}>
 									<UserPlus class="mr-2 h-4 w-4" />
-									{translations[$language].jointGroup}
+									{m.jointGroup()}
 								</Button>
 							</div>
 						{:else}
 							<Button color="primary" on:click={handleCreateGroup} disabled={isCreatingGroup}>
 								<Users class="mr-2 h-4 w-4" />
-								{isCreatingGroup
-									? translations[$language].creatingGroup
-									: translations[$language].createNewGroup}
+								{isCreatingGroup ? m.creatingGroup() : m.createNewGroup()}
 							</Button>
 						{/if}
 						<Button color="alternative" on:click={() => (creating = !creating)}>
-							{creating
-								? translations[$language].cancel
-								: translations[$language].joinExistingGroup}
+							{creating ? m.cancel() : m.joinExistingGroup()}
 						</Button>
 					</div>
 				{:else}
-					<p class="text-gray-600">{translations[$language].notInGroup}</p>
+					<p class="text-gray-600">{m.notInGroup()}</p>
 				{/if}
 			</div>
 		</div>
@@ -761,8 +674,8 @@
 		>
 			{#if $session?.status === 'preparing'}
 				<div class="mt-4">
-					<h3 class="mb-2 font-medium">{translations[$language].waitStart}</h3>
-					<p class="text-gray-600">{translations[$language].hostBeginShortly}</p>
+					<h3 class="mb-2 font-medium">{m.waitStart()}</h3>
+					<p class="text-gray-600">{m.hostBeginShortly()}</p>
 				</div>
 			{:else if $session?.status === 'individual'}
 				<Chatroom record={handleRecord} send={handleSend} {conversations} isIndividual />

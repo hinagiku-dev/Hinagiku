@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button, Card } from 'flowbite-svelte';
 	import ResolveUsername from './ResolveUsername.svelte';
-	import { language } from '$lib/stores/language'; // Import the global language store
+	import * as m from '$lib/paraglide/messages.js';
 
 	let {
 		id,
@@ -20,17 +20,6 @@
 		host?: string;
 		createdAt: Date;
 	} = $props();
-
-	const translations = {
-		en: {
-			hostedBy: 'Hosted by',
-			viewSession: 'View Session'
-		},
-		zh: {
-			hostedBy: '主持人',
-			viewSession: '查看會話'
-		}
-	};
 </script>
 
 <Card padding="lg" class="transition-all hover:border-primary-500">
@@ -64,9 +53,7 @@
 		<div class="mt-auto w-full">
 			{#if host}
 				<div class="flex items-center gap-4">
-					<span class="text-sm text-gray-500"
-						>{translations[$language].hostedBy} <ResolveUsername id={host} /></span
-					>
+					<span class="text-sm text-gray-500">{m.hostedBy()} <ResolveUsername id={host} /></span>
 				</div>
 			{/if}
 			<div class="mb-4 flex items-center gap-4">
@@ -74,7 +61,7 @@
 					{createdAt.toLocaleString()}
 				</span>
 			</div>
-			<Button href="/session/{id}" class="w-full">{translations[$language].viewSession}</Button>
+			<Button href="/session/{id}" class="w-full">{m.viewSession()}</Button>
 		</div>
 	</div>
 </Card>
