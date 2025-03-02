@@ -7,7 +7,6 @@
 	import { page } from '$app/state';
 	import { language } from '$lib/stores/language'; // Import the global language store
 	import * as m from '$lib/paraglide/messages.js';
-
 	let hinagiku = $state('Hinagiku');
 	let highlight = $state(0);
 	let hydrated = $state(false);
@@ -29,19 +28,30 @@
 			highlight = newHighlight;
 		}, 800);
 		hydrated = true;
+
 		return () => clearInterval(interval);
 	});
 
 	function setLanguage(lang: 'en' | 'zh') {
 		language.set(lang);
 		console.log('set language to', lang);
-		console.log('current pathname:', window.location.pathname);
-		if (lang === 'zh' && !window.location.pathname.startsWith('zh')) {
-			window.location.assign('/zh' + window.location.pathname + window.location.search);
-		} else if (lang === 'en' && window.location.pathname.startsWith('/zh')) {
+		//console.log('current pathname:', window.location.pathname);
+		if (lang === 'en' && window.location.pathname.startsWith('/zh')) {
 			console.log('gotoen', window.location.pathname.replace('/zh', ''));
-			window.location.assign(window.location.pathname.replace('/zh', '') + window.location.search);
+			if (window.location.pathname === '/zh') {
+				window.location.assign(
+					window.location.pathname.replace('/zh', '/') + window.location.search
+				);
+			} else {
+				window.location.assign(
+					window.location.pathname.replace('/zh', '') + window.location.search
+				);
+			}
+		} else if (lang === 'zh' && !window.location.pathname.startsWith('/zh')) {
+			console.log('gotozh', window.location.pathname);
+			window.location.assign('/zh' + window.location.pathname + window.location.search);
 		}
+		//window.location.reload();
 	}
 </script>
 

@@ -26,6 +26,7 @@
 	import { user } from '$lib/stores/auth';
 	import TemplateCard from '$lib/components/TemplateCard.svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
+	import { i18n } from '$lib/i18n';
 
 	import * as m from '$lib/paraglide/messages.js';
 
@@ -130,7 +131,7 @@
 		try {
 			const id = await createTemplate();
 			notifications.success('Template created successfully');
-			await goto(`/template/${id}`);
+			await goto(i18n.resolveRoute(`/template/${id}`));
 		} catch (error) {
 			console.error('Error creating template:', error);
 			notifications.error('Failed to create template');

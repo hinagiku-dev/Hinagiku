@@ -4,7 +4,7 @@
 	import { GitFork } from 'lucide-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { goto } from '$app/navigation';
-
+	import { i18n } from '$lib/i18n';
 	let {
 		id,
 		title,
@@ -45,7 +45,7 @@
 				id: string;
 			} = await response.json();
 			notifications.success('Template forked successfully');
-			await goto(`/template/${forkedId}`);
+			await goto(i18n.resolveRoute(`/template/${forkedId}`));
 		} catch (error) {
 			console.error('Error forking template:', error);
 			notifications.error('Failed to fork template');

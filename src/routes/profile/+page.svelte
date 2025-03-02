@@ -89,7 +89,7 @@
 				<div class="flex justify-end gap-4">
 					<Button href="/dashboard" color="light">{m.cancel()}</Button>
 					<Button type="submit" disabled={loading}>
-						{loading ? m.saving() : m.saveChanges()}
+						{loading ? m.saving() : m.saveChangesButton()}
 					</Button>
 				</div>
 			</form>
