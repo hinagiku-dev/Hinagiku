@@ -173,5 +173,9 @@
 	"Tsubtasks": "Subtasks",
 	"Tpublic": "Public",
 	"Tprivate": "Private",
-	"lastUpdated": "Last Updated"
+	"lastUpdated": "Last Updated",
+	"confirmEnd": "Confirm",
+	"dashboardTitle": "Participants Status Dashboard",
+	"loadingGroups": "Loading groups",
+	"noParticipantsInGroup": "no Participants in current group"
 }
