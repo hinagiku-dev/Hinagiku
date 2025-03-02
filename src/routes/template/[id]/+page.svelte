@@ -11,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { notifications } from '$lib/stores/notifications';
 	import * as m from '$lib/paraglide/messages';
+	import { i18n } from '$lib/i18n';
 
 	let title = '';
 	let task = '';
@@ -103,7 +104,7 @@
 			}
 
 			const data = await res.json();
-			await goto(`/session/${data.sessionId}`);
+			await goto(i18n.resolveRoute(`/session/${data.sessionId}`));
 		} catch (e) {
 			console.error('Error creating session:', e);
 			notifications.error('Failed to create session');
@@ -122,7 +123,7 @@
 				return;
 			}
 
-			await goto('/dashboard');
+			await goto(i18n.resolveRoute('/dashboard'));
 		} catch (e) {
 			console.error('Error deleting template:', e);
 			notifications.error('Failed to delete template');
