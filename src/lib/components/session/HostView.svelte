@@ -571,7 +571,7 @@
 				? 'md:col-span-4'
 				: ''}"
 		>
-			<h2 class="mb-4 text-xl font-semibold">m.Groups()</h2>
+			<h2 class="mb-4 text-xl font-semibold">{m.Groups()}</h2>
 			{#if $groups.length === 0}
 				<Alert>{m.waitingForParticipants()}</Alert>
 			{:else}
