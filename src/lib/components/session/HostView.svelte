@@ -159,7 +159,7 @@
 				});
 				unsubscribes.push(unsubscribe);
 			} catch (error) {
-				console.error('無法加載群組資料:', error);
+				console.error('無法載入群組資料:', error);
 			}
 		};
 
@@ -389,8 +389,8 @@
 				selectedConversation = conversation;
 			}
 		} catch (error) {
-			console.error('無法加載對話歷史:', error);
-			notifications.error('無法加載對話歷史');
+			console.error('無法載入對話歷史:', error);
+			notifications.error('無法載入對話歷史');
 		}
 	}
 
@@ -410,8 +410,8 @@
 			};
 			showGroupChatHistory = true;
 		} catch (error) {
-			console.error('無法加載群組討論:', error);
-			notifications.error('無法加載群組討論');
+			console.error('無法載入群組討論:', error);
+			notifications.error('無法載入群組討論');
 		}
 	}
 
@@ -452,8 +452,8 @@
 
 			conversationsData = await response.json();
 		} catch (error) {
-			console.error('無法加載對話資料:', error);
-			notifications.error('無法加載對話資料');
+			console.error('無法載入對話資料:', error);
+			notifications.error('無法載入對話資料');
 		}
 	}
 
@@ -469,8 +469,8 @@
 
 			keywordData = await response.json();
 		} catch (error) {
-			console.error('無法加載關鍵字資料:', error);
-			notifications.error('無法加載關鍵字資料');
+			console.error('無法載入關鍵字資料:', error);
+			notifications.error('無法載入關鍵字資料');
 		}
 	}
 
@@ -571,7 +571,7 @@
 				? 'md:col-span-4'
 				: ''}"
 		>
-			<h2 class="mb-4 text-xl font-semibold">Groups</h2>
+			<h2 class="mb-4 text-xl font-semibold">m.Groups()</h2>
 			{#if $groups.length === 0}
 				<Alert>{m.waitingForParticipants()}</Alert>
 			{:else}
