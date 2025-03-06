@@ -87,7 +87,7 @@
 			"eslint --fix"
 		]
 	},
-	"packageManager": "pnpm@9.15.1",
+	"packageManager": "pnpm@10.5.1",
 	"dependencies": {
 		"@inlang/paraglide-sveltekit": "0.15.5"
 	}
