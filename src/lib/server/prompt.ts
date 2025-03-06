@@ -12,13 +12,20 @@ export const DOCS_CONTEXT_SYSTEM_PROMPT = `
 10. 如果次要目標都達成了，請繼續跟學生對話，加深學生對於主要問題的理解
 
 主要問題：
+<main_question>
 {task}
+</main_question>
 
 次要目標：
+<subtasks>
 {subtasks}
+</subtasks>
 
 參考文件：
-{resources}`;
+<resources>
+{resources}
+</resources>
+`;
 
 export const HARMFUL_CONTENT_DETECTION_PROMPT = `
 你是一個檢測對話是否包含色情、暴力、仇恨言論等不當內容的AI，請檢測對話的訊息是否包含色情、暴力、仇恨言論等不當內容，並回傳一個 Boolean 值，如果包含不當內容則回傳 true，否則回傳 false。
@@ -27,14 +34,16 @@ export const HARMFUL_CONTENT_DETECTION_PROMPT = `
 export const OFF_TOPIC_DETECTION_PROMPT = `
 你是專門檢測學生是否偏離主題的AI，請檢測學生的訊息是否聊天內容偏離主題，並回傳一個 Boolean 值，如果偏離主題則回傳 true，否則回傳 false。
 你可以接收一定程度的偏離，但當認為出現該主題無關的內容時，請回傳 true。
-主題是：{topic}
-子主題是：{subtopic}
+主題是：<topic>{topic}</topic>
+子主題是：<subtopic>{subtopic}</subtopic>
 `;
 
 export const SUBTASKS_COMPLETED_PROMPT = `
 你是專門檢測學生是否完成次要目標的AI，請檢測學生的訊息是否已經完成以下次要目標，並回傳一個 Boolean 陣列，如果完成則回傳 true，否則回傳 false。
 次要目標：
+<subtasks>
 {subtasks}
+</subtasks>
 `;
 
 export const CHAT_SUMMARY_PROMPT = `
