@@ -2,9 +2,9 @@ import { adminDb } from '$lib/server/firebase';
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	if (!locals.user) {
-		throw redirect(303, '/login');
+		throw redirect(303, '/login?then=' + encodeURIComponent(url.pathname));
 	}
 
 	const sessionRef = adminDb.collection('sessions').doc(params.id);

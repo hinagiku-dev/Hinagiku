@@ -6,12 +6,17 @@
 	import { db } from '$lib/firebase';
 	import * as m from '$lib/paraglide/messages.js';
 	import { i18n } from '$lib/i18n';
+	import { signInWithGoogle, user } from '$lib/stores/auth';
 
 	async function handleScan(code: string) {
 		try {
 			const url = new URL(code);
 			if (url.pathname.startsWith('/session/')) {
-				await goto(i18n.resolveRoute(url.pathname));
+				if (!user) {
+					await signInWithGoogle(url.pathname);
+				} else {
+					await goto(i18n.resolveRoute(url.pathname));
+				}
 			} else {
 				notifications.error('Invalid session QR code');
 			}
@@ -36,7 +41,11 @@
 				return;
 			}
 			const url = new URL(`/session/${sessionid}`, window.location.href);
-			await goto(i18n.resolveRoute(url.pathname));
+			if (!user) {
+				await signInWithGoogle(url.pathname);
+			} else {
+				await goto(i18n.resolveRoute(url.pathname));
+			}
 		} catch (e) {
 			notifications.error('Invalid session code');
 			console.error(e);
