@@ -35,6 +35,7 @@
 	import LabelManager from './LabelManager.svelte';
 	import ResolveUsername from '../ResolveUsername.svelte';
 	import * as m from '$lib/paraglide/messages.js';
+	import { Toggle, Input } from 'flowbite-svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -80,6 +81,32 @@
 	} | null>(null);
 	let conversationsData = $state<Array<Conversation>>([]);
 	let keywordData = $state<Record<string, number>>({});
+	let autoGrouping = $state(true);
+	let groupNumber = $state(2);
+
+	async function handleApplyGroups() {
+		try {
+			const response = await fetch(`/api/session/${$page.params.id}/settings/groups`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					count: groupNumber,
+					auto: autoGrouping
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to apply group settings');
+			}
+
+			notifications.success('成功更新分組設定', 3000);
+		} catch (error) {
+			console.error('無法更新分組設定:', error);
+			notifications.error('無法更新分組設定');
+		}
+	}
 
 	onMount(() => {
 		const unsubscribes: (() => void)[] = [];
@@ -571,7 +598,30 @@
 				? 'md:col-span-4'
 				: ''}"
 		>
-			<h2 class="mb-4 text-xl font-semibold">{m.Groups()}</h2>
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="text-xl font-semibold">{m.Groups()}</h2>
+				{#if $session?.status === 'preparing'}
+					<div class="flex items-center gap-4">
+						<div class="flex items-center gap-2">
+							<Toggle bind:checked={autoGrouping}>
+								{autoGrouping ? '自動分組' : '手動分組'}
+							</Toggle>
+							<Tooltip placement="right">
+								{autoGrouping ? '系統將自動為參與者分配群組' : '參與者可以自由選擇要加入的群組'}
+							</Tooltip>
+						</div>
+						{#if autoGrouping}
+							<div class="flex items-center gap-2">
+								<Input type="number" min="2" max="10" class="w-20" bind:value={groupNumber} />
+								<span class="text-sm text-gray-500">組</span>
+							</div>
+						{/if}
+						{#if autoGrouping}
+							<Button color="primary" size="sm" on:click={handleApplyGroups}>套用</Button>
+						{/if}
+					</div>
+				{/if}
+			</div>
 			{#if $groups.length === 0}
 				<Alert>{m.waitingForParticipants()}</Alert>
 			{:else}
