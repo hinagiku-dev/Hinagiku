@@ -78,10 +78,12 @@ export async function isHarmfulContent(content: string) {
 }
 
 export async function isOffTopic(history: LLMChatMessage[], topic: string, subtasks: string[]) {
-	const system_prompt = OFF_TOPIC_DETECTION_PROMPT.replace('{topic}', topic).replace(
-		'{subtopic}',
-		subtasks.join('\n')
-	);
+	const llm_message = history.length > 1 ? history[history.length - 2].content : '';
+	const student_message = history[history.length - 1].content;
+	const system_prompt = OFF_TOPIC_DETECTION_PROMPT.replace('{llmMessage}', llm_message)
+		.replace('{studentMessage}', student_message)
+		.replace('{topic}', topic)
+		.replace('{subtopic}', subtasks.join('\n'));
 	try {
 		const schema = z.object({ isOffTopic: z.boolean() });
 		const { result } = await requestLLM(system_prompt, history, schema);
@@ -102,7 +104,11 @@ export async function isOffTopic(history: LLMChatMessage[], topic: string, subta
 }
 
 async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string[]) {
-	const system_prompt = SUBTASKS_COMPLETED_PROMPT.replace('{subtasks}', subtasks.join('\n'));
+	const formatted_history = history.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
+	const system_prompt = SUBTASKS_COMPLETED_PROMPT.replace(
+		'{chatHistory}',
+		formatted_history
+	).replace('{subtasks}', subtasks.join('\n'));
 
 	try {
 		const schema = z.object({
