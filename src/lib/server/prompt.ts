@@ -45,6 +45,11 @@ export const OFF_TOPIC_DETECTION_PROMPT = `
 - 若學生的訊息與**主題或子主題**仍有關聯，則允許一定程度的偏離。
 - 若內容與主題無明顯關聯，或完全偏向無關話題，請回傳 **true**。
 
+LLM訊息：
+{llmMessage}
+學生訊息：
+{studentMessage}
+
 📌 **主題**：
 <topic>{topic}</topic>
 
@@ -57,7 +62,10 @@ export const OFF_TOPIC_DETECTION_PROMPT = `
 `;
 
 export const SUBTASKS_COMPLETED_PROMPT = `
-你是一個專門檢測學生是否已完成學習目標的 AI，請根據學生的對話內容，判斷以下**次要目標**是否已達成。
+你是一個專門檢測學生回答是否包含學習目標的 AI，請根據學生的對話內容，判斷以下**次要目標**是否已達成。
+
+對話紀錄：
+{chatHistory}
 
 📌 **次要目標**：
 <subtasks>
