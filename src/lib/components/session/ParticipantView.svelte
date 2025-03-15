@@ -48,6 +48,8 @@
 
 	let isCreatingGroup = $state(false);
 
+	const isGroupManagementEnabled = false; // The flag for auto group
+
 	onMount(() => {
 		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
 		const groupDocQuery = query(groupsRef, where('participants', 'array-contains', user.uid));
@@ -617,6 +619,7 @@
 									size="xs"
 									class="hidden sm:flex"
 									onclick={() => groupDoc?.id && handleLeaveGroup(groupDoc.id, user.uid)}
+									disabled={!isGroupManagementEnabled}
 								>
 									<LogOut class="mr-2 h-4 w-4" />
 									{m.leaveGroup()}
@@ -626,6 +629,7 @@
 									size="xs"
 									class="sm:hidden"
 									onclick={() => groupDoc?.id && handleLeaveGroup(groupDoc.id, user.uid)}
+									disabled={!isGroupManagementEnabled}
 								>
 									<LogOut class="h-4 w-4" />
 								</Button>
@@ -646,20 +650,33 @@
 										min="1"
 										max="50"
 										placeholder={m.enterGroupNumber()}
+										disabled={!isGroupManagementEnabled}
 									/>
 								</div>
-								<Button color="primary" on:click={handleJoinGroup}>
+								<Button
+									color="primary"
+									on:click={handleJoinGroup}
+									disabled={!isGroupManagementEnabled}
+								>
 									<UserPlus class="mr-2 h-4 w-4" />
 									{m.jointGroup()}
 								</Button>
 							</div>
 						{:else}
-							<Button color="primary" on:click={handleCreateGroup} disabled={isCreatingGroup}>
+							<Button
+								color="primary"
+								on:click={handleCreateGroup}
+								disabled={isCreatingGroup || !isGroupManagementEnabled}
+							>
 								<Users class="mr-2 h-4 w-4" />
 								{isCreatingGroup ? m.creatingGroup() : m.createNewGroup()}
 							</Button>
 						{/if}
-						<Button color="alternative" on:click={() => (creating = !creating)}>
+						<Button
+							color="alternative"
+							on:click={() => (creating = !creating)}
+							disabled={!isGroupManagementEnabled}
+						>
 							{creating ? m.cancel() : m.joinExistingGroup()}
 						</Button>
 					</div>

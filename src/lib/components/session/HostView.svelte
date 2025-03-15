@@ -84,6 +84,14 @@
 	let autoGrouping = $state(true);
 	let groupNumber = $state(2);
 
+	// Add dummy participants for testing
+	const dummyParticipants = [
+		{ id: 'user1', name: 'John Doe' },
+		{ id: 'user2', name: 'Jane Smith' },
+		{ id: 'user3', name: 'Bob Wilson' },
+		{ id: 'user4', name: 'Alice Brown' }
+	];
+
 	async function handleApplyGroups() {
 		try {
 			const response = await fetch(`/api/session/${$page.params.id}/settings/groups`, {
@@ -598,6 +606,20 @@
 				? 'md:col-span-4'
 				: ''}"
 		>
+			<!-- Add Participants List Section -->
+			<div class="mb-6 border-b pb-4">
+				<h3 class="mb-3 text-lg font-semibold">Ungrouped Participants</h3>
+				<div class="flex flex-wrap gap-2">
+					{#each dummyParticipants as participant}
+						<div class="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1">
+							<span class="h-2 w-2 rounded-full bg-green-500"></span>
+							<span class="text-sm">{participant.name}</span>
+						</div>
+					{/each}
+				</div>
+			</div>
+
+			<!-- Existing Groups Section -->
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="text-xl font-semibold">{m.Groups()}</h2>
 				{#if $session?.status === 'preparing'}
