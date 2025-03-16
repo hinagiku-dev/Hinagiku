@@ -26,7 +26,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		const group_data = await getGroupData(group_ref);
 
 		const { response } = await chatWithLLMByDocs(
-			[{ role: 'user', content: '請介紹一下你自己，大致提點今日的主題與內容，並開始進行引導' }],
+			[{ role: 'user', content: '請介紹你自己，說明本次要討論的 maintask 主題，並挑選任一適合的次要目標 subtask 開始引導' }],
 			task,
 			subtasks,
 			new Array(subtasks.length).fill(false),
