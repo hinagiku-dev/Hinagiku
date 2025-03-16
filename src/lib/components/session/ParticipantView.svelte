@@ -10,16 +10,7 @@
 	import { page } from '$app/stores';
 	import { UserPlus, User, Users, CircleCheck, LogOut } from 'lucide-svelte';
 	import { db } from '$lib/firebase';
-	import {
-		collection,
-		query,
-		where,
-		onSnapshot,
-		getDoc,
-		doc,
-		orderBy,
-		limit
-	} from 'firebase/firestore';
+	import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 	import { onDestroy, onMount } from 'svelte';
 	import { getUser } from '$lib/utils/getUser';
 	import Chatroom from '$lib/components/Chatroom.svelte';
@@ -29,9 +20,6 @@
 	import { initFFmpeg, float32ArrayToWav, wav2mp3 } from '$lib/utils/wav2mp3';
 	import EndedView from '$lib/components/session/EndedView.svelte';
 	import * as m from '$lib/paraglide/messages.js';
-	import { subscribeAll } from '$lib/firebase/store';
-	import { browser } from '$app/environment';
-	import { writable, derived as derived_func } from 'svelte/store';
 
 	interface ChatroomConversation {
 		name: string;
@@ -41,11 +29,14 @@
 		avatar?: string;
 	}
 
-	let { session, user } = $props<{
+	let {
+		session,
+		user
+	}: {
 		session: Readable<Session>;
 		// eslint-disable-next-line no-undef
-		user: App.Locals['user'];
-	}>();
+		user: Exclude<App.Locals['user'], null>;
+	} = $props();
 
 	let groupDoc = $state<{ data: Group; id: string } | null>(null);
 	let groupStatus = $derived.by(() => groupDoc?.data.status || 'discussion');
@@ -60,35 +51,13 @@
 
 	let isCreatingGroup = $state(false);
 
-	let [hostSessions, { unsubscribe: unsubscribe1 }] = browser
-		? subscribeAll<Session>(
-				query(
-					collection(db, 'sessions'),
-					where('host', '==', user.uid),
-					orderBy('createdAt', 'desc'),
-					limit(1)
-				)
-			)
-		: [writable([]), { unsubscribe: () => {} }];
-	let selectedLabels = writable<string[]>([]);
-	let filteredHostSessions = derived_func(
-		[hostSessions, selectedLabels],
-		([$hostSessions, $selectedLabels]) => {
-			if (!$hostSessions || $selectedLabels.length === 0) return $hostSessions;
-			return $hostSessions.filter(([, session]) =>
-				$selectedLabels.every((label) => session.labels?.includes(label))
-			);
+	let isGroupManagementEnabled = $state(false);
+	$effect(() => {
+		if ($session?.settings?.autoGroup) {
+			isGroupManagementEnabled = false;
+		} else {
+			isGroupManagementEnabled = true;
 		}
-	);
-
-	onDestroy(() => {
-		unsubscribe1();
-	});
-	let isGroupManagementEnabled = derived_func([filteredHostSessions], ([$filteredHostSessions]) => {
-		if (!$filteredHostSessions || $filteredHostSessions.length === 0) return false;
-		const latestSession = $filteredHostSessions[0]?.[1];
-		console.log('latestSession', latestSession?.settings?.autoGroup);
-		return latestSession?.settings?.autoGroup ?? false;
 	});
 
 	let waitlistjoined = $state(false);
@@ -747,18 +716,30 @@
 										<UserPlus class="mr-2 h-4 w-4" />
 										{m.jointGroup()}
 									</Button>
-									<Button color="alternative" on:click={() => (creating = false)}>
+									<Button
+										color="alternative"
+										on:click={() => (creating = false)}
+										disabled={!isGroupManagementEnabled}
+									>
 										{m.cancel()}
 									</Button>
 								</div>
 							</div>
 						{:else}
 							<div class="space-y-2">
-								<Button color="primary" on:click={handleCreateGroup} disabled={isCreatingGroup}>
+								<Button
+									color="primary"
+									on:click={handleCreateGroup}
+									disabled={isCreatingGroup || !isGroupManagementEnabled}
+								>
 									<Users class="mr-2 h-4 w-4" />
 									{isCreatingGroup ? m.creatingGroup() : m.createNewGroup()}
 								</Button>
-								<Button color="alternative" on:click={() => (creating = true)}>
+								<Button
+									color="alternative"
+									on:click={() => (creating = true)}
+									disabled={!isGroupManagementEnabled}
+								>
 									{m.joinExistingGroup()}
 								</Button>
 							</div>

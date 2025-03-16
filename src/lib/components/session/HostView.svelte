@@ -86,7 +86,16 @@
 	let settings = $state<Session['settings']>({ autoGroup: true });
 
 	async function handleApplyGroups() {
-		// TODO: Implement auto-grouping logic and update groups in Firestore
+		if (!$session?.waitlist || !autoGroup || groupNumber < 1) return;
+		// const waitlist = $session.waitlist;
+
+		// const res = await fetch(`/api/session/${$page.params.id}/action/apply-groups`, {
+		// 	method: 'POST',
+		// 	headers: {
+		// 		'Content-Type': 'application/json'
+		// 	},
+		// 	body: JSON.stringify({ groupNumber, waitlist })
+		// });
 	}
 
 	async function updateSettings() {
