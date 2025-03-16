@@ -10,7 +10,7 @@
 	import { page } from '$app/stores';
 	import { UserPlus, User, Users, CircleCheck, LogOut } from 'lucide-svelte';
 	import { db } from '$lib/firebase';
-	import { collection, query, where, onSnapshot } from 'firebase/firestore';
+	import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 	import { onDestroy, onMount } from 'svelte';
 	import { getUser } from '$lib/utils/getUser';
 	import Chatroom from '$lib/components/Chatroom.svelte';
@@ -50,6 +50,8 @@
 
 	const isGroupManagementEnabled = true; // The flag for auto group
 
+	let waitlistjoined = $state(false);
+
 	onMount(() => {
 		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
 		const groupDocQuery = query(groupsRef, where('participants', 'array-contains', user.uid));
@@ -66,6 +68,8 @@
 
 			updateConversationDoc();
 		});
+
+		getwaitlist();
 
 		pInitFFmpeg = initFFmpeg();
 
@@ -174,6 +178,25 @@
 		}
 	}
 
+	async function joinWaitlist() {
+		try {
+			const response = await fetch(`/api/session/${$page.params.id}/action/joinWaitlist`, {
+				method: 'POST'
+			});
+
+			if (!response.ok) {
+				await response.json(); // ignore result
+				notifications.error(m.failedJoinWaitlist());
+				return;
+			}
+
+			notifications.success(m.successJoinWaitlist());
+		} catch (error) {
+			console.error('Error joining waiting:', error);
+			notifications.error(m.failedJoinWaitlist());
+		}
+	}
+
 	async function sendAudioToSTT(file: File) {
 		const formData = new FormData();
 		formData.append('file', file);
@@ -236,6 +259,21 @@
 			vad.pause();
 			vad.destroy();
 		};
+	}
+
+	async function getwaitlist() {
+		const docRef = doc(db, 'sessions', $page.params.id);
+		const docSnap = await getDoc(docRef);
+		if (!docSnap.exists()) {
+			waitlistjoined = false;
+		} else {
+			const data = docSnap.data();
+			if (data.waitlist.includes(user.uid)) {
+				waitlistjoined = true;
+			} else {
+				waitlistjoined = false;
+			}
+		}
 	}
 
 	async function handleRecord() {
@@ -662,6 +700,11 @@
 									{m.jointGroup()}
 								</Button>
 							</div>
+						{:else if !isGroupManagementEnabled}
+							<Button color="primary" on:click={joinWaitlist} disabled={waitlistjoined}>
+								<Users class="mr-2 h-4 w-4" />
+								{waitlistjoined ? m.isInWaitlist() : m.joinWaitlist()}
+							</Button>
 						{:else}
 							<Button
 								color="primary"
@@ -671,14 +714,14 @@
 								<Users class="mr-2 h-4 w-4" />
 								{isCreatingGroup ? m.creatingGroup() : m.createNewGroup()}
 							</Button>
+							<Button
+								color="alternative"
+								on:click={() => (creating = !creating)}
+								disabled={!isGroupManagementEnabled}
+							>
+								{creating ? m.cancel() : m.joinExistingGroup()}
+							</Button>
 						{/if}
-						<Button
-							color="alternative"
-							on:click={() => (creating = !creating)}
-							disabled={!isGroupManagementEnabled}
-						>
-							{creating ? m.cancel() : m.joinExistingGroup()}
-						</Button>
 					</div>
 				{:else}
 					<p class="text-gray-600">{m.notInGroup()}</p>

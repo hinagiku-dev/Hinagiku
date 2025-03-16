@@ -1,6 +1,6 @@
 import type { Session } from '$lib/schema/session';
 import { adminDb } from '$lib/server/firebase';
-import { json } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import { Timestamp } from 'firebase-admin/firestore';
 import type { RequestHandler } from './$types';
 
@@ -18,15 +18,13 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		}
 
 		const sessionData = session.data() as Session;
-
-		if (sessionData.host !== locals.user.uid) {
-			return json({ error: 'Unauthorized' }, { status: 403 });
-		}
-
 		const action = params.action;
 		const now = Timestamp.now();
 
 		if (action === 'generate-code') {
+			if (sessionData.host !== locals.user.uid) {
+				return json({ error: 'Unauthorized' }, { status: 403 });
+			}
 			let Codes;
 			let code;
 			let tryCount = 0;
@@ -55,6 +53,34 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 				return json({ code: code?.toString() });
 			} else {
 				return json({ error: 'Failed to generate code. Please retry.' }, { status: 500 });
+			}
+		}
+
+		if (action === 'joinWaitlist') {
+			try {
+				const sessionRef = adminDb.collection('sessions').doc(params.id);
+				const sessionData = (await sessionRef.get()).data();
+				// Create new group
+				if (!sessionData) {
+					throw error(404, 'Session not found');
+				}
+				if (sessionData.waitlist === undefined) {
+					//create waitlist
+					await sessionRef.update({
+						waitlist: [locals.user.uid]
+					});
+				} else {
+					if (sessionData.waitlist.includes(locals.user.uid)) {
+						return json({ error: 'You are already in the waitlist' }, { status: 400 });
+					}
+					await sessionRef.update({
+						waitlist: [...sessionData.waitlist, locals.user.uid]
+					});
+				}
+				return json({ success: true });
+			} catch (e) {
+				console.error('Error updating waitlist:', e);
+				throw error(500, 'Failed to update waitlist');
 			}
 		}
 
