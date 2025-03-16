@@ -178,5 +178,9 @@
 	"dashboardTitle": "Participants Status Dashboard",
 	"loadingGroups": "Loading groups",
 	"Groups": "Groups",
-	"noParticipantsInGroup": "no Participants in current group"
+	"noParticipantsInGroup": "no Participants in current group",
+	"joinWaitlist": "Join the waitlist for the host to group...",
+	"failedJoinWaitlist": "Failed to join waiting list",
+	"successJoinWaitlist": "Joined waiting list successfully",
+	"isInWaitlist": "You are already in the waiting list"
 }
