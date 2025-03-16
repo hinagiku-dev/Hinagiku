@@ -10,7 +10,16 @@
 	import { page } from '$app/stores';
 	import { UserPlus, User, Users, CircleCheck, LogOut } from 'lucide-svelte';
 	import { db } from '$lib/firebase';
-	import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
+	import {
+		collection,
+		query,
+		where,
+		onSnapshot,
+		getDoc,
+		doc,
+		orderBy,
+		limit
+	} from 'firebase/firestore';
 	import { onDestroy, onMount } from 'svelte';
 	import { getUser } from '$lib/utils/getUser';
 	import Chatroom from '$lib/components/Chatroom.svelte';
@@ -20,6 +29,9 @@
 	import { initFFmpeg, float32ArrayToWav, wav2mp3 } from '$lib/utils/wav2mp3';
 	import EndedView from '$lib/components/session/EndedView.svelte';
 	import * as m from '$lib/paraglide/messages.js';
+	import { subscribeAll } from '$lib/firebase/store';
+	import { browser } from '$app/environment';
+	import { writable, derived as derived_func } from 'svelte/store';
 
 	interface ChatroomConversation {
 		name: string;
@@ -48,7 +60,36 @@
 
 	let isCreatingGroup = $state(false);
 
-	const isGroupManagementEnabled = true; // The flag for auto group
+	let [hostSessions, { unsubscribe: unsubscribe1 }] = browser
+		? subscribeAll<Session>(
+				query(
+					collection(db, 'sessions'),
+					where('host', '==', user.uid),
+					orderBy('createdAt', 'desc'),
+					limit(1)
+				)
+			)
+		: [writable([]), { unsubscribe: () => {} }];
+	let selectedLabels = writable<string[]>([]);
+	let filteredHostSessions = derived_func(
+		[hostSessions, selectedLabels],
+		([$hostSessions, $selectedLabels]) => {
+			if (!$hostSessions || $selectedLabels.length === 0) return $hostSessions;
+			return $hostSessions.filter(([, session]) =>
+				$selectedLabels.every((label) => session.labels?.includes(label))
+			);
+		}
+	);
+
+	onDestroy(() => {
+		unsubscribe1();
+	});
+	let isGroupManagementEnabled = derived_func([filteredHostSessions], ([$filteredHostSessions]) => {
+		if (!$filteredHostSessions || $filteredHostSessions.length === 0) return false;
+		const latestSession = $filteredHostSessions[0]?.[1];
+		console.log('latestSession', latestSession?.settings?.autoGroup);
+		return latestSession?.settings?.autoGroup ?? false;
+	});
 
 	let waitlistjoined = $state(false);
 
@@ -190,6 +231,7 @@
 				return;
 			}
 
+			waitlistjoined = true; // Set state immediately after successful join
 			notifications.success(m.successJoinWaitlist());
 		} catch (error) {
 			console.error('Error joining waiting:', error);
@@ -677,7 +719,12 @@
 				{:else if $session?.status === 'preparing'}
 					<div class="mt-6 space-y-4">
 						<h3 class="font-medium">{m.groupManagement()}</h3>
-						{#if creating}
+						{#if !waitlistjoined}
+							<Button color="primary" on:click={joinWaitlist}>
+								<Users class="mr-2 h-4 w-4" />
+								{m.joinWaitlist()}
+							</Button>
+						{:else if creating}
 							<div class="space-y-4">
 								<div class="flex items-center gap-2">
 									<Label for="groupNumber">{m.groupNum()}</Label>
@@ -691,36 +738,30 @@
 										disabled={!isGroupManagementEnabled}
 									/>
 								</div>
-								<Button
-									color="primary"
-									on:click={handleJoinGroup}
-									disabled={!isGroupManagementEnabled}
-								>
-									<UserPlus class="mr-2 h-4 w-4" />
-									{m.jointGroup()}
+								<div class="space-y-2">
+									<Button
+										color="primary"
+										on:click={handleJoinGroup}
+										disabled={!isGroupManagementEnabled}
+									>
+										<UserPlus class="mr-2 h-4 w-4" />
+										{m.jointGroup()}
+									</Button>
+									<Button color="alternative" on:click={() => (creating = false)}>
+										{m.cancel()}
+									</Button>
+								</div>
+							</div>
+						{:else}
+							<div class="space-y-2">
+								<Button color="primary" on:click={handleCreateGroup} disabled={isCreatingGroup}>
+									<Users class="mr-2 h-4 w-4" />
+									{isCreatingGroup ? m.creatingGroup() : m.createNewGroup()}
+								</Button>
+								<Button color="alternative" on:click={() => (creating = true)}>
+									{m.joinExistingGroup()}
 								</Button>
 							</div>
-						{:else if !isGroupManagementEnabled}
-							<Button color="primary" on:click={joinWaitlist} disabled={waitlistjoined}>
-								<Users class="mr-2 h-4 w-4" />
-								{waitlistjoined ? m.isInWaitlist() : m.joinWaitlist()}
-							</Button>
-						{:else}
-							<Button
-								color="primary"
-								on:click={handleCreateGroup}
-								disabled={isCreatingGroup || !isGroupManagementEnabled}
-							>
-								<Users class="mr-2 h-4 w-4" />
-								{isCreatingGroup ? m.creatingGroup() : m.createNewGroup()}
-							</Button>
-							<Button
-								color="alternative"
-								on:click={() => (creating = !creating)}
-								disabled={!isGroupManagementEnabled}
-							>
-								{creating ? m.cancel() : m.joinExistingGroup()}
-							</Button>
 						{/if}
 					</div>
 				{:else}

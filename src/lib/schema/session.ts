@@ -28,7 +28,8 @@ export const SessionSchema = z.object({
 			autoGroup: z.boolean()
 		})
 		.optional()
-		.default({ autoGroup: true })
+		.default({ autoGroup: true }),
+	waitlist: z.array(z.string()).default([])
 });
 
 export type Session = z.infer<typeof SessionSchema>;

@@ -85,14 +85,6 @@
 	let autoGroup = $state(true);
 	let settings = $state<Session['settings']>({ autoGroup: true });
 
-	// Add dummy participants for testing
-	const dummyParticipants = [
-		{ id: 'user1', name: 'John Doe' },
-		{ id: 'user2', name: 'Jane Smith' },
-		{ id: 'user3', name: 'Bob Wilson' },
-		{ id: 'user4', name: 'Alice Brown' }
-	];
-
 	async function handleApplyGroups() {
 		// TODO: Implement auto-grouping logic and update groups in Firestore
 	}
@@ -622,16 +614,22 @@
 				? 'md:col-span-4'
 				: ''}"
 		>
-			<!-- Add Participants List Section -->
+			<!-- Replace the waitlist participants section with this -->
 			<div class="mb-6 border-b pb-4">
-				<h3 class="mb-3 text-lg font-semibold">Ungrouped Participants</h3>
+				<h3 class="mb-3 text-lg font-semibold">Waitlist Participants</h3>
 				<div class="flex flex-wrap gap-2">
-					{#each dummyParticipants as participant}
-						<div class="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1">
-							<span class="h-2 w-2 rounded-full bg-green-500"></span>
-							<span class="text-sm">{participant.name}</span>
-						</div>
-					{/each}
+					{#if $session?.waitlist && $session.waitlist.length > 0}
+						{#each $session.waitlist as participantId}
+							<div class="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1">
+								<span class="h-2 w-2 rounded-full bg-green-500"></span>
+								<span class="text-sm">
+									<ResolveUsername id={participantId} />
+								</span>
+							</div>
+						{/each}
+					{:else}
+						<p class="text-sm text-gray-500">No participants in waitlist</p>
+					{/if}
 				</div>
 			</div>
 
