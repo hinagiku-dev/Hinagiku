@@ -42,6 +42,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					start: null,
 					end: null
 				}
+			},
+			settings: {
+				autoGroup: true
 			}
 		};
 

@@ -22,7 +22,13 @@ export const SessionSchema = z.object({
 			start: Timestamp.nullable(),
 			end: Timestamp.nullable()
 		})
-	})
+	}),
+	settings: z
+		.object({
+			autoGroup: z.boolean()
+		})
+		.optional()
+		.default({ autoGroup: true })
 });
 
 export type Session = z.infer<typeof SessionSchema>;

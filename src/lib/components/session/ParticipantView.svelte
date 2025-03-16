@@ -48,7 +48,7 @@
 
 	let isCreatingGroup = $state(false);
 
-	const isGroupManagementEnabled = false; // The flag for auto group
+	const isGroupManagementEnabled = true; // The flag for auto group
 
 	onMount(() => {
 		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');

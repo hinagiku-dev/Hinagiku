@@ -81,8 +81,9 @@
 	} | null>(null);
 	let conversationsData = $state<Array<Conversation>>([]);
 	let keywordData = $state<Record<string, number>>({});
-	let autoGrouping = $state(true);
-	let groupNumber = $state(2);
+	let groupNumber = $state(1);
+	let autoGroup = $state(true);
+	let settings = $state<Session['settings']>({ autoGroup: true });
 
 	// Add dummy participants for testing
 	const dummyParticipants = [
@@ -93,26 +94,41 @@
 	];
 
 	async function handleApplyGroups() {
+		// TODO: Implement auto-grouping logic and update groups in Firestore
+	}
+
+	async function updateSettings() {
 		try {
-			const response = await fetch(`/api/session/${$page.params.id}/settings/groups`, {
+			settings.autoGroup = autoGroup;
+			const response = await fetch(`/api/session/${$page.params.id}/settings`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({
-					count: groupNumber,
-					auto: autoGrouping
-				})
+				body: JSON.stringify(settings)
 			});
 
 			if (!response.ok) {
-				throw new Error('Failed to apply group settings');
+				throw new Error('Failed to update settings');
+			} else {
+				notifications.success('Settings updated', 3000);
 			}
-
-			notifications.success('成功更新分組設定', 3000);
 		} catch (error) {
-			console.error('無法更新分組設定:', error);
-			notifications.error('無法更新分組設定');
+			console.error('Error updating settings:', error);
+			notifications.error('Failed to update settings');
+		}
+	}
+
+	async function handleAutoGroupToggle(event: Event) {
+		const newValue = (event.target as HTMLInputElement).checked;
+		try {
+			await updateSettings();
+			autoGroup = newValue;
+		} catch (error) {
+			console.error('Error updating auto group setting:', error);
+			notifications.error('Failed to update auto group setting');
+			// Revert the toggle if update fails
+			autoGroup = !newValue;
 		}
 	}
 
@@ -625,20 +641,20 @@
 				{#if $session?.status === 'preparing'}
 					<div class="flex items-center gap-4">
 						<div class="flex items-center gap-2">
-							<Toggle bind:checked={autoGrouping}>
-								{autoGrouping ? '自動分組' : '手動分組'}
+							<Toggle bind:checked={autoGroup} on:change={handleAutoGroupToggle}>
+								{autoGroup ? '自動分組' : '手動分組'}
 							</Toggle>
 							<Tooltip placement="right">
-								{autoGrouping ? '系統將自動為參與者分配群組' : '參與者可以自由選擇要加入的群組'}
+								{autoGroup ? '系統將自動為參與者分配群組' : '參與者可以自由選擇要加入的群組'}
 							</Tooltip>
 						</div>
-						{#if autoGrouping}
+						{#if autoGroup}
 							<div class="flex items-center gap-2">
-								<Input type="number" min="2" max="10" class="w-20" bind:value={groupNumber} />
+								<Input type="number" min="1" max="50" class="w-20" bind:value={groupNumber} />
 								<span class="text-sm text-gray-500">組</span>
 							</div>
 						{/if}
-						{#if autoGrouping}
+						{#if autoGroup}
 							<Button color="primary" size="sm" on:click={handleApplyGroups}>套用</Button>
 						{/if}
 					</div>
