@@ -179,5 +179,11 @@
 	"dashboardTitle": "參與者狀態儀表板",
 	"loadingGroups": "載入群組...",
 	"Groups": "組別",
-	"noParticipantsInGroup": "此群組中沒有參與者"
+	"noParticipantsInGroup": "此群組中沒有參與者",
+	"autoGrouping": "自動分組",
+	"manualGrouping": "手動分組",
+	"autoGroupingDesc": "系統將自動為參與者分配群組",
+	"manualGroupingDesc": "參與者可以自由選擇要加入的群組",
+	"groupModeApplied": "套用",
+	"autoGroupingUnit": "組"
 }

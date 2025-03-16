@@ -182,5 +182,11 @@
 	"joinWaitlist": "Join the waitlist for the host to group...",
 	"failedJoinWaitlist": "Failed to join waiting list",
 	"successJoinWaitlist": "Joined waiting list successfully",
-	"isInWaitlist": "You are already in the waiting list"
+	"isInWaitlist": "You are already in the waiting list",
+	"autoGrouping": "Auto",
+	"manualGrouping": "Manual",
+	"autoGroupingDesc": "System will automatically assign participants to groups",
+	"manualGroupingDesc": "Participants can freely choose which group to join",
+	"groupModeApplied": "Apply",
+	"autoGroupingUnit": "Group(s)"
 }

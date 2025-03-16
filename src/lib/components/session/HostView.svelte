@@ -649,20 +649,22 @@
 					<div class="flex items-center gap-4">
 						<div class="flex items-center gap-2">
 							<Toggle bind:checked={autoGroup} on:change={handleAutoGroupToggle}>
-								{autoGroup ? '自動分組' : '手動分組'}
+								{autoGroup ? m.autoGrouping() : m.manualGrouping()}
 							</Toggle>
 							<Tooltip placement="right">
-								{autoGroup ? '系統將自動為參與者分配群組' : '參與者可以自由選擇要加入的群組'}
+								{autoGroup ? m.autoGroupingDesc() : m.manualGroupingDesc()}
 							</Tooltip>
 						</div>
 						{#if autoGroup}
 							<div class="flex items-center gap-2">
 								<Input type="number" min="1" max="50" class="w-20" bind:value={groupNumber} />
-								<span class="text-sm text-gray-500">組</span>
+								<span class="text-sm text-gray-500">{m.autoGroupingUnit()}</span>
 							</div>
 						{/if}
 						{#if autoGroup}
-							<Button color="primary" size="sm" on:click={handleApplyGroups}>套用</Button>
+							<Button color="primary" size="sm" on:click={handleApplyGroups}>
+								{m.groupModeApplied()}
+							</Button>
 						{/if}
 					</div>
 				{/if}
