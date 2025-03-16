@@ -19,6 +19,7 @@
 	import GroupSummary from '$lib/components/session/GroupSummary.svelte';
 	import { initFFmpeg, float32ArrayToWav, wav2mp3 } from '$lib/utils/wav2mp3';
 	import EndedView from '$lib/components/session/EndedView.svelte';
+	import { setting } from '$lib/stores/setting';
 	import * as m from '$lib/paraglide/messages.js';
 
 	interface ChatroomConversation {
@@ -206,7 +207,7 @@
 		const vad = await MicVAD.new({
 			model: 'v5',
 			minSpeechFrames: 16, // 0.5s
-			redemptionFrames: 32, // 1s
+			redemptionFrames: $setting?.enableVAD ? 32 : 3200, // 1s if VAD is enabled, 100s if not
 			onSpeechEnd: async (audio: Float32Array) => {
 				await pInitFFmpeg;
 				console.log('Audio recorded:', audio);
