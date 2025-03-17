@@ -10,7 +10,7 @@
 	import { page } from '$app/stores';
 	import { UserPlus, User, Users, CircleCheck, LogOut } from 'lucide-svelte';
 	import { db } from '$lib/firebase';
-	import { collection, query, where, onSnapshot } from 'firebase/firestore';
+	import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 	import { onDestroy, onMount } from 'svelte';
 	import { getUser } from '$lib/utils/getUser';
 	import Chatroom from '$lib/components/Chatroom.svelte';
@@ -30,11 +30,14 @@
 		avatar?: string;
 	}
 
-	let { session, user } = $props<{
+	let {
+		session,
+		user
+	}: {
 		session: Readable<Session>;
 		// eslint-disable-next-line no-undef
-		user: App.Locals['user'];
-	}>();
+		user: Exclude<App.Locals['user'], null>;
+	} = $props();
 
 	let groupDoc = $state<{ data: Group; id: string } | null>(null);
 	let groupStatus = $derived.by(() => groupDoc?.data.status || 'discussion');
@@ -48,6 +51,17 @@
 	let selfUser: Promise<Profile> | null = null;
 
 	let isCreatingGroup = $state(false);
+
+	let isGroupManagementEnabled = $state(false);
+	$effect(() => {
+		if ($session?.settings?.autoGroup) {
+			isGroupManagementEnabled = false;
+		} else {
+			isGroupManagementEnabled = true;
+		}
+	});
+
+	let waitlistjoined = $state(false);
 
 	onMount(() => {
 		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
@@ -65,6 +79,8 @@
 
 			updateConversationDoc();
 		});
+
+		getwaitlist();
 
 		pInitFFmpeg = initFFmpeg();
 
@@ -173,6 +189,47 @@
 		}
 	}
 
+	async function handleWaitlist() {
+		if (waitlistjoined) {
+			try {
+				const response = await fetch(`/api/session/${$page.params.id}/action/leaveWaitlist`, {
+					method: 'POST'
+				});
+
+				if (!response.ok) {
+					await response.json();
+					notifications.error(m.failedLeaveWaitlist());
+					return;
+				}
+
+				waitlistjoined = false;
+				notifications.success(m.successLeaveWaitlist());
+			} catch (error) {
+				console.error('Error leaving waiting:', error);
+				notifications.error(m.failedLeaveWaitlist());
+			}
+			return;
+		} else {
+			try {
+				const response = await fetch(`/api/session/${$page.params.id}/action/joinWaitlist`, {
+					method: 'POST'
+				});
+
+				if (!response.ok) {
+					await response.json(); // ignore result
+					notifications.error(m.failedJoinWaitlist());
+					return;
+				}
+
+				waitlistjoined = true; // Set state immediately after successful join
+				notifications.success(m.successJoinWaitlist());
+			} catch (error) {
+				console.error('Error joining waiting:', error);
+				notifications.error(m.failedJoinWaitlist());
+			}
+		}
+	}
+
 	async function sendAudioToSTT(file: File) {
 		const formData = new FormData();
 		formData.append('file', file);
@@ -235,6 +292,21 @@
 			vad.pause();
 			vad.destroy();
 		};
+	}
+
+	async function getwaitlist() {
+		const docRef = doc(db, 'sessions', $page.params.id);
+		const docSnap = await getDoc(docRef);
+		if (!docSnap.exists()) {
+			waitlistjoined = false;
+		} else {
+			const data = docSnap.data();
+			if (data.waitlist.includes(user.uid)) {
+				waitlistjoined = true;
+			} else {
+				waitlistjoined = false;
+			}
+		}
 	}
 
 	async function handleRecord() {
@@ -618,6 +690,7 @@
 									size="xs"
 									class="hidden sm:flex"
 									onclick={() => groupDoc?.id && handleLeaveGroup(groupDoc.id, user.uid)}
+									disabled={!isGroupManagementEnabled}
 								>
 									<LogOut class="mr-2 h-4 w-4" />
 									{m.leaveGroup()}
@@ -627,6 +700,7 @@
 									size="xs"
 									class="sm:hidden"
 									onclick={() => groupDoc?.id && handleLeaveGroup(groupDoc.id, user.uid)}
+									disabled={!isGroupManagementEnabled}
 								>
 									<LogOut class="h-4 w-4" />
 								</Button>
@@ -636,7 +710,12 @@
 				{:else if $session?.status === 'preparing'}
 					<div class="mt-6 space-y-4">
 						<h3 class="font-medium">{m.groupManagement()}</h3>
-						{#if creating}
+						{#if !isGroupManagementEnabled}
+							<Button color="primary" on:click={handleWaitlist}>
+								<Users class="mr-2 h-4 w-4" />
+								{!waitlistjoined ? m.joinWaitlist() : m.leaveWaitlist()}
+							</Button>
+						{:else if creating}
 							<div class="space-y-4">
 								<div class="flex items-center gap-2">
 									<Label for="groupNumber">{m.groupNum()}</Label>
@@ -647,22 +726,46 @@
 										min="1"
 										max="50"
 										placeholder={m.enterGroupNumber()}
+										disabled={!isGroupManagementEnabled}
 									/>
 								</div>
-								<Button color="primary" on:click={handleJoinGroup}>
-									<UserPlus class="mr-2 h-4 w-4" />
-									{m.jointGroup()}
-								</Button>
+								<div class="space-y-2">
+									<Button
+										color="primary"
+										on:click={handleJoinGroup}
+										disabled={!isGroupManagementEnabled}
+									>
+										<UserPlus class="mr-2 h-4 w-4" />
+										{m.jointGroup()}
+									</Button>
+									<Button
+										color="alternative"
+										on:click={() => (creating = false)}
+										disabled={!isGroupManagementEnabled}
+									>
+										{m.cancel()}
+									</Button>
+								</div>
 							</div>
 						{:else}
-							<Button color="primary" on:click={handleCreateGroup} disabled={isCreatingGroup}>
-								<Users class="mr-2 h-4 w-4" />
-								{isCreatingGroup ? m.creatingGroup() : m.createNewGroup()}
-							</Button>
+							<div class="space-y-2">
+								<Button
+									color="primary"
+									on:click={handleCreateGroup}
+									disabled={isCreatingGroup || !isGroupManagementEnabled}
+								>
+									<Users class="mr-2 h-4 w-4" />
+									{isCreatingGroup ? m.creatingGroup() : m.createNewGroup()}
+								</Button>
+								<Button
+									color="alternative"
+									on:click={() => (creating = true)}
+									disabled={!isGroupManagementEnabled}
+								>
+									{m.joinExistingGroup()}
+								</Button>
+							</div>
 						{/if}
-						<Button color="alternative" on:click={() => (creating = !creating)}>
-							{creating ? m.cancel() : m.joinExistingGroup()}
-						</Button>
 					</div>
 				{:else}
 					<p class="text-gray-600">{m.notInGroup()}</p>

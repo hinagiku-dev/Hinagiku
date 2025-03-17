@@ -35,6 +35,7 @@
 	import LabelManager from './LabelManager.svelte';
 	import ResolveUsername from '../ResolveUsername.svelte';
 	import * as m from '$lib/paraglide/messages.js';
+	import { Toggle, Input } from 'flowbite-svelte';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -80,6 +81,72 @@
 	} | null>(null);
 	let conversationsData = $state<Array<Conversation>>([]);
 	let keywordData = $state<Record<string, number>>({});
+	let groupNumber = $state(1);
+	let autoGroup = $state(true);
+	let settings = $state<Session['settings']>({ autoGroup: true });
+
+	async function handleApplyGroups() {
+		if (!$session?.waitlist || !autoGroup || groupNumber < 1) return;
+		let waitlist = $session.waitlist;
+		const groupSizeBig = Math.ceil(waitlist.length / groupNumber);
+		const groupSizeSmall = Math.floor(waitlist.length / groupNumber);
+		const Bignum = waitlist.length % groupNumber;
+		let nums = 0;
+		for (let i = 0; i < groupNumber; i++) {
+			const groupSize = i < Bignum ? groupSizeBig : groupSizeSmall;
+			const group = waitlist.slice(nums, groupSize);
+			nums += groupSize;
+			if (group.length <= 0) break;
+			const response = await fetch(`/api/session/${$page.params.id}/group/auto_group`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(group)
+			});
+			if (!response.ok) {
+				const data = await response.json();
+				notifications.error(data.error || 'Auto group failed');
+				return;
+			}
+		}
+		waitlist = [];
+	}
+
+	async function updateSettings() {
+		try {
+			settings.autoGroup = autoGroup;
+			const response = await fetch(`/api/session/${$page.params.id}/settings`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(settings)
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to update settings');
+			} else {
+				notifications.success('Settings updated', 3000);
+			}
+		} catch (error) {
+			console.error('Error updating settings:', error);
+			notifications.error('Failed to update settings');
+		}
+	}
+
+	async function handleAutoGroupToggle(event: Event) {
+		const newValue = (event.target as HTMLInputElement).checked;
+		try {
+			await updateSettings();
+			autoGroup = newValue;
+		} catch (error) {
+			console.error('Error updating auto group setting:', error);
+			notifications.error('Failed to update auto group setting');
+			// Revert the toggle if update fails
+			autoGroup = !newValue;
+		}
+	}
 
 	onMount(() => {
 		const unsubscribes: (() => void)[] = [];
@@ -571,7 +638,52 @@
 				? 'md:col-span-4'
 				: ''}"
 		>
-			<h2 class="mb-4 text-xl font-semibold">{m.Groups()}</h2>
+			<!-- Replace the waitlist participants section with this -->
+			<div class="mb-6 border-b pb-4">
+				<h3 class="mb-3 text-lg font-semibold">Waitlist Participants</h3>
+				<div class="flex flex-wrap gap-2">
+					{#if $session?.waitlist && $session.waitlist.length > 0}
+						{#each $session.waitlist as participantId}
+							<div class="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1">
+								<span class="h-2 w-2 rounded-full bg-green-500"></span>
+								<span class="text-sm">
+									<ResolveUsername id={participantId} />
+								</span>
+							</div>
+						{/each}
+					{:else}
+						<p class="text-sm text-gray-500">No participants in waitlist</p>
+					{/if}
+				</div>
+			</div>
+
+			<!-- Existing Groups Section -->
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="text-xl font-semibold">{m.Groups()}</h2>
+				{#if $session?.status === 'preparing'}
+					<div class="flex items-center gap-4">
+						<div class="flex items-center gap-2">
+							<Toggle bind:checked={autoGroup} on:change={handleAutoGroupToggle}>
+								{autoGroup ? m.autoGrouping() : m.manualGrouping()}
+							</Toggle>
+							<Tooltip placement="right">
+								{autoGroup ? m.autoGroupingDesc() : m.manualGroupingDesc()}
+							</Tooltip>
+						</div>
+						{#if autoGroup}
+							<div class="flex items-center gap-2">
+								<Input type="number" min="1" max="50" class="w-20" bind:value={groupNumber} />
+								<span class="text-sm text-gray-500">{m.autoGroupingUnit()}</span>
+							</div>
+						{/if}
+						{#if autoGroup}
+							<Button color="primary" size="sm" on:click={handleApplyGroups}>
+								{m.groupModeApplied()}
+							</Button>
+						{/if}
+					</div>
+				{/if}
+			</div>
 			{#if $groups.length === 0}
 				<Alert>{m.waitingForParticipants()}</Alert>
 			{:else}
