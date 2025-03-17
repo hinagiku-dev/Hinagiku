@@ -191,5 +191,11 @@
 	"autoGroupingDesc": "System will automatically assign participants to groups",
 	"manualGroupingDesc": "Participants can freely choose which group to join",
 	"groupModeApplied": "Apply",
-	"autoGroupingUnit": "Group(s)"
+	"autoGroupingUnit": "Group(s)",
+	"settings": "Settings",
+	"settingsInfo": "Customize your application preferences and features",
+	"settingsSuccessMessage": "Settings updated successfully!",
+	"settingsErrorMessage": "Cannot update settings. Please try again later.",
+	"enableVAD": "Enable Voice Activity Detection",
+	"enableVADHelp": "Voice Activity Detection helps improve audio transcription by automatically detecting when you're speaking"
 }
