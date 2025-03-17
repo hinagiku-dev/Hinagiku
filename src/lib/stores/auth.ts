@@ -14,8 +14,13 @@ auth.onAuthStateChanged((newUser) => {
 	user.set(newUser);
 });
 
+function sanitizeUrl(url: string): string {
+	const parsedUrl = new URL(url);
+	return parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
+}
+
 // Google sign in function
-export async function signInWithGoogle() {
+export async function signInWithGoogle(url: string) {
 	const provider = new GoogleAuthProvider();
 	try {
 		const result = await signInWithPopup(auth, provider);
@@ -35,9 +40,15 @@ export async function signInWithGoogle() {
 		if (!response.ok) {
 			throw new Error('Failed to create session');
 		}
-
+		// if url is provided, sanitize and redirect to that url
+		if (url) {
+			const sanitizedUrl = sanitizeUrl(url);
+			await goto(i18n.resolveRoute(sanitizedUrl));
+		}
 		// Redirect to dashboard after successful sign in
-		await goto(i18n.resolveRoute('/dashboard'));
+		else {
+			await goto(i18n.resolveRoute('/dashboard'));
+		}
 	} catch (error) {
 		log('Error signing in with Google:', error);
 	}
