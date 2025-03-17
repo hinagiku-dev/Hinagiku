@@ -7,8 +7,10 @@ import {
 	DOCS_CONTEXT_SYSTEM_PROMPT,
 	GROUP_OPINION_SUMMARY_PROMPT,
 	HARMFUL_CONTENT_DETECTION_PROMPT,
+	HISTORY_PROMPT,
 	OFF_TOPIC_DETECTION_PROMPT,
-	SUBTASKS_COMPLETED_PROMPT
+	SUBTASKS_COMPLETED_PROMPT,
+	SUBTASK_PRESENCE_PROMPT
 } from './prompt';
 
 export async function requestLLM(
@@ -19,11 +21,10 @@ export async function requestLLM(
 	try {
 		const { output } = await GoogleGeminiFlash.generate({
 			system: system_prompt,
-			prompt:
-				history?.map((message) => ({
-					role: message.role === 'user' ? 'user' : 'model',
-					text: message.content
-				})) ?? [],
+			prompt: HISTORY_PROMPT.replace(
+				'{chatHistory}',
+				history.map((msg) => `${msg.role}: ${msg.content}`).join('\n')
+			),
 
 			output: {
 				schema: schema
@@ -108,7 +109,10 @@ async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string
 	const system_prompt = SUBTASKS_COMPLETED_PROMPT.replace(
 		'{chatHistory}',
 		formatted_history
-	).replace('{subtasks}', subtasks.join('\n'));
+	).replace(
+		'{subtasks}',
+		subtasks.map((subtask) => SUBTASK_PRESENCE_PROMPT.replace('{subtask}', subtask)).join('\n')
+	);
 
 	try {
 		const schema = z.object({
@@ -148,7 +152,9 @@ export async function chatWithLLMByDocs(
 		.join('\n\n');
 
 	const formattedSubtasks = subtasks.map((subtask, index) => {
-		return subtaskCompleted[index] ? `(完成)${subtask}` : `(未完成)${subtask}`;
+		return subtaskCompleted[index]
+			? `(完成)`
+			: `(未完成)` + SUBTASK_PRESENCE_PROMPT.replace('{subtask}', subtask);
 	});
 
 	const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)

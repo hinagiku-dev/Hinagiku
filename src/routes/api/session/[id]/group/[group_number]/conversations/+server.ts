@@ -6,6 +6,7 @@ import {
 	getSessionRef
 } from '$lib/server/firebase';
 import { chatWithLLMByDocs } from '$lib/server/gemini';
+import { INTRODUCTION_PROMPT } from '$lib/server/prompt';
 import type { LLMChatMessage } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
@@ -26,7 +27,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		const group_data = await getGroupData(group_ref);
 
 		const { response } = await chatWithLLMByDocs(
-			[{ role: 'user', content: '請介紹一下你自己' }],
+			[{ role: 'user', content: INTRODUCTION_PROMPT }],
 			task,
 			subtasks,
 			new Array(subtasks.length).fill(false),
