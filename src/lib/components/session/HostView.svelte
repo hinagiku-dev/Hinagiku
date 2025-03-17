@@ -87,15 +87,29 @@
 
 	async function handleApplyGroups() {
 		if (!$session?.waitlist || !autoGroup || groupNumber < 1) return;
-		// const waitlist = $session.waitlist;
-
-		// const res = await fetch(`/api/session/${$page.params.id}/action/apply-groups`, {
-		// 	method: 'POST',
-		// 	headers: {
-		// 		'Content-Type': 'application/json'
-		// 	},
-		// 	body: JSON.stringify({ groupNumber, waitlist })
-		// });
+		let waitlist = $session.waitlist;
+		const groupSizeBig = Math.ceil(waitlist.length / groupNumber);
+		const groupSizeSmall = Math.floor(waitlist.length / groupNumber);
+		const Bignum = waitlist.length % groupNumber;
+		let nums = 0;
+		for (let i = 0; i < groupNumber; i++) {
+			const groupSize = i < Bignum ? groupSizeBig : groupSizeSmall;
+			const group = waitlist.slice(nums, groupSize);
+			nums += groupSize;
+			const response = await fetch(`/api/session/${$page.params.id}/group/auto_group`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(group)
+			});
+			if (!response.ok) {
+				const data = await response.json();
+				notifications.error(data.error || 'Auto group failed');
+				return;
+			}
+		}
+		waitlist = [];
 	}
 
 	async function updateSettings() {

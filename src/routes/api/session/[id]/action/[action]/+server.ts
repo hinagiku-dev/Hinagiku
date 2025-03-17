@@ -84,6 +84,37 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			}
 		}
 
+		if (action === 'leaveWaitlist') {
+			try {
+				const sessionRef = adminDb.collection('sessions').doc(params.id);
+				const sessionData = (await sessionRef.get()).data();
+				if (!sessionData) {
+					throw error(404, 'Session not found');
+				}
+				if (sessionData.waitlist === undefined) {
+					return json({ error: 'You are not in the waitlist' }, { status: 400 });
+				} else {
+					if (!sessionData.waitlist.includes(locals.user.uid)) {
+						return json({ error: 'You are not in the waitlist' }, { status: 400 });
+					}
+					const removed = sessionData.waitlist.filter((uid: string) => uid !== locals.user!.uid);
+					if (removed.length === 0) {
+						await sessionRef.update({
+							waitlist: []
+						});
+					} else {
+						await sessionRef.update({
+							waitlist: removed
+						});
+					}
+				}
+				return json({ success: true });
+			} catch (e) {
+				console.error('Error updating waitlist:', e);
+				throw error(500, 'Failed to update waitlist');
+			}
+		}
+
 		// Define valid stage transitions
 		const validTransitions = {
 			'start-individual': {

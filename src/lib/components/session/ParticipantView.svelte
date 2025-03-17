@@ -188,23 +188,44 @@
 		}
 	}
 
-	async function joinWaitlist() {
-		try {
-			const response = await fetch(`/api/session/${$page.params.id}/action/joinWaitlist`, {
-				method: 'POST'
-			});
+	async function handleWaitlist() {
+		if (waitlistjoined) {
+			try {
+				const response = await fetch(`/api/session/${$page.params.id}/action/leaveWaitlist`, {
+					method: 'POST'
+				});
 
-			if (!response.ok) {
-				await response.json(); // ignore result
-				notifications.error(m.failedJoinWaitlist());
-				return;
+				if (!response.ok) {
+					await response.json();
+					notifications.error(m.failedLeaveWaitlist());
+					return;
+				}
+
+				waitlistjoined = false;
+				notifications.success(m.successLeaveWaitlist());
+			} catch (error) {
+				console.error('Error leaving waiting:', error);
+				notifications.error(m.failedLeaveWaitlist());
 			}
+			return;
+		} else {
+			try {
+				const response = await fetch(`/api/session/${$page.params.id}/action/joinWaitlist`, {
+					method: 'POST'
+				});
 
-			waitlistjoined = true; // Set state immediately after successful join
-			notifications.success(m.successJoinWaitlist());
-		} catch (error) {
-			console.error('Error joining waiting:', error);
-			notifications.error(m.failedJoinWaitlist());
+				if (!response.ok) {
+					await response.json(); // ignore result
+					notifications.error(m.failedJoinWaitlist());
+					return;
+				}
+
+				waitlistjoined = true; // Set state immediately after successful join
+				notifications.success(m.successJoinWaitlist());
+			} catch (error) {
+				console.error('Error joining waiting:', error);
+				notifications.error(m.failedJoinWaitlist());
+			}
 		}
 	}
 
@@ -688,10 +709,10 @@
 				{:else if $session?.status === 'preparing'}
 					<div class="mt-6 space-y-4">
 						<h3 class="font-medium">{m.groupManagement()}</h3>
-						{#if !waitlistjoined}
-							<Button color="primary" on:click={joinWaitlist}>
+						{#if !isGroupManagementEnabled}
+							<Button color="primary" on:click={handleWaitlist}>
 								<Users class="mr-2 h-4 w-4" />
-								{m.joinWaitlist()}
+								{!waitlistjoined ? m.joinWaitlist() : m.leaveWaitlist()}
 							</Button>
 						{:else if creating}
 							<div class="space-y-4">
