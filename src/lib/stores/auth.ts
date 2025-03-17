@@ -15,9 +15,8 @@ auth.onAuthStateChanged((newUser) => {
 });
 
 function sanitizeUrl(url: string): string {
-	const parser = document.createElement('a');
-	parser.href = url;
-	return parser.pathname + parser.search + parser.hash;
+	const parsedUrl = new URL(url);
+	return parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
 }
 
 // Google sign in function
