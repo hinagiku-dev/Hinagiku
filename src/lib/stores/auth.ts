@@ -52,8 +52,8 @@ export async function signInWithGoogle(url: string) {
 				// Extract just the pathname and search params for safe navigation
 				const sessionPath = `${parsedUrl.pathname}${parsedUrl.search}`;
 
-				// Use direct navigation for more reliable redirection
-				window.location.href = sessionPath;
+				// Use SPA navigation to preserve client-side state
+				await goto(i18n.resolveRoute(sessionPath));
 			} catch (error) {
 				// Fallback to original redirection if URL parsing fails
 				console.error('Error parsing session URL:', error);
