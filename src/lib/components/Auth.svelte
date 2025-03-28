@@ -8,12 +8,32 @@
 	const hasSessionParam = then.includes('session');
 	const buttonText = hasSessionParam ? 'GoToNextPage' : 'Dashboard';
 
-	// Extract the correct path for session URLs
-	const buttonHref = hasSessionParam
-		? then.startsWith('/')
-			? then
-			: `/${then.split('/').pop()}`
-		: '/dashboard';
+	// Parse session URLs robustly
+	function getButtonHref(url: string): string {
+		if (!url.includes('session')) {
+			return '/dashboard';
+		}
+
+		try {
+			// Use the URL API for robust URL parsing
+			// If url is a relative path, prepend with origin to make it parseable
+			const fullUrl = url.startsWith('/')
+				? `${window.location.origin}${url}`
+				: url.includes('://')
+					? url
+					: `${window.location.origin}/${url}`;
+
+			const parsedUrl = new URL(fullUrl);
+
+			// Extract just the pathname and search params for safe navigation
+			return `${parsedUrl.pathname}${parsedUrl.search}`;
+		} catch (error) {
+			console.error('Error parsing session URL:', error);
+			return '/dashboard';
+		}
+	}
+
+	const buttonHref = getButtonHref(then);
 </script>
 
 {#if $user}

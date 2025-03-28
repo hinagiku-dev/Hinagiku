@@ -38,11 +38,27 @@ export async function signInWithGoogle(url: string) {
 
 		// if url is provided and contains a session parameter, redirect to that url
 		if (url && url.includes('session')) {
-			// Extract the session path directly
-			const sessionPath = url.startsWith('/') ? url : `/${url.split('/').pop()}`;
+			try {
+				// Use the URL API for robust URL parsing
+				// If url is a relative path, prepend with origin to make it parseable
+				const fullUrl = url.startsWith('/')
+					? `${window.location.origin}${url}`
+					: url.includes('://')
+						? url
+						: `${window.location.origin}/${url}`;
 
-			// Use direct navigation approach for session URLs
-			window.location.href = sessionPath;
+				const parsedUrl = new URL(fullUrl);
+
+				// Extract just the pathname and search params for safe navigation
+				const sessionPath = `${parsedUrl.pathname}${parsedUrl.search}`;
+
+				// Use direct navigation for more reliable redirection
+				window.location.href = sessionPath;
+			} catch (error) {
+				// Fallback to original redirection if URL parsing fails
+				console.error('Error parsing session URL:', error);
+				await goto(i18n.resolveRoute('/dashboard'));
+			}
 		}
 		// Otherwise redirect to dashboard after successful sign in
 		else {
