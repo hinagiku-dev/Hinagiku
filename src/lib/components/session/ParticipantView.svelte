@@ -10,7 +10,7 @@
 	import { page } from '$app/stores';
 	import { UserPlus, User, Users, CircleCheck, LogOut } from 'lucide-svelte';
 	import { db } from '$lib/firebase';
-	import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
+	import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
 	import { onDestroy, onMount } from 'svelte';
 	import { getUser } from '$lib/utils/getUser';
 	import Chatroom from '$lib/components/Chatroom.svelte';
@@ -80,11 +80,29 @@
 			updateConversationDoc();
 		});
 
-		getwaitlist();
+		const waitlistRef = doc(db, 'sessions', $page.params.id);
+		const waitlistUnsubscribe = onSnapshot(waitlistRef, (snapshot) => {
+			if (!snapshot.exists()) {
+				waitlistjoined = false;
+			} else {
+				const data = snapshot.data();
+				if (data.waitlist.includes(user.uid)) {
+					waitlistjoined = true;
+				} else {
+					waitlistjoined = false;
+				}
+			}
+		});
+		onDestroy(() => {
+			waitlistUnsubscribe();
+		});
 
 		pInitFFmpeg = initFFmpeg();
 
-		return unsbscribe;
+		return () => {
+			unsbscribe();
+			waitlistUnsubscribe();
+		};
 	});
 
 	$effect(() => {
@@ -293,22 +311,6 @@
 			vad.destroy();
 		};
 	}
-
-	async function getwaitlist() {
-		const docRef = doc(db, 'sessions', $page.params.id);
-		const docSnap = await getDoc(docRef);
-		if (!docSnap.exists()) {
-			waitlistjoined = false;
-		} else {
-			const data = docSnap.data();
-			if (data.waitlist.includes(user.uid)) {
-				waitlistjoined = true;
-			} else {
-				waitlistjoined = false;
-			}
-		}
-	}
-
 	async function handleRecord() {
 		if (!conversationDoc || !groupDoc) {
 			notifications.error('No group or conversation found');

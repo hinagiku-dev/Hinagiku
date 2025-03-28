@@ -94,8 +94,9 @@
 		let nums = 0;
 		for (let i = 0; i < groupNumber; i++) {
 			const groupSize = i < Bignum ? groupSizeBig : groupSizeSmall;
-			const group = waitlist.slice(nums, groupSize);
+			const group = waitlist.slice(nums, nums + groupSize);
 			nums += groupSize;
+			console.log('Group:', group);
 			if (group.length <= 0) break;
 			const response = await fetch(`/api/session/${$page.params.id}/group/auto_group`, {
 				method: 'POST',
