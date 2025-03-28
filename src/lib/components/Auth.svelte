@@ -5,12 +5,21 @@
 	import { page } from '$app/state';
 
 	const then = page.url.searchParams.get('then') || '/dashboard';
+	const hasSessionParam = then.includes('session');
+	const buttonText = hasSessionParam ? 'GoToNextPage' : 'Dashboard';
+
+	// Extract the correct path for session URLs
+	const buttonHref = hasSessionParam
+		? then.startsWith('/')
+			? then
+			: `/${then.split('/').pop()}`
+		: '/dashboard';
 </script>
 
 {#if $user}
 	<div class="flex items-center space-x-4">
 		<p class="inline-block">Welcome, {$profile?.displayName || $user.displayName}!</p>
-		<Button href="/dashboard" color="primary">Dashboard</Button>
+		<Button href={buttonHref} color="primary">{buttonText}</Button>
 	</div>
 {:else}
 	<button

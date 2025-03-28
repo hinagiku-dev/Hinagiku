@@ -34,19 +34,21 @@
 	let recording = $state(false);
 	let stopRecording: (() => Promise<void>) | undefined = $state(undefined);
 	let messagesContainer: HTMLDivElement;
+	let latestMessageMarker = $state<HTMLDivElement | null>(null);
 	let dots = $state('...');
 
-	function scrollToBottom() {
-		if (!messagesContainer || !autoscroll) return;
+	function scrollToLatestMessage() {
+		if (!messagesContainer || !latestMessageMarker || !autoscroll) return;
 
 		requestAnimationFrame(() => {
-			messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			// Scroll to the marker instead of the bottom
+			latestMessageMarker?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		});
 	}
 
 	$effect(() => {
 		if (conversations.length > 0) {
-			setTimeout(scrollToBottom, 100);
+			setTimeout(scrollToLatestMessage, 100);
 		}
 	});
 
@@ -104,7 +106,10 @@
 				<p class="text-gray-500">請重新載入頁面</p>
 			</div>
 		{:else}
-			{#each conversations as conv}
+			{#each conversations as conv, index}
+				{#if index === conversations.length - 1}
+					<div bind:this={latestMessageMarker} class="latest-message-marker"></div>
+				{/if}
 				<div class="flex flex-col {conv.self ? 'items-end' : 'items-start'} gap-1">
 					{#if !conv.self}
 						<div class="flex items-center gap-2 {conv.self ? 'flex-row-reverse' : ''}">
@@ -207,3 +212,13 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	.latest-message-marker {
+		position: relative;
+		height: 0;
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+	}
+</style>
