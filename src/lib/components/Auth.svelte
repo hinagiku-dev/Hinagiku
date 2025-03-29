@@ -2,9 +2,9 @@
 	import { signInWithGoogle, user } from '$lib/stores/auth';
 	import { profile } from '$lib/stores/profile';
 	import { Button } from 'flowbite-svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
-	const then = $page.url.searchParams.get('then') || '/dashboard';
+	const then = page.url.searchParams.get('then') || '/dashboard';
 	const hasSessionParam = then.includes('session');
 	const buttonText = hasSessionParam ? 'GoToNextPage' : 'Dashboard';
 
@@ -18,10 +18,10 @@
 			// Use the URL API for robust URL parsing
 			// If url is a relative path, prepend with origin to make it parseable
 			const fullUrl = url.startsWith('/')
-				? `${$page.url.origin}${url}`
+				? `${page.url.origin}${url}`
 				: url.includes('://')
 					? url
-					: `${$page.url.origin}/${url}`;
+					: `${page.url.origin}/${url}`;
 
 			const parsedUrl = new URL(fullUrl);
 
@@ -44,7 +44,7 @@
 {:else}
 	<button
 		class="inline-flex h-10 w-auto cursor-pointer items-center space-x-2"
-		on:click={() => signInWithGoogle(then, $page.url.origin)}
+		on:click={() => signInWithGoogle(then, page.url.origin)}
 	>
 		<img class="max-h-8" src="/Google.png" alt="Sign in With Google" />
 		<div class="w-auto text-lg">Sign in</div>
