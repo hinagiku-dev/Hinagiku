@@ -67,7 +67,7 @@ async function joinGroup(sessionId: string, members: string[], groupNumber: numb
 
 	// Add user to group
 	await groupDoc.ref.update({
-		participants: [...groupData.participants, members]
+		participants: groupData.participants.concat(members)
 	});
 }
 
