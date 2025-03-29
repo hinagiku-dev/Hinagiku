@@ -15,7 +15,7 @@ auth.onAuthStateChanged((newUser) => {
 });
 
 // Google sign in function
-export async function signInWithGoogle(url: string) {
+export async function signInWithGoogle(url: string, origin?: string) {
 	const provider = new GoogleAuthProvider();
 	try {
 		const result = await signInWithPopup(auth, provider);
@@ -42,10 +42,10 @@ export async function signInWithGoogle(url: string) {
 				// Use the URL API for robust URL parsing
 				// If url is a relative path, prepend with origin to make it parseable
 				const fullUrl = url.startsWith('/')
-					? `${window.location.origin}${url}`
+					? `${origin || ''}${url}`
 					: url.includes('://')
 						? url
-						: `${window.location.origin}/${url}`;
+						: `${origin || ''}/${url}`;
 
 				const parsedUrl = new URL(fullUrl);
 
