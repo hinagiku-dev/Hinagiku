@@ -14,13 +14,8 @@ auth.onAuthStateChanged((newUser) => {
 	user.set(newUser);
 });
 
-function sanitizeUrl(url: string): string {
-	const parsedUrl = new URL(url);
-	return parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
-}
-
 // Google sign in function
-export async function signInWithGoogle(url: string) {
+export async function signInWithGoogle(url: string, origin?: string) {
 	const provider = new GoogleAuthProvider();
 	try {
 		const result = await signInWithPopup(auth, provider);
@@ -40,12 +35,32 @@ export async function signInWithGoogle(url: string) {
 		if (!response.ok) {
 			throw new Error('Failed to create session');
 		}
-		// if url is provided, sanitize and redirect to that url
-		if (url) {
-			const sanitizedUrl = sanitizeUrl(url);
-			await goto(i18n.resolveRoute(sanitizedUrl));
+
+		// if url is provided and contains a session parameter, redirect to that url
+		if (url && url.includes('session')) {
+			try {
+				// Use the URL API for robust URL parsing
+				// If url is a relative path, prepend with origin to make it parseable
+				const fullUrl = url.startsWith('/')
+					? `${origin || ''}${url}`
+					: url.includes('://')
+						? url
+						: `${origin || ''}/${url}`;
+
+				const parsedUrl = new URL(fullUrl);
+
+				// Extract just the pathname and search params for safe navigation
+				const sessionPath = `${parsedUrl.pathname}${parsedUrl.search}`;
+
+				// Use SPA navigation to preserve client-side state
+				await goto(i18n.resolveRoute(sessionPath));
+			} catch (error) {
+				// Fallback to original redirection if URL parsing fails
+				console.error('Error parsing session URL:', error);
+				await goto(i18n.resolveRoute('/dashboard'));
+			}
 		}
-		// Redirect to dashboard after successful sign in
+		// Otherwise redirect to dashboard after successful sign in
 		else {
 			await goto(i18n.resolveRoute('/dashboard'));
 		}
