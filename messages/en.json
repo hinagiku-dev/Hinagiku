@@ -197,5 +197,11 @@
 	"settingsSuccessMessage": "Settings updated successfully!",
 	"settingsErrorMessage": "Cannot update settings. Please try again later.",
 	"enableVAD": "Enable Voice Activity Detection",
-	"enableVADHelp": "Voice Activity Detection helps improve audio transcription by automatically detecting when you're speaking"
+	"enableVADHelp": "Voice Activity Detection helps improve audio transcription by automatically detecting when you're speaking",
+	"currentParticipants": "Current Participants",
+	"applyingAutoGroup": "Applying...",
+	"unGrouped": "Ungrouped",
+	"allGrouped": "All participants are grouped!",
+	"SomeoneUngroupednotification1": "There are still",
+	"SomeoneUngroupednotification2": "participant(s) who haven't been grouped yet. Proceed to the next step?"
 }

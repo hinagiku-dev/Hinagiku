@@ -180,6 +180,13 @@
 	"loadingGroups": "載入群組...",
 	"Groups": "組別",
 	"noParticipantsInGroup": "此群組中沒有參與者",
+	"joinWaitlist": "加入參與者等候名單",
+	"leaveWaitlist": "離開參與者等候名單",
+	"failedJoinWaitlist": "加入等候名單失敗",
+	"successJoinWaitlist": "成功加入等候名單",
+	"failedLeaveWaitlist": "離開等候名單失敗",
+	"successLeaveWaitlist": "成功離開等候名單",
+	"isInWaitlist": "你已經在等候名單中",
 	"autoGrouping": "自動分組",
 	"manualGrouping": "手動分組",
 	"autoGroupingDesc": "系統將自動為參與者分配群組",
@@ -191,5 +198,11 @@
 	"settingsSuccessMessage": "設定更新成功！",
 	"settingsErrorMessage": "無法更新設定。請稍後再試。",
 	"enableVAD": "啟用語音活動檢測",
-	"enableVADHelp": "語音活動檢測通過自動檢測您何時在說話來幫助改善音訊轉錄"
+	"enableVADHelp": "語音活動檢測通過自動檢測您何時在說話來幫助改善音訊轉錄",
+	"currentParticipants": "當前參與者",
+	"applyingAutoGroup": "套用中...",
+	"unGrouped": "尚未分組人數",
+	"allGrouped": "所有參與者都已分組完畢!",
+	"SomeoneUngroupednotification1": "還有",
+	"SomeoneUngroupednotification2": "人未分組，確定進行下一步嗎？"
 }
