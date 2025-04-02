@@ -82,35 +82,79 @@
 	let conversationsData = $state<Array<Conversation>>([]);
 	let keywordData = $state<Record<string, number>>({});
 	let groupNumber = $state(1);
-	let autoGroup = $state(true);
-	let settings = $state<Session['settings']>({ autoGroup: true });
+
+	let isApplyingGroups = $state(false);
+	let settings = { autoGroup: true };
+	session.subscribe((value) => {
+		settings = value.settings;
+	});
+	let autoGroup = $state(settings.autoGroup);
+
+	let current_waitlist: string[] = $state([]);
+	session.subscribe((value) => {
+		current_waitlist = value.waitlist;
+	});
+	let allGroupParticipants: string[] = $state([]);
+	groups.subscribe((value) => {
+		allGroupParticipants = value.flatMap((group) => group.participants);
+	});
+	let unGroupedParticipantsNum = $derived(current_waitlist.length - allGroupParticipants.length);
+
+	$effect(() => {
+		console.log('current_waitlist: ', current_waitlist);
+		console.log('allGroupParticipants: ', allGroupParticipants);
+		console.log('unGroupedParticipantsNum: ', unGroupedParticipantsNum);
+	});
 
 	async function handleApplyGroups() {
-		if (!$session?.waitlist || !autoGroup || groupNumber < 1) return;
-		let waitlist = $session.waitlist;
-		const groupSizeBig = Math.ceil(waitlist.length / groupNumber);
-		const groupSizeSmall = Math.floor(waitlist.length / groupNumber);
-		const Bignum = waitlist.length % groupNumber;
-		let nums = 0;
-		for (let i = 0; i < groupNumber; i++) {
-			const groupSize = i < Bignum ? groupSizeBig : groupSizeSmall;
-			const group = waitlist.slice(nums, nums + groupSize);
-			nums += groupSize;
-			if (group.length <= 0) break;
-			const response = await fetch(`/api/session/${$page.params.id}/group/auto_group`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(group)
-			});
-			if (!response.ok) {
-				const data = await response.json();
-				notifications.error(data.error || 'Auto group failed');
-				return;
+		if (!current_waitlist || !autoGroup || groupNumber < 1 || isApplyingGroups) return;
+
+		try {
+			isApplyingGroups = true;
+			console.log('Now: ', current_waitlist);
+			let filtered_waitlist = current_waitlist.filter(
+				(item) => !allGroupParticipants.includes(item)
+			);
+
+			// Get all users currently in groups
+			// $groups.forEach(group => {
+			// 	group.participants.forEach(participant => {
+			// 		filtered_waitlist = filtered_waitlist.filter((item) => item !== participant);
+			// 		console.log(participant);
+			// 	});
+			// });
+
+			// Filter waitlist to only include users not in any group
+			console.log('filter: ', filtered_waitlist);
+
+			const groupSizeBig = Math.ceil(filtered_waitlist.length / groupNumber);
+			const groupSizeSmall = Math.floor(filtered_waitlist.length / groupNumber);
+			const Bignum = filtered_waitlist.length % groupNumber;
+			let nums = 0;
+			for (let i = 0; i < groupNumber; i++) {
+				const groupSize = i < Bignum ? groupSizeBig : groupSizeSmall;
+				const group = filtered_waitlist.slice(nums, nums + groupSize);
+				nums += groupSize;
+				if (group.length <= 0) break;
+				const response = await fetch(`/api/session/${$page.params.id}/group/auto_group`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(group)
+				});
+				if (!response.ok) {
+					const data = await response.json();
+					notifications.error(data.error || 'Auto group failed');
+					return;
+				}
 			}
+		} catch (error) {
+			console.error('Error applying groups:', error);
+			notifications.error('Failed to apply groups');
+		} finally {
+			isApplyingGroups = false;
 		}
-		waitlist = [];
 	}
 
 	async function updateSettings() {
@@ -159,6 +203,7 @@
 						(doc) => ({ id: doc.id, ...doc.data() }) as GroupWithId
 					);
 					groups.set(groupsData);
+					console.log($groups);
 
 					const allParticipants = new Set<string>();
 					groupsData.forEach((group) => {
@@ -498,6 +543,16 @@
 		};
 
 		try {
+			// Add confirmation check for ungrouped participants
+			if (unGroupedParticipantsNum > 0 && newStage !== 'preparing') {
+				const confirmed = window.confirm(
+					`${m.SomeoneUngroupednotification1()} ${unGroupedParticipantsNum} ${m.SomeoneUngroupednotification2()}`
+				);
+				if (!confirmed) {
+					return;
+				}
+			}
+
 			await actions[newStage as keyof typeof actions]();
 		} catch (error) {
 			console.error('Failed to change stage:', error);
@@ -640,14 +695,18 @@
 		>
 			<!-- Replace the waitlist participants section with this -->
 			<div class="mb-6 border-b pb-4">
-				<h3 class="mb-3 text-lg font-semibold">Waitlist Participants</h3>
+				<h3 class="mb-3 text-lg font-semibold">
+					{m.currentParticipants()} ({current_waitlist?.length || 0})
+				</h3>
 				<div class="flex flex-wrap gap-2">
-					{#if $session?.waitlist && $session.waitlist.length > 0}
-						{#each $session.waitlist as participantId}
+					{#if current_waitlist && current_waitlist.length > 0}
+						{#each current_waitlist as participantId}
 							<div class="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1">
 								<span class="h-2 w-2 rounded-full bg-green-500"></span>
 								<span class="text-sm">
-									<ResolveUsername id={participantId} />
+									{#key participantId}
+										<ResolveUsername id={participantId} />
+									{/key}
 								</span>
 							</div>
 						{/each}
@@ -659,7 +718,18 @@
 
 			<!-- Existing Groups Section -->
 			<div class="mb-4 flex items-center justify-between">
-				<h2 class="text-xl font-semibold">{m.Groups()}</h2>
+				<div class="flex items-center gap-2">
+					<h2 class="text-xl font-semibold">{m.Groups()}</h2>
+					{#if unGroupedParticipantsNum > 0}
+						<span class="rounded-full bg-orange-100 px-2 py-0.5 text-sm text-orange-600">
+							{m.unGrouped()}: {unGroupedParticipantsNum}
+						</span>
+					{:else}
+						<span class="rounded-full bg-green-100 px-2 py-0.5 text-sm text-green-600">
+							{m.allGrouped()}
+						</span>
+					{/if}
+				</div>
 				{#if $session?.status === 'preparing'}
 					<div class="flex items-center gap-4">
 						<div class="flex items-center gap-2">
@@ -677,8 +747,13 @@
 							</div>
 						{/if}
 						{#if autoGroup}
-							<Button color="primary" size="sm" on:click={handleApplyGroups}>
-								{m.groupModeApplied()}
+							<Button
+								color="primary"
+								size="sm"
+								on:click={handleApplyGroups}
+								disabled={isApplyingGroups}
+							>
+								{isApplyingGroups ? m.applyingAutoGroup() : m.groupModeApplied()}
 							</Button>
 						{/if}
 					</div>
@@ -688,7 +763,7 @@
 				<Alert>{m.waitingForParticipants()}</Alert>
 			{:else}
 				<div class="grid grid-cols-3 gap-4">
-					{#each [...$groups].sort((a, b) => a.number - b.number) as group}
+					{#each $groups.sort((a, b) => a.number - b.number) as group}
 						<div class="rounded border p-3">
 							<div class="mb-2 flex items-center justify-between">
 								<button
@@ -719,7 +794,9 @@
 														role="button"
 														tabindex="0"
 													>
-														<ResolveUsername id={participant} />
+														{#key participant}
+															<ResolveUsername id={participant} />
+														{/key}
 													</span>
 													<Tooltip>{m.openChatHistory()}</Tooltip>
 

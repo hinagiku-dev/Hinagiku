@@ -52,16 +52,15 @@
 
 	let isCreatingGroup = $state(false);
 
+	let waitlistjoined = $state(false);
 	let isGroupManagementEnabled = $state(false);
 	$effect(() => {
 		if ($session?.settings?.autoGroup) {
 			isGroupManagementEnabled = false;
 		} else {
-			isGroupManagementEnabled = true;
+			isGroupManagementEnabled = waitlistjoined;
 		}
 	});
-
-	let waitlistjoined = $state(false);
 
 	onMount(() => {
 		const groupsRef = collection(db, 'sessions', $page.params.id, 'groups');
@@ -711,13 +710,12 @@
 					</div>
 				{:else if $session?.status === 'preparing'}
 					<div class="mt-6 space-y-4">
+						<Button color="primary" on:click={handleWaitlist}>
+							<Users class="mr-2 h-4 w-4" />
+							{!waitlistjoined ? m.joinWaitlist() : m.leaveWaitlist()}
+						</Button>
 						<h3 class="font-medium">{m.groupManagement()}</h3>
-						{#if !isGroupManagementEnabled}
-							<Button color="primary" on:click={handleWaitlist}>
-								<Users class="mr-2 h-4 w-4" />
-								{!waitlistjoined ? m.joinWaitlist() : m.leaveWaitlist()}
-							</Button>
-						{:else if creating}
+						{#if creating}
 							<div class="space-y-4">
 								<div class="flex items-center gap-2">
 									<Label for="groupNumber">{m.groupNum()}</Label>
