@@ -54,7 +54,6 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		});
 
 		const pattern = /嘿[\p{P}\s]*小[\p{P}\s]*菊/u;
-		console.log('MATCH', speaker.match(pattern));
 		if (content.match(pattern)) {
 			await adminDb.runTransaction(async (t) => {
 				const doc = await t.get(group_ref);
