@@ -18,6 +18,7 @@ export interface Discussion {
 	id: string | null;
 	content: string;
 	speaker: string;
+	audio: string | null;
 	moderation: boolean;
 }
 
