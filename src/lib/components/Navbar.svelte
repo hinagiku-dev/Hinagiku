@@ -34,20 +34,20 @@
 		language.set(lang);
 		console.log('set language to', lang);
 		//console.log('current pathname:', window.location.pathname);
-		if (lang === 'zh' && window.location.pathname.startsWith('/en')) {
-			console.log('gotozh', window.location.pathname.replace('/en', ''));
-			if (window.location.pathname === '/en') {
+		if (lang === 'en' && window.location.pathname.startsWith('/zh')) {
+			console.log('gotoen', window.location.pathname.replace('/zh', ''));
+			if (window.location.pathname === '/zh') {
 				window.location.assign(
-					window.location.pathname.replace('/en', '/') + window.location.search
+					window.location.pathname.replace('/zh', '/') + window.location.search
 				);
 			} else {
 				window.location.assign(
-					window.location.pathname.replace('/en', '') + window.location.search
+					window.location.pathname.replace('/zh', '') + window.location.search
 				);
 			}
-		} else if (lang === 'en' && !window.location.pathname.startsWith('/en')) {
-			console.log('gotoen', window.location.pathname);
-			window.location.assign('/en' + window.location.pathname + window.location.search);
+		} else if (lang === 'zh' && !window.location.pathname.startsWith('/zh')) {
+			console.log('gotozh', window.location.pathname);
+			window.location.assign('/zh' + window.location.pathname + window.location.search);
 		}
 		//window.location.reload();
 	}

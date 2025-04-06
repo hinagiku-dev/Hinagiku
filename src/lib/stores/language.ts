@@ -8,7 +8,7 @@ function getSavedLanguage() {
 			return saved;
 		}
 	}
-	return 'zh';
+	return 'en';
 }
 
 export const language = writable<'en' | 'zh'>(getSavedLanguage());
