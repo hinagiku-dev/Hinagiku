@@ -159,4 +159,5 @@ export const PDF_PARSE_PROMPT = `\
 
 export const HEY_HELP_PROMPT = `
 \n現在學生不知道該討論什麼，請你引導他們繼續討論，並協助他們完成學習任務。
+請以"你們"作為主語，並使用第三人稱的方式進行引導。
 `;
