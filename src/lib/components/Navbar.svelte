@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Navbar, NavBrand, Avatar, Dropdown, DropdownItem, Button } from 'flowbite-svelte';
-	import { LogOut, User, Settings, LayoutDashboard } from 'lucide-svelte';
+	import { LogOut, User, Settings, LayoutDashboard, Globe } from 'lucide-svelte';
 	import { signOut, user } from '$lib/stores/auth';
 	import { profile } from '$lib/stores/profile';
 	import { onMount } from 'svelte';
@@ -13,11 +13,9 @@
 
 	import { derived } from 'svelte/store';
 
-	const flagSrc = derived(language, ($language) => {
-		return $language === 'zh' ? '/icons/flag-zh.jpg' : '/icons/flag-us.png';
+	const currentLanguageText = derived(language, ($language) => {
+		return $language === 'zh' ? '繁體中文' : 'English';
 	});
-
-	const fallbackFlagSrc = '/icons/flag-us.png';
 
 	onMount(() => {
 		const interval = setInterval(() => {
@@ -66,6 +64,25 @@
 		</span>
 	</NavBrand>
 	<div class="ml-auto flex items-center">
+		<!-- Language dropdown menu with text and icon -->
+		<Button
+			id="language-menu"
+			class="mr-2 flex items-center gap-1 bg-transparent px-3 hover:bg-gray-100 dark:hover:bg-gray-700"
+		>
+			<Globe class="h-4 w-4 text-gray-500" />
+			<span class="text-gray-500">{hydrated ? $currentLanguageText : 'English'}</span>
+			<span class="ml-1 text-xs text-gray-500">▼</span>
+		</Button>
+		<Dropdown triggeredBy="#language-menu" class="w-36">
+			<DropdownItem class="flex items-center" on:click={() => setLanguage('en')}>
+				<img src="/icons/flag-us.png" alt="English" class="mr-2 h-4 w-4" />
+				English
+			</DropdownItem>
+			<DropdownItem class="flex items-center" on:click={() => setLanguage('zh')}>
+				<img src="/icons/flag-zh.jpg" alt="中文" class="mr-2 h-4 w-4" />
+				繁體中文
+			</DropdownItem>
+		</Dropdown>
 		{#if $user}
 			<Avatar id="user-menu" src={$user.photoURL || ''} alt="User" class="cursor-pointer" />
 			<Dropdown triggeredBy="#user-menu" class="w-48">
@@ -89,23 +106,5 @@
 		{:else if !page.url.pathname.startsWith('/login')}
 			<Button href="/login" class="">{m.login()}</Button>
 		{/if}
-
-		<!-- Remove the old toggle button and add a dropdown for language selection(PM requested) -->
-		<Avatar
-			id="language-menu"
-			src={hydrated ? $flagSrc : fallbackFlagSrc}
-			alt="language"
-			class="ml-2 cursor-pointer"
-		/>
-		<Dropdown triggeredBy="#language-menu" class="w-36">
-			<DropdownItem class="flex items-center" on:click={() => setLanguage('en')}>
-				<img src="/icons/flag-us.png" alt="English" class="mr-2 h-4 w-4" />
-				English
-			</DropdownItem>
-			<DropdownItem class="flex items-center" on:click={() => setLanguage('zh')}>
-				<img src="/icons/flag-zh.jpg" alt="中文" class="mr-2 h-4 w-4" />
-				繁體中文
-			</DropdownItem>
-		</Dropdown>
 	</div>
 </Navbar>
