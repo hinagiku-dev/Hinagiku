@@ -38,7 +38,7 @@ export const HISTORY_PROMPT = `\
 '以下是對話紀錄：\n\n{chatHistory}'
 `;
 
-export const SUBTASK_PRESENCE_PROMPT = `\
+export const SUBTASK_PREFIX_PROMPT = `\
 讓學生理解並了解「{subtask}」
 `;
 
@@ -155,4 +155,9 @@ export const PDF_PARSE_PROMPT = `\
 | 年齡 | 25 |
 
 > **註釋：** 這是一段重要的引述內容...
+`;
+
+export const HEY_HELP_PROMPT = `
+\n現在學生不知道該討論什麼，請你引導他們繼續討論，並協助他們完成學習任務。
+請以"你們"作為主語，並使用第三人稱的方式進行引導。
 `;
