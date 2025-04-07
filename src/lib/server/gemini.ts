@@ -17,7 +17,9 @@ import {
 export async function requestLLM(
 	system_prompt: string,
 	history: LLMChatMessage[],
-	schema: z.ZodSchema
+	schema: z.ZodSchema,
+	temperature: number = 0.1,
+	topP: number = 0.5
 ) {
 	try {
 		const { output } = await GoogleGeminiFlash.generate({
@@ -30,7 +32,7 @@ export async function requestLLM(
 			output: {
 				schema: schema
 			},
-			config: { temperature: 0.1 }
+			config: { temperature: temperature, topP: topP }
 		});
 		const result = output as z.infer<typeof schema>;
 
@@ -62,7 +64,7 @@ export async function isHarmfulContent(content: string) {
 	];
 	try {
 		const schema = z.object({ isHarmful: z.boolean() });
-		const { result } = await requestLLM(HARMFUL_CONTENT_DETECTION_PROMPT, history, schema);
+		const { result } = await requestLLM(HARMFUL_CONTENT_DETECTION_PROMPT, history, schema, 0.1);
 		const parsed_result = schema.parse(result);
 		return {
 			success: true,
@@ -88,7 +90,7 @@ export async function isOffTopic(history: LLMChatMessage[], topic: string, subta
 		.replace('{subtopic}', subtasks.join('\n'));
 	try {
 		const schema = z.object({ isOffTopic: z.boolean() });
-		const { result } = await requestLLM(system_prompt, history, schema);
+		const { result } = await requestLLM(system_prompt, history, schema, 0.1);
 		const parsed_result = schema.parse(result);
 		return {
 			success: true,
@@ -120,7 +122,7 @@ async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string
 			satisfied: z.object(Object.fromEntries(subtasks.map((subtask) => [subtask, z.boolean()]))),
 			satisfied_subtasks: z.array(z.string())
 		});
-		const { result } = await requestLLM(system_prompt, history, schema);
+		const { result } = await requestLLM(system_prompt, history, schema, 0.1);
 		const parsed_result = schema.parse(result);
 
 		const completed = subtasks.map((subtask) => parsed_result.satisfied[subtask]);
@@ -164,7 +166,7 @@ export async function chatWithLLMByDocs(
 
 	try {
 		const [response, subtask_completed, moderation, off_topic] = await Promise.all([
-			requestLLM(system_prompt, history, z.object({ response: z.string() })),
+			requestLLM(system_prompt, history, z.object({ response: z.string() }), 0.1),
 			checkSubtaskCompleted(history, subtasks),
 			isHarmfulContent(history.length > 0 ? history[history.length - 1].content : ''),
 			isOffTopic(history, task, subtasks)
@@ -210,7 +212,7 @@ export async function summarizeStudentChat(history: LLMChatMessage[]) {
 			student_summary: z.string(),
 			student_key_points: z.array(z.string())
 		});
-		const { result } = await requestLLM(CHAT_SUMMARY_PROMPT, history, schema);
+		const { result } = await requestLLM(CHAT_SUMMARY_PROMPT, history, schema, 0.9);
 		const parsed_result = schema.parse(result);
 
 		return {
@@ -243,7 +245,7 @@ export async function summarizeConcepts(
 			different_view_points: z.array(z.string()),
 			students_summary: z.string()
 		});
-		const { result } = await requestLLM(CONCEPT_SUMMARY_PROMPT, history, schema);
+		const { result } = await requestLLM(CONCEPT_SUMMARY_PROMPT, history, schema, 0.9);
 		const parsed_result = schema.parse(result);
 		return {
 			success: true,
@@ -285,7 +287,7 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 				})
 			)
 		});
-		const { result } = await requestLLM(system_prompt, history, schema);
+		const { result } = await requestLLM(system_prompt, history, schema, 0.9);
 		const parsed_result = schema.parse(result);
 
 		const summary = parsed_result.group_summary;
