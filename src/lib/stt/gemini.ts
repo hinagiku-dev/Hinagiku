@@ -3,7 +3,7 @@ import { GoogleGeminiFlash, z } from '$lib/ai';
 export async function transcribe(data: Buffer): Promise<string> {
 	const dataurl = `data:audio/wav;base64,${data.toString('base64')}`;
 	const { output } = await GoogleGeminiFlash.generate({
-		system: '(zh-tw)請將語音確實轉錄，使用的主要語言為臺灣繁體中文，次要語言為英語。',
+		system: '(zh-tw)請將語音確實轉錄，使用的主要語言為臺灣繁體中文，次要語言為英語。其次是正確辨識「嘿小菊」的關鍵字。',
 		prompt: [{ text: '' }, { media: { url: dataurl } }],
 		output: {
 			schema: z.object({

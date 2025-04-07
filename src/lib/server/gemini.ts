@@ -7,10 +7,11 @@ import {
 	DOCS_CONTEXT_SYSTEM_PROMPT,
 	GROUP_OPINION_SUMMARY_PROMPT,
 	HARMFUL_CONTENT_DETECTION_PROMPT,
+	HEY_HELP_PROMPT,
 	HISTORY_PROMPT,
 	OFF_TOPIC_DETECTION_PROMPT,
 	SUBTASKS_COMPLETED_PROMPT,
-	SUBTASK_PRESENCE_PROMPT
+	SUBTASK_PREFIX_PROMPT
 } from './prompt';
 
 export async function requestLLM(
@@ -25,7 +26,7 @@ export async function requestLLM(
 			system: system_prompt,
 			prompt: HISTORY_PROMPT.replace(
 				'{chatHistory}',
-				history.map((msg) => `${msg.role}: ${msg.content}`).join('\n')
+				history.map((msg) => `${msg.name ? msg.name : msg.role}: ${msg.content}`).join('\n')
 			),
 
 			output: {
@@ -113,7 +114,7 @@ async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string
 		formatted_history
 	).replace(
 		'{subtasks}',
-		subtasks.map((subtask) => SUBTASK_PRESENCE_PROMPT.replace('{subtask}', subtask)).join('\n')
+		subtasks.map((subtask) => SUBTASK_PREFIX_PROMPT.replace('{subtask}', subtask)).join('\n')
 	);
 
 	try {
@@ -156,7 +157,7 @@ export async function chatWithLLMByDocs(
 	const formattedSubtasks = subtasks.map((subtask, index) => {
 		return subtaskCompleted[index]
 			? `(完成)`
-			: `(未完成)` + SUBTASK_PRESENCE_PROMPT.replace('{subtask}', subtask);
+			: `(未完成)` + SUBTASK_PREFIX_PROMPT.replace('{subtask}', subtask);
 	});
 
 	const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
@@ -310,6 +311,50 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 			summary: '',
 			keywords: {},
 			error: 'Error in summarizeGroupOpinions'
+		};
+	}
+}
+
+export async function getHeyHelpMessage(
+	history: LLMChatMessage[],
+	task: string,
+	subtasks: string[],
+	resources: Resource[]
+) {
+	const formatted_docs = resources
+		.map((doc, index) => {
+			const title = doc.name || `Document ${index + 1}`;
+			return `[${title}]:\n${doc.content}`;
+		})
+		.join('\n\n');
+
+	const formattedSubtasks = subtasks.map((subtask) => {
+		return SUBTASK_PREFIX_PROMPT.replace('{subtask}', subtask);
+	});
+
+	const system_prompt =
+		DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
+			.replace('{subtasks}', formattedSubtasks.join('\n'))
+			.replace('{resources}', formatted_docs) + HEY_HELP_PROMPT;
+
+	try {
+		const response = await requestLLM(system_prompt, history, z.object({ response: z.string() }));
+
+		if (!response.success) {
+			throw new Error('Failed to get response');
+		}
+
+		return {
+			success: true,
+			response: response.result.response,
+			error: ''
+		};
+	} catch (error) {
+		console.error('Error in chatWithLLMByDocs:', error);
+		return {
+			success: false,
+			response: '',
+			error: 'Error in chatWithLLMByDocs'
 		};
 	}
 }

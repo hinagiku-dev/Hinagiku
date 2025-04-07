@@ -91,11 +91,11 @@ export async function POST({ params, locals, request }) {
 		const group_number = await createGroup(params.id, members[0]);
 		joinGroup(params.id, members.slice(1), group_number);
 
-		//Epmty the waiting list
-		const sessionRef = adminDb.collection('sessions').doc(params.id);
-		await sessionRef.update({
-			waitlist: []
-		});
+		// Empty the waiting list
+		// const sessionRef = adminDb.collection('sessions').doc(params.id);
+		// await sessionRef.update({
+		// 	waitlist: []
+		// });
 
 		return json({ success: true });
 	} catch (error) {
