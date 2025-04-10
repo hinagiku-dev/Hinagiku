@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { deploymentConfig } from '$lib/config/deployment';
 </script>
 
 <svelte:head>
-	<title>Conversation | Hinagiku</title>
+	<title>Conversation | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <main class="mx-auto max-w-4xl px-4 py-8">

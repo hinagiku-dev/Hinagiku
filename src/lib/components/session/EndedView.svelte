@@ -4,6 +4,7 @@
 	import Summary from './Summary.svelte';
 	import GroupSummary from './GroupSummary.svelte';
 	import Chatroom from '$lib/components/Chatroom.svelte';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	let { conversationDoc, groupDoc, user } = $props<{
 		conversationDoc: { data: Conversation; id: string } | null;
@@ -17,7 +18,7 @@
 		if (!conversationDoc) return [];
 		return conversationDoc.data.history.map(
 			(message: { role: string; content: string; audio?: string }) => ({
-				name: message.role === 'user' ? 'You' : '小菊(Hinagiku)',
+				name: message.role === 'user' ? 'You' : '小菊' + deploymentConfig.siteTitle,
 				content: message.content,
 				self: message.role === 'user',
 				audio: message.audio || undefined

@@ -4,6 +4,7 @@
 	import AudioPlayer from './AudioPlayer.svelte';
 	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 	import * as m from '$lib/paraglide/messages.js';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	interface Conversation {
 		name: string;
@@ -147,7 +148,7 @@
 							{'小'}
 						</div>
 						<div class="text-sm font-semibold text-gray-700">
-							{'小菊(Hinagiku)'}
+							{'小菊' + deploymentConfig.siteTitle}
 						</div>
 					</div>
 					<Card class="w-fit max-w-[80%]">

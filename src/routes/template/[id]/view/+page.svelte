@@ -3,6 +3,7 @@
 	import { Link, FileText, File } from 'lucide-svelte';
 	import type { ResourceType } from '$lib/schema/resource';
 	import * as m from '$lib/paraglide/messages.js';
+	import { deploymentConfig } from '$lib/config/deployment';
 	export let data;
 	const { template } = data;
 
@@ -21,7 +22,7 @@
 </script>
 
 <svelte:head>
-	<title>Template: {data.template.title} | Hinagiku</title>
+	<title>Template: {data.template.title} | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <div class="container mx-auto max-w-4xl px-4 py-8">

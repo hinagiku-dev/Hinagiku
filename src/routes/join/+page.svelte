@@ -7,6 +7,7 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { i18n } from '$lib/i18n';
 	import { signInWithGoogle, user } from '$lib/stores/auth';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	async function handleScan(code: string) {
 		try {
@@ -54,7 +55,7 @@
 </script>
 
 <svelte:head>
-	<title>Join Session | Hinagiku</title>
+	<title>Join Session | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <main class="mx-auto max-w-2xl px-4 py-16">

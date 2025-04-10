@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Mic } from 'lucide-svelte';
+	import { deploymentConfig } from '$lib/config/deployment';
 	const transAPI = 'http://localhost:5173/api/stt';
 
 	let messages = $state([
@@ -91,7 +92,7 @@
 </script>
 
 <svelte:head>
-	<title>Discussion | Hinagiku</title>
+	<title>Discussion | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <main class="mt-20">

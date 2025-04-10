@@ -4,8 +4,11 @@
 	import { ArrowRight, Mic, Brain, GraduationCap, Github } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import * as m from '$lib/paraglide/messages.js';
+	import { base } from '$app/paths';
+	import { deploymentConfig } from '$lib/config/deployment';
+	import Title from '$lib/components/Title.svelte';
 
-	let title = $state('Hinagiku');
+	let title = $state(deploymentConfig.siteTitle);
 	let highlight = $state(0);
 
 	onMount(() => {
@@ -21,8 +24,10 @@
 	});
 </script>
 
+<Title page="Home" />
+
 <svelte:head>
-	<title>Home | Hinagiku</title>
+	<title>Home | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <main class="min-h-screen">
@@ -119,7 +124,7 @@
 	</div>
 
 	<!-- Workflow Section -->
-	<div class="bg-gradient-to-b from-white via-primary-50/30 to-white py-24">
+	<div class="via-primary-50/30 bg-gradient-to-b from-white to-white py-24">
 		<div class="mx-auto max-w-6xl px-4">
 			<div class="mb-16 text-center">
 				<h2 class="mb-4 text-3xl font-bold text-gray-900">{m.howItWorks()}</h2>
@@ -204,36 +209,29 @@
 	</div>
 
 	<!-- Story Behind Our Name section -->
-	<div class="bg-gradient-to-b from-white via-primary-50/30 to-white py-24">
-		<div class="mx-auto max-w-6xl px-4">
-			<div class="grid items-center gap-12 lg:grid-cols-2">
-				<div class="order-2 lg:order-1">
+	<section class="bg-white py-12 md:py-24">
+		<div class="container mx-auto max-w-5xl px-4">
+			<h2 class="mb-4 text-center text-3xl font-bold">{m.storyBehind()}</h2>
+			<p class="mb-8 text-center text-lg text-gray-600">{m.storyBehindDesc()}</p>
+			<div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+				<div class="flex items-center">
 					<img
-						src="/daisy-illustration.webp"
-						alt="Hinagiku Daisy"
-						class="mx-auto max-w-md rounded-lg shadow-lg"
+						src="{base}/daisy-illustration.webp"
+						class="mx-auto max-w-full md:mx-0"
+						alt="{deploymentConfig.siteTitle} Daisy"
 					/>
 				</div>
-				<div class="order-1 lg:order-2">
-					<h2 class="mb-6 text-3xl font-bold text-gray-900">{m.storyBehind()}</h2>
-					<div class="space-y-4 text-gray-600">
-						<p>
-							<span class="font-semibold text-primary-600">Hinagiku (雛菊)</span>, {m.storyBehindDesc()}
-						</p>
-						<p>
-							{m.realTime()}
-						</p>
-						<p>
-							{m.coreValues()}
-						</p>
-						<p>
-							{m.mission()}
-						</p>
-					</div>
+				<div class="space-y-4">
+					<p>
+						<span class="font-semibold text-primary-600">{deploymentConfig.siteTitle} (雛菊)</span>, {m.storyBehindDesc()}
+					</p>
+					<p>{m.realTime()}</p>
+					<p>{m.coreValues()}</p>
+					<p>{m.mission()}</p>
 				</div>
 			</div>
 		</div>
-	</div>
+	</section>
 
 	<!-- GitHub Section -->
 	<div class="bg-white py-24">

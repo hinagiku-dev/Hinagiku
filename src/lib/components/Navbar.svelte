@@ -7,7 +7,9 @@
 	import { page } from '$app/state';
 	import { language } from '$lib/stores/language'; // Import the global language store
 	import * as m from '$lib/paraglide/messages.js';
-	let hinagiku = $state('Hinagiku');
+	import { deploymentConfig } from '$lib/config/deployment';
+
+	let hinagiku = $state(deploymentConfig.siteTitle || 'Hinagiku');
 	let highlight = $state(0);
 	let hydrated = $state(false);
 
@@ -26,6 +28,9 @@
 			highlight = newHighlight;
 		}, 800);
 		hydrated = true;
+
+		// Log the site title from deployment config
+		console.log('Site title from deployment config:', deploymentConfig.siteTitle);
 
 		return () => clearInterval(interval);
 	});

@@ -4,6 +4,7 @@
 	import { CheckCircle, XCircle } from 'lucide-svelte';
 	import * as m from '$lib/paraglide/messages.js';
 	import { onMount } from 'svelte';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	let loading = $state(false);
 	let success = $state<boolean | null>(null);
@@ -57,7 +58,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.settings()} | Hinagiku</title>
+	<title>{m.settings()} | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <main class="mx-auto max-w-2xl px-4 py-16">

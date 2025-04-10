@@ -27,6 +27,7 @@
 	import TemplateCard from '$lib/components/TemplateCard.svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import { i18n } from '$lib/i18n';
+	import Title from '$lib/components/Title.svelte';
 
 	import * as m from '$lib/paraglide/messages.js';
 
@@ -145,9 +146,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Dashboard | Hinagiku</title>
-</svelte:head>
+<Title page="Dashboard" />
 
 <main class="mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-12">
@@ -274,7 +273,7 @@
 	<!-- Recent Session -->
 	<div class="mt-16">
 		<div class="mb-6 flex items-center justify-between">
-			<h2 class="text-2xl font-semibold text-gray-900">{m.recentActivity()}</h2>
+			<h2 class="text-2xl font-semibold text-gray-900">{m.recentHostActivity()}</h2>
 			<Button color="alternative" href="/dashboard/recent/host">{m.viewAll()}</Button>
 		</div>
 		<div class="mb-4 flex flex-wrap gap-2">

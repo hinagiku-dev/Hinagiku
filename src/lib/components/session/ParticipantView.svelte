@@ -21,6 +21,7 @@
 	import EndedView from '$lib/components/session/EndedView.svelte';
 	import { setting } from '$lib/stores/setting';
 	import * as m from '$lib/paraglide/messages.js';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	interface ChatroomConversation {
 		name: string;
@@ -149,7 +150,7 @@
 			return [];
 		}
 		return conversationDoc.data.history.map((message) => ({
-			name: message.role === 'user' ? 'You' : '小菊(Hinagiku)',
+			name: message.role === 'user' ? 'You' : '小菊' + deploymentConfig.siteTitle,
 			self: message.role === 'user',
 			content: message.content,
 			audio: message.audio || undefined
