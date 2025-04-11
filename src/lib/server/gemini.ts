@@ -14,7 +14,7 @@ import {
 	SUBTASK_PREFIX_PROMPT
 } from './prompt';
 
-import { text_normalization } from '$lib/utils/normalization';
+import { normalizeText } from '$lib/utils/normalization';
 
 export async function requestLLM(
 	system_prompt: string,
@@ -166,9 +166,15 @@ export async function chatWithLLMByDocs(
 		.replace('{subtasks}', formattedSubtasks.join('\n'))
 		.replace('{resources}', formatted_docs);
 
+	const schema = z.object({
+		affirmation: z.string(),
+		elaboration: z.string(),
+		question: z.string()
+	});
+
 	try {
 		const [response, subtask_completed, moderation, off_topic] = await Promise.all([
-			requestLLM(system_prompt, history, z.object({ response: z.string() }), 0.1),
+			requestLLM(system_prompt, history, schema, 0.1),
 			checkSubtaskCompleted(history, subtasks),
 			isHarmfulContent(history.length > 0 ? history[history.length - 1].content : ''),
 			isOffTopic(history, task, subtasks)
@@ -183,9 +189,17 @@ export async function chatWithLLMByDocs(
 			throw new Error('Failed to get response');
 		}
 
+		const { affirmation, elaboration, question } = schema.parse(response.result) as z.infer<
+			typeof schema
+		>;
+
+		const normalized_response = `${normalizeText(affirmation)}\n\n${normalizeText(elaboration)}\n\n${normalizeText(
+			question
+		)}`;
+
 		return {
 			success: true,
-			response: text_normalization(response.result.response),
+			response: normalized_response,
 			subtask_completed: subtask_completed.completed,
 			warning: {
 				moderation: moderation.harmfulContent,
@@ -219,8 +233,8 @@ export async function summarizeStudentChat(history: LLMChatMessage[]) {
 
 		return {
 			success: true,
-			summary: text_normalization(parsed_result.student_summary),
-			key_points: parsed_result.student_key_points.map((point) => text_normalization(point)),
+			summary: normalizeText(parsed_result.student_summary),
+			key_points: parsed_result.student_key_points.map((point) => normalizeText(point)),
 			error: ''
 		};
 	} catch (error) {
@@ -251,13 +265,11 @@ export async function summarizeConcepts(
 		const parsed_result = schema.parse(result);
 		return {
 			success: true,
-			similar_view_points: parsed_result.similar_view_points.map((point) =>
-				text_normalization(point)
-			),
+			similar_view_points: parsed_result.similar_view_points.map((point) => normalizeText(point)),
 			different_view_points: parsed_result.different_view_points.map((point) =>
-				text_normalization(point)
+				normalizeText(point)
 			),
-			students_summary: text_normalization(parsed_result.students_summary),
+			students_summary: normalizeText(parsed_result.students_summary),
 			error: ''
 		};
 	} catch (error) {
@@ -309,7 +321,7 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 
 		return {
 			success: true,
-			summary: text_normalization(summary),
+			summary: normalizeText(summary),
 			keywords: keywords,
 			error: ''
 		};
@@ -355,7 +367,7 @@ export async function getHeyHelpMessage(
 
 		return {
 			success: true,
-			response: text_normalization(response.result.response),
+			response: normalizeText(response.result.response),
 			error: ''
 		};
 	} catch (error) {
