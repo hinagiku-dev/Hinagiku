@@ -14,6 +14,8 @@ import {
 	SUBTASK_PREFIX_PROMPT
 } from './prompt';
 
+import { text_normalization } from '$lib/utils/normalization';
+
 export async function requestLLM(
 	system_prompt: string,
 	history: LLMChatMessage[],
@@ -183,7 +185,7 @@ export async function chatWithLLMByDocs(
 
 		return {
 			success: true,
-			response: response.result.response,
+			response: text_normalization(response.result.response),
 			subtask_completed: subtask_completed.completed,
 			warning: {
 				moderation: moderation.harmfulContent,
@@ -217,8 +219,8 @@ export async function summarizeStudentChat(history: LLMChatMessage[]) {
 
 		return {
 			success: true,
-			summary: parsed_result.student_summary,
-			key_points: parsed_result.student_key_points,
+			summary: text_normalization(parsed_result.student_summary),
+			key_points: parsed_result.student_key_points.map((point) => text_normalization(point)),
 			error: ''
 		};
 	} catch (error) {
@@ -249,9 +251,14 @@ export async function summarizeConcepts(
 		const parsed_result = schema.parse(result);
 		return {
 			success: true,
-			similar_view_points: parsed_result.similar_view_points,
-			different_view_points: parsed_result.different_view_points,
-			students_summary: parsed_result.students_summary
+			similar_view_points: parsed_result.similar_view_points.map((point) =>
+				text_normalization(point)
+			),
+			different_view_points: parsed_result.different_view_points.map((point) =>
+				text_normalization(point)
+			),
+			students_summary: text_normalization(parsed_result.students_summary),
+			error: ''
 		};
 	} catch (error) {
 		console.error('Error in summarizeConcepts:', error);
@@ -259,7 +266,8 @@ export async function summarizeConcepts(
 			success: false,
 			similar_view_points: [],
 			different_view_points: [],
-			students_summary: ''
+			students_summary: '',
+			error: 'Error in summarizeConcepts'
 		};
 	}
 }
@@ -301,8 +309,9 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 
 		return {
 			success: true,
-			summary: summary,
-			keywords: keywords
+			summary: text_normalization(summary),
+			keywords: keywords,
+			error: ''
 		};
 	} catch (error) {
 		console.error('Error in summarizeGroupOpinions:', error);
@@ -346,7 +355,7 @@ export async function getHeyHelpMessage(
 
 		return {
 			success: true,
-			response: response.result.response,
+			response: text_normalization(response.result.response),
 			error: ''
 		};
 	} catch (error) {
