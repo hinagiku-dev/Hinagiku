@@ -55,7 +55,7 @@ export function normalizeText(input: string): string {
 		return fullwidthPunctuation[match] || match;
 	});
 
-	// 3. remove extra spaces around punctuation
+	// 3. remove markdown bold markers (**) while preserving the content inside them
 	input = input.replace(/\*\*(.*?)\*\*/g, '$1');
 	return input;
 }
