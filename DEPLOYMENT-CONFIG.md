@@ -11,6 +11,7 @@ The following settings can be configured per deployment:
 | `PUBLIC_SITE_TITLE` | Site title shown in the navbar | `Hinagiku` |
 | `PUBLIC_PRIMARY_COLOR` | Primary theme color (hex format) | `#8b5cf6` |
 | `PUBLIC_SECONDARY_COLOR` | Secondary theme color (hex format) | `#10b981` |
+| `PUBLIC_DEFAULT_LANGUAGE` | Default language for the application (options: 'en' or 'zh') | `zh` |
 
 ## How to Configure
 
@@ -19,11 +20,12 @@ The following settings can be configured per deployment:
 1. Create a `.env` file in the root of your project (you can copy from `.env.example`)
 2. Add or modify the deployment variables as needed:
 
-```
+```bash
 # Deployment configuration
 PUBLIC_SITE_TITLE="My Site Name"
 PUBLIC_PRIMARY_COLOR="#ff5733"
 PUBLIC_SECONDARY_COLOR="#4a90e2"
+PUBLIC_DEFAULT_LANGUAGE="en"
 ```
 
 3. Run the application with `pnpm dev`
@@ -47,6 +49,16 @@ PUBLIC_SITE_TITLE="Educational Discussion Platform"
 PUBLIC_PRIMARY_COLOR="#4a90e2"
 PUBLIC_SECONDARY_COLOR="#50e3c2"
 ```
+
+### Language Configuration
+
+```
+PUBLIC_DEFAULT_LANGUAGE="en"  # Set English as the default language
+```
+
+Supported languages:
+- `en`: English
+- `zh`: Chinese (Traditional)
 
 ## Technical Details
 
