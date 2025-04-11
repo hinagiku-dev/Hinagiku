@@ -40,7 +40,7 @@
 		// Remove language prefix from pathname before resolving new route
 		let cleanPath = pathname;
 		if (currentLang === 'en' || currentLang === 'zh') {
-			cleanPath = pathname.replace(`/${currentLang}`, '') || '/';
+			cleanPath = pathname.replace(/^\/(?:en|zh)(?=\/|$)/, '') || '/';
 		}
 
 		// Get new path using i18n.resolveRoute with cleaned path

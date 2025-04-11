@@ -6,12 +6,12 @@ This document explains how to use deployment-specific settings to customize your
 
 The following settings can be configured per deployment:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PUBLIC_SITE_TITLE` | Site title shown in the navbar | `Hinagiku` |
-| `PUBLIC_PRIMARY_COLOR` | Primary theme color (hex format) | `#8b5cf6` |
-| `PUBLIC_SECONDARY_COLOR` | Secondary theme color (hex format) | `#10b981` |
-| `PUBLIC_DEFAULT_LANGUAGE` | Default language for the application (options: 'en' or 'zh') | `zh` |
+| Variable                  | Description                                                  | Default    |
+| ------------------------- | ------------------------------------------------------------ | ---------- |
+| `PUBLIC_SITE_TITLE`       | Site title shown in the navbar                               | `Hinagiku` |
+| `PUBLIC_PRIMARY_COLOR`    | Primary theme color (hex format)                             | `#8b5cf6`  |
+| `PUBLIC_SECONDARY_COLOR`  | Secondary theme color (hex format)                           | `#10b981`  |
+| `PUBLIC_DEFAULT_LANGUAGE` | Default language for the application (options: 'en' or 'zh') | `zh`       |
 
 ## How to Configure
 
@@ -44,7 +44,7 @@ For production deployments, set these environment variables in your hosting plat
 
 ### Custom Branding
 
-```
+```bash
 PUBLIC_SITE_TITLE="Educational Discussion Platform"
 PUBLIC_PRIMARY_COLOR="#4a90e2"
 PUBLIC_SECONDARY_COLOR="#50e3c2"
@@ -52,11 +52,12 @@ PUBLIC_SECONDARY_COLOR="#50e3c2"
 
 ### Language Configuration
 
-```
+```bash
 PUBLIC_DEFAULT_LANGUAGE="en"  # Set English as the default language
 ```
 
 Supported languages:
+
 - `en`: English
 - `zh`: Chinese (Traditional)
 
@@ -71,4 +72,4 @@ import { deploymentConfig } from '$lib/config/deployment';
 
 // Use the settings
 const siteTitle = deploymentConfig.siteTitle;
-``` 
+```

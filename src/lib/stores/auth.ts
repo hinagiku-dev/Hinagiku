@@ -54,7 +54,7 @@ export async function signInWithGoogle(url: string, origin?: string) {
 
 				// Use SPA navigation to preserve client-side state
 				if (sessionPath.includes('/en/') || sessionPath.includes('/zh/')) {
-					await goto(i18n.resolveRoute(sessionPath.replace('/en/', '/').replace('/zh/', '/')));
+					await goto(i18n.resolveRoute(sessionPath.replace(/^\/(en|zh)\//, '/')));
 				} else {
 					await goto(i18n.resolveRoute(sessionPath));
 				}
