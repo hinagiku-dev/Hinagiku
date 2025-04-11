@@ -8,15 +8,15 @@
  * @returns The normalized text.
  */
 export function normalizeText(input: string): string {
-	console.log('Original text:', input);
-
-	// 1.
+	// 1. replace multiple spaces with a single space and add spaces around English words and numbers
+	//    and trim the input
 	input = input
 		.replace(/([a-zA-Z0-9])/g, ' $1 ')
 		.replace(/\s+/g, ' ')
 		.trim();
 
-	// 2.
+	// 2. convert punctuation to full-width, except for $ and _
+	//    and remove extra spaces around punctuation
 	input = input.replace(/[!"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~]/g, (match) => {
 		if (match === '$' || match === '_') return match; // 保留 $ 和 _
 
@@ -55,9 +55,7 @@ export function normalizeText(input: string): string {
 		return fullwidthPunctuation[match] || match;
 	});
 
-	// 3. 移除粗體標示（**）
+	// 3. remove extra spaces around punctuation
 	input = input.replace(/\*\*(.*?)\*\*/g, '$1');
-
-	console.log('Normalized text:', input);
 	return input;
 }
