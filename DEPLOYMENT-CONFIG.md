@@ -6,12 +6,12 @@ This document explains how to use deployment-specific settings to customize your
 
 The following settings can be configured per deployment:
 
-| Variable                          | Description                                                  | Default    |
-| --------------------------------- | ------------------------------------------------------------ | ---------- |
-| `PUBLIC_HINAGIKU_SITE_TITLE`      | Site title shown in the navbar                               | `Hinagiku` |
-| `PUBLIC_HINAGIKU_PRIMARY_COLOR`   | Primary theme color (hex format)                             | `#8b5cf6`  |
-| `PUBLIC_HINAGIKU_SECONDARY_COLOR` | Secondary theme color (hex format)                           | `#10b981`  |
-| `PUBLIC_HINAGIKU_DEFAULT_LANGUAGE`| Default language for the application (options: 'en' or 'zh') | `zh`       |
+| Variable                           | Description                                                  | Default    |
+| ---------------------------------- | ------------------------------------------------------------ | ---------- |
+| `PUBLIC_HINAGIKU_SITE_TITLE`       | Site title shown in the navbar                               | `Hinagiku` |
+| `PUBLIC_HINAGIKU_PRIMARY_COLOR`    | Primary theme color (hex format)                             | `#8b5cf6`  |
+| `PUBLIC_HINAGIKU_SECONDARY_COLOR`  | Secondary theme color (hex format)                           | `#10b981`  |
+| `PUBLIC_HINAGIKU_DEFAULT_LANGUAGE` | Default language for the application (options: 'en' or 'zh') | `zh`       |
 
 ## How to Configure
 
