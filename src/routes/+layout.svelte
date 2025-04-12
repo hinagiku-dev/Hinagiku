@@ -8,9 +8,6 @@
 	import debug from 'debug';
 	import { browser, dev } from '$app/environment';
 	import { env } from '$env/dynamic/public';
-	import { deploymentConfig } from '$lib/config/deployment';
-	import { setContext } from 'svelte';
-	import { onMount } from 'svelte';
 
 	debug.enable('app:*');
 
@@ -23,14 +20,14 @@
 		);
 	}
 
-	// Make the app title available for use in components
-	const appTitle = deploymentConfig.siteTitle;
+	// // Make the app title available for use in components
+	// const appTitle = deploymentConfig.siteTitle;
 
-	// Use onMount to ensure component is properly initialized
-	onMount(() => {
-		// Set the context within component lifecycle
-		setContext('appTitle', appTitle);
-	});
+	// // Use onMount to ensure component is properly initialized
+	// onMount(() => {
+	// 	// Set the context within component lifecycle
+	// 	setContext('appTitle', appTitle);
+	// });
 
 	let { children } = $props();
 </script>

@@ -11,9 +11,6 @@
 	let title = $state(deploymentConfig.siteTitle);
 	let highlight = $state(0);
 
-	// Optional: Get the app title from context if needed to explicitly pass to messages
-	// const appTitle = getContext<string>('appTitle');
-
 	onMount(() => {
 		const interval = setInterval(() => {
 			let newHighlight;

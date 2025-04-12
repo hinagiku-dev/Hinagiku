@@ -21,7 +21,8 @@ const deploymentConfigSchema = z.object({
 		.regex(/^#([0-9A-Fa-f]{6})$/, {
 			message: 'Secondary color must be a valid hex color code (e.g., #10b981)'
 		})
-		.default('#10b981')
+		.default('#10b981'),
+	defaultLanguage: z.enum(['en', 'zh']).default('zh')
 });
 
 // Infer the type from the schema
@@ -31,7 +32,8 @@ type DeploymentConfig = z.infer<typeof deploymentConfigSchema>;
 const defaultConfig: DeploymentConfig = {
 	siteTitle: 'Hinagiku',
 	primaryColor: '#8b5cf6', // Default violet color
-	secondaryColor: '#10b981' // Default emerald color
+	secondaryColor: '#10b981', // Default emerald color
+	defaultLanguage: 'zh' // Default language
 };
 
 // Load environment variables to override default configuration
@@ -41,7 +43,8 @@ function loadConfigFromEnv(): DeploymentConfig {
 		const envConfig = {
 			siteTitle: env.PUBLIC_HINAGIKU_SITE_TITLE,
 			primaryColor: env.PUBLIC_HINAGIKU_PRIMARY_COLOR,
-			secondaryColor: env.PUBLIC_HINAGIKU_SECONDARY_COLOR
+			secondaryColor: env.PUBLIC_HINAGIKU_SECONDARY_COLOR,
+			defaultLanguage: env.PUBLIC_HINAGIKU_DEFAULT_LANGUAGE
 		};
 
 		// Remove undefined values to allow schema defaults to apply
