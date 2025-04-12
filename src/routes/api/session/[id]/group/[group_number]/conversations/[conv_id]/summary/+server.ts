@@ -29,7 +29,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			throw error(403, 'Forbidden');
 		}
 
-		const response = await summarizeStudentChat(history);
+		// Loop and filter the list of messages from the history if the message is offTopic
+		const filteredHistory = history.filter((message) => !message.warning?.offTopic);
+		if (filteredHistory.length === 0) {
+			return new Response(JSON.stringify({ success: true }), { status: 200 });
+		}
+
+		const response = await summarizeStudentChat(filteredHistory);
 		if (!response.success) {
 			throw error(500, response.error);
 		}
