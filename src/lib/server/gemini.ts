@@ -358,16 +358,30 @@ export async function getHeyHelpMessage(
 			.replace('{subtasks}', formattedSubtasks.join('\n'))
 			.replace('{resources}', formatted_docs) + HEY_HELP_PROMPT;
 
+	const schema = z.object({
+		affirmation: z.string(),
+		elaboration: z.string(),
+		question: z.string()
+	});
+
 	try {
-		const response = await requestLLM(system_prompt, history, z.object({ response: z.string() }));
+		const response = await requestLLM(system_prompt, history, schema);
 
 		if (!response.success) {
 			throw new Error('Failed to get response');
 		}
 
+		const { affirmation, elaboration, question } = schema.parse(response.result) as z.infer<
+			typeof schema
+		>;
+
+		const normalized_response = `${normalizeText(affirmation)}\n\n${normalizeText(elaboration)}\n\n${normalizeText(
+			question
+		)}`;
+
 		return {
 			success: true,
-			response: normalizeText(response.result.response),
+			response: normalized_response,
 			error: ''
 		};
 	} catch (error) {
