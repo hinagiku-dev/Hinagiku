@@ -4,15 +4,13 @@
 	import { Button, Label, Input, Textarea, Card, Alert } from 'flowbite-svelte';
 	import { CheckCircle, XCircle } from 'lucide-svelte';
 	import * as m from '$lib/paraglide/messages.js';
-	import { deploymentConfig } from '$lib/config/deployment';
+	import Title from '$lib/components/Title.svelte';
 
 	let { form, data } = $props();
 	let loading = $state(false);
 </script>
 
-<svelte:head>
-	<title>{m.profileSettings()} | {deploymentConfig.siteTitle}</title>
-</svelte:head>
+<Title page={m.profileSettings()} />
 
 <main class="mx-auto max-w-2xl px-4 py-16">
 	<div class="mb-8">

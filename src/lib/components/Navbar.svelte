@@ -90,12 +90,9 @@
 
 <Navbar class="fixed left-0 top-0 z-50 w-full shadow-sm">
 	<NavBrand href="/">
-		<img src="/Icon.png" class="mr-3 h-8" alt={m.welcome()} />
-		<span class="self-center whitespace-nowrap text-2xl font-bold">
-			{#each hinagiku as c, i}<span
-					class="transition-colors duration-500"
-					class:text-primary-600={i === highlight}>{c}</span
-				>{/each}
+		<img src="/Icon.png" class="mr-3 h-8" alt={m.welcome({ title: deploymentConfig.siteTitle })} />
+		<span class="h-8 self-center whitespace-nowrap text-xl font-semibold text-primary-600">
+			{hinagiku}
 		</span>
 	</NavBrand>
 	<div class="ml-auto flex items-center">

@@ -6,15 +6,16 @@
 	import Notifications from '$lib/components/Notifications.svelte';
 	import ThemeManager from '$lib/components/ThemeManager.svelte';
 	import debug from 'debug';
-	import { setLanguageTag } from '$lib/paraglide/runtime';
-	import { language } from '$lib/stores/language';
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 	import { env } from '$env/dynamic/public';
+	import { deploymentConfig } from '$lib/config/deployment';
+	import { setContext } from 'svelte';
+	import { onMount } from 'svelte';
 
 	debug.enable('app:*');
 
 	// Log environment variables for debugging
-	if (browser && import.meta.env.DEV) {
+	if (browser && dev) {
 		console.log('Layout initialization - browser environment');
 		console.log(
 			'Public environment variables available:',
@@ -22,8 +23,15 @@
 		);
 	}
 
-	setLanguageTag($language);
-	console.log('layout language tag', $language);
+	// Make the app title available for use in components
+	const appTitle = deploymentConfig.siteTitle;
+
+	// Use onMount to ensure component is properly initialized
+	onMount(() => {
+		// Set the context within component lifecycle
+		setContext('appTitle', appTitle);
+	});
+
 	let { children } = $props();
 </script>
 

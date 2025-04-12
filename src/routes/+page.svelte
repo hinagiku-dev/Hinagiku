@@ -11,6 +11,9 @@
 	let title = $state(deploymentConfig.siteTitle);
 	let highlight = $state(0);
 
+	// Optional: Get the app title from context if needed to explicitly pass to messages
+	// const appTitle = getContext<string>('appTitle');
+
 	onMount(() => {
 		const interval = setInterval(() => {
 			let newHighlight;
@@ -49,7 +52,7 @@
 						</span>
 					</h1>
 					<p class="mb-8 text-xl text-gray-600">
-						{m.intro()}
+						{m.intro({ title: deploymentConfig.siteTitle })}
 					</p>
 					<div class="flex gap-4">
 						{#if $user}
@@ -77,9 +80,11 @@
 	<div id="features" class="bg-white py-24">
 		<div class="mx-auto max-w-6xl px-4">
 			<div class="mb-16 text-center">
-				<h2 class="mb-4 text-3xl font-bold text-gray-900">{m.whyChoose()}</h2>
+				<h2 class="mb-4 text-3xl font-bold text-gray-900">
+					{m.whyChoose({ title: deploymentConfig.siteTitle })}
+				</h2>
 				<p class="mx-auto max-w-2xl text-xl text-gray-600">
-					{m.whyChooseDesc()}
+					{m.whyChooseDesc({ title: deploymentConfig.siteTitle })}
 				</p>
 			</div>
 
@@ -129,7 +134,7 @@
 			<div class="mb-16 text-center">
 				<h2 class="mb-4 text-3xl font-bold text-gray-900">{m.howItWorks()}</h2>
 				<p class="mx-auto max-w-2xl text-xl text-gray-600">
-					{m.howItWorksDesc()}
+					{m.howItWorksDesc({ title: deploymentConfig.siteTitle })}
 				</p>
 			</div>
 
@@ -181,7 +186,7 @@
 					</h2>
 					<div class="space-y-4 text-gray-600">
 						<p class="text-xl">
-							{m.communityDrivenDesc()}
+							{m.communityDrivenDesc({ title: deploymentConfig.siteTitle })}
 						</p>
 						<ul class="ml-6 list-disc space-y-3">
 							<li>{m.browseTemplates()}</li>
@@ -212,7 +217,9 @@
 	<section class="bg-white py-12 md:py-24">
 		<div class="container mx-auto max-w-5xl px-4">
 			<h2 class="mb-4 text-center text-3xl font-bold">{m.storyBehind()}</h2>
-			<p class="mb-8 text-center text-lg text-gray-600">{m.storyBehindDesc()}</p>
+			<p class="mb-8 text-center text-lg text-gray-600">
+				{m.storyBehindDesc({ title: deploymentConfig.siteTitle })}
+			</p>
 			<div class="grid grid-cols-1 gap-8 md:grid-cols-2">
 				<div class="flex items-center">
 					<img
@@ -223,11 +230,13 @@
 				</div>
 				<div class="space-y-4">
 					<p>
-						<span class="font-semibold text-primary-600">{deploymentConfig.siteTitle} (雛菊)</span>, {m.storyBehindDesc()}
+						<span class="font-semibold text-primary-600">{deploymentConfig.siteTitle} (雛菊)</span>, {m.storyBehindDesc(
+							{ title: deploymentConfig.siteTitle }
+						)}
 					</p>
-					<p>{m.realTime()}</p>
-					<p>{m.coreValues()}</p>
-					<p>{m.mission()}</p>
+					<p>{m.realTime({ title: deploymentConfig.siteTitle })}</p>
+					<p>{m.coreValues({ title: deploymentConfig.siteTitle })}</p>
+					<p>{m.mission({ title: deploymentConfig.siteTitle })}</p>
 				</div>
 			</div>
 		</div>
@@ -239,7 +248,7 @@
 			<div class="text-center">
 				<h2 class="mb-4 text-3xl font-bold text-gray-900">{m.openSource()}</h2>
 				<p class="mx-auto mb-8 max-w-2xl text-xl text-gray-600">
-					{m.openSourceDesc()}
+					{m.openSourceDesc({ title: deploymentConfig.siteTitle })}
 				</p>
 				<Button
 					size="xl"

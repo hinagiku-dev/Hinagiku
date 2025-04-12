@@ -6,12 +6,12 @@ This document explains how to use deployment-specific settings to customize your
 
 The following settings can be configured per deployment:
 
-| Variable                  | Description                                                  | Default    |
-| ------------------------- | ------------------------------------------------------------ | ---------- |
-| `PUBLIC_SITE_TITLE`       | Site title shown in the navbar                               | `Hinagiku` |
-| `PUBLIC_PRIMARY_COLOR`    | Primary theme color (hex format)                             | `#8b5cf6`  |
-| `PUBLIC_SECONDARY_COLOR`  | Secondary theme color (hex format)                           | `#10b981`  |
-| `PUBLIC_DEFAULT_LANGUAGE` | Default language for the application (options: 'en' or 'zh') | `zh`       |
+| Variable                          | Description                                                  | Default    |
+| --------------------------------- | ------------------------------------------------------------ | ---------- |
+| `PUBLIC_HINAGIKU_SITE_TITLE`      | Site title shown in the navbar                               | `Hinagiku` |
+| `PUBLIC_HINAGIKU_PRIMARY_COLOR`   | Primary theme color (hex format)                             | `#8b5cf6`  |
+| `PUBLIC_HINAGIKU_SECONDARY_COLOR` | Secondary theme color (hex format)                           | `#10b981`  |
+| `PUBLIC_HINAGIKU_DEFAULT_LANGUAGE`| Default language for the application (options: 'en' or 'zh') | `zh`       |
 
 ## How to Configure
 
@@ -22,10 +22,10 @@ The following settings can be configured per deployment:
 
 ```bash
 # Deployment configuration
-PUBLIC_SITE_TITLE="My Site Name"
-PUBLIC_PRIMARY_COLOR="#ff5733"
-PUBLIC_SECONDARY_COLOR="#4a90e2"
-PUBLIC_DEFAULT_LANGUAGE="en"
+PUBLIC_HINAGIKU_SITE_TITLE="My Site Name"
+PUBLIC_HINAGIKU_PRIMARY_COLOR="#ff5733"
+PUBLIC_HINAGIKU_SECONDARY_COLOR="#4a90e2"
+PUBLIC_HINAGIKU_DEFAULT_LANGUAGE="en"
 ```
 
 3. Run the application with `pnpm dev`
@@ -45,15 +45,15 @@ For production deployments, set these environment variables in your hosting plat
 ### Custom Branding
 
 ```bash
-PUBLIC_SITE_TITLE="Educational Discussion Platform"
-PUBLIC_PRIMARY_COLOR="#4a90e2"
-PUBLIC_SECONDARY_COLOR="#50e3c2"
+PUBLIC_HINAGIKU_SITE_TITLE="Educational Discussion Platform"
+PUBLIC_HINAGIKU_PRIMARY_COLOR="#4a90e2"
+PUBLIC_HINAGIKU_SECONDARY_COLOR="#50e3c2"
 ```
 
 ### Language Configuration
 
 ```bash
-PUBLIC_DEFAULT_LANGUAGE="en"  # Set English as the default language
+PUBLIC_HINAGIKU_DEFAULT_LANGUAGE="en"  # Set English as the default language
 ```
 
 Supported languages:
