@@ -712,7 +712,7 @@
 							</div>
 						{/each}
 					{:else}
-						<p class="text-sm text-gray-500">No participants in waitlist</p>
+						<p class="text-sm text-gray-500">{m.noParticipantsInWaitlist()}</p>
 					{/if}
 				</div>
 			</div>
