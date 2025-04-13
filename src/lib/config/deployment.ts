@@ -29,10 +29,13 @@ const deploymentConfigSchema = z.object({
 type DeploymentConfig = z.infer<typeof deploymentConfigSchema>;
 
 // Default configuration (don't change this)
+// Default colors:
+// PRIMARY_COLOR="#ff5733"
+// SECONDARY_COLOR="#4a90e2"
 const defaultConfig: DeploymentConfig = {
 	siteTitle: 'Hinagiku',
-	primaryColor: '#8b5cf6', // Default violet color
-	secondaryColor: '#10b981', // Default emerald color
+	primaryColor: '#ff5733', // Default violet color
+	secondaryColor: '#4a90e2', // Default emerald color
 	defaultLanguage: 'zh' // Default language
 };
 
