@@ -639,7 +639,21 @@
 											? 'bg-green-500'
 											: 'bg-gray-500'}"
 						/>
-						<span class="capitalize">{$session?.status}</span>
+						<span>
+							{#if $session?.status === 'preparing'}
+								{m.preparingStage()}
+							{:else if $session?.status === 'individual'}
+								{m.individualStage()}
+							{:else if $session?.status === 'before-group'}
+								{m.beforeGroupStage()}
+							{:else if $session?.status === 'group'}
+								{m.groupStage()}
+							{:else if $session?.status === 'ended'}
+								{m.ended()}
+							{:else}
+								<span class="capitalize">{$session?.status}</span>
+							{/if}
+						</span>
 					</div>
 					{#if $session?.status === 'individual'}
 						<p class="text-gray-600">{m.individual()}</p>

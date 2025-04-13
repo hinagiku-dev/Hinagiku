@@ -34,7 +34,7 @@ type DeploymentConfig = z.infer<typeof deploymentConfigSchema>;
 // SECONDARY_COLOR="#4a90e2"
 const defaultConfig: DeploymentConfig = {
 	siteTitle: 'Hinagiku',
-	primaryColor: '#ff5733', // Default violet color
+	primaryColor: '#ff5733', // Default orange hue color
 	secondaryColor: '#4a90e2', // Default emerald color
 	defaultLanguage: 'zh' // Default language
 };

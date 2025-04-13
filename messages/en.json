@@ -53,9 +53,14 @@
 	"waitStart": "Waiting for session to start...",
 	"end": "Please wait for the host to end the session.",
 	"status": "Session Status",
+	"preparing": "Preparation Phase",
+	"preparingStage": "Preparation Stage",
 	"individual": "Work on your individual contributions",
+	"individualStage": "Individual Stage",
 	"beforeGroup": "Get ready to collaborate with your group.",
+	"beforeGroupStage": "Before Group Stage",
 	"group": "Collaborate with your group members.",
+	"groupStage": "Group Stage",
 	"ended": "Ended",
 	"member": "Members: ",
 	"groupNum": "Group Number",
@@ -187,6 +192,7 @@
 	"failedLeaveWaitlist": "Failed to leave waiting list",
 	"successLeaveWaitlist": "Left waiting list successfully",
 	"isInWaitlist": "You are already in the waiting list",
+	"noParticipantsInWaitlist": "No participants in waitlist",
 	"autoGrouping": "Auto",
 	"manualGrouping": "Manual",
 	"autoGroupingDesc": "System will automatically assign participants to groups",
@@ -204,5 +210,9 @@
 	"unGrouped": "Ungrouped",
 	"allGrouped": "All participants are grouped!",
 	"SomeoneUngroupednotification1": "There are still",
-	"SomeoneUngroupednotification2": "participant(s) who haven't been grouped yet. Proceed to the next step?"
+	"SomeoneUngroupednotification2": "participant(s) who haven't been grouped yet. Proceed to the next step?",
+	"view": "View",
+	"fork": "Fork",
+	"useTemplate": "Use Template",
+	"loginToFork": "Login to Fork"
 }

@@ -5,6 +5,8 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { goto } from '$app/navigation';
 	import { i18n } from '$lib/i18n';
+	import * as m from '$lib/paraglide/messages.js';
+
 	let {
 		id,
 		title,
@@ -81,20 +83,22 @@
 			</div>
 			<div class="flex gap-2">
 				{#if owner === $user?.uid}
-					<Button href="/template/{id}" class="flex-1">Use Template</Button>
+					<Button href="/template/{id}" class="flex-1">{m.useTemplate()}</Button>
 				{:else if $user?.uid}
 					<div class="flex w-full gap-2">
-						<Button href="/template/{id}/view" color="alternative" class="flex-1">View</Button>
+						<Button href="/template/{id}/view" color="alternative" class="flex-1">{m.view()}</Button
+						>
 						<Button color="alternative" class="flex-1" on:click={handleForkTemplate}>
 							<GitFork class="h-4 w-4" />
-							Fork
+							{m.fork()}
 						</Button>
 					</div>
 				{:else}
 					<div class="flex w-full gap-2">
-						<Button href="/template/{id}/view" color="alternative" class="flex-1">View</Button>
+						<Button href="/template/{id}/view" color="alternative" class="flex-1">{m.view()}</Button
+						>
 						<Button href="/login?redirect=/templates/public" color="alternative" class="flex-1">
-							Login to Fork
+							{m.loginToFork()}
 						</Button>
 					</div>
 				{/if}

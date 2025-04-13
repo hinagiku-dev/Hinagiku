@@ -5,11 +5,11 @@
 	import * as m from '$lib/paraglide/messages.js';
 
 	const stages = [
-		{ id: 'preparing', name: '準備階段', color: 'bg-yellow-500' },
-		{ id: 'individual', name: '個人階段', color: 'bg-blue-500' },
-		{ id: 'before-group', name: '團體討論前階段', color: 'bg-purple-500' },
-		{ id: 'group', name: '團體討論階段', color: 'bg-green-500' },
-		{ id: 'ended', name: '總結階段', color: 'bg-gray-500' }
+		{ id: 'preparing', name: 'preparing', color: 'bg-yellow-500' },
+		{ id: 'individual', name: 'individual', color: 'bg-blue-500' },
+		{ id: 'before-group', name: 'beforeGroup', color: 'bg-purple-500' },
+		{ id: 'group', name: 'group', color: 'bg-green-500' },
+		{ id: 'ended', name: 'ended', color: 'bg-gray-500' }
 	] as const;
 
 	export let session: Session | undefined;
@@ -24,6 +24,24 @@
 	$: canGoPrevious = currentStageIndex > 0 && !loadingPrevious;
 	$: canGoNext = currentStageIndex < stages.length - 1 && !loadingNext;
 	$: nextStage = currentStageIndex < stages.length - 1 ? stages[currentStageIndex + 1] : null;
+
+	// Function to get the translated stage name
+	function getStageName(stageName: string) {
+		switch (stageName) {
+			case 'preparing':
+				return m.preparingStage();
+			case 'individual':
+				return m.individualStage();
+			case 'beforeGroup':
+				return m.beforeGroupStage();
+			case 'group':
+				return m.groupStage();
+			case 'ended':
+				return m.ended();
+			default:
+				return stageName;
+		}
+	}
 
 	async function handlePrevious() {
 		if (canGoPrevious) {
@@ -73,7 +91,7 @@
 							: isPast
 								? 'bg-gray-200'
 								: 'bg-white'}"
-						title={stage.name}
+						title={getStageName(stage.name)}
 					>
 						{#if isPast}
 							<div class="h-2 w-2 rounded-full bg-gray-400"></div>
@@ -84,7 +102,7 @@
 		</div>
 		<div class="flex items-center gap-2">
 			<div class="text-base font-semibold tracking-wide">
-				{stages.find((s) => s.id === session?.status)?.name}
+				{getStageName(stages.find((s) => s.id === session?.status)?.name || '')}
 			</div>
 		</div>
 	</div>
@@ -99,11 +117,11 @@
 				{:else}
 					<ArrowLeft class="h-4 w-4" />
 				{/if}
-				<span class="ml-2">{stages[currentStageIndex - 1]?.name}</span>
+				<span class="ml-2">{getStageName(stages[currentStageIndex - 1]?.name || '')}</span>
 			</Button>
 		{/if}
 		<Button color="primary" on:click={handleNext} disabled={!canGoNext || loadingNext}>
-			<span class="ml-2">{stages[currentStageIndex + 1]?.name}</span>
+			<span class="ml-2">{getStageName(stages[currentStageIndex + 1]?.name || '')}</span>
 			<span class="ml-2"
 				>{#if loadingNext && currentStageIndex < stages.length - 1}
 					<Loader2 class="h-4 w-4 animate-spin" />
