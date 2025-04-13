@@ -29,7 +29,24 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			throw error(403, 'Forbidden');
 		}
 
-		const response = await summarizeStudentChat(history);
+		// Loop and filter the list of messages from the history if the message is offTopic or the role is assistant
+		const filteredHistory = history.filter(
+			(message) => !message.warning?.offTopic && message.role !== 'assistant'
+		);
+		if (filteredHistory.length === 0) {
+			// If there are no messages to summarize, return a success response
+			console.log('No messages to summarize');
+			await conversation_ref.update({
+				summary: 'No messages to summarize',
+				keyPoints: []
+			});
+			return new Response(JSON.stringify({ success: true }), { status: 200 });
+		} else {
+			console.log('History:', history);
+			console.log('Filtered history:', filteredHistory);
+		}
+
+		const response = await summarizeStudentChat(filteredHistory);
 		if (!response.success) {
 			throw error(500, response.error);
 		}
