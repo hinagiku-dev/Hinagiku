@@ -20,15 +20,6 @@
 		);
 	}
 
-	// // Make the app title available for use in components
-	// const appTitle = deploymentConfig.siteTitle;
-
-	// // Use onMount to ensure component is properly initialized
-	// onMount(() => {
-	// 	// Set the context within component lifecycle
-	// 	setContext('appTitle', appTitle);
-	// });
-
 	let { children } = $props();
 </script>
 
