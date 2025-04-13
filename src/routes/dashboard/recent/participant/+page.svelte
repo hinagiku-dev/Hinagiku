@@ -16,6 +16,7 @@
 	import type { Session } from '$lib/schema/session';
 	import { onMount } from 'svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	let { data } = $props();
 
@@ -50,7 +51,7 @@
 </script>
 
 <svelte:head>
-	<title>Recent Participant Sessions | Hinagiku</title>
+	<title>Recent Participant Sessions | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <main class="mx-auto max-w-6xl px-4 py-16">

@@ -7,6 +7,7 @@
 	import LabelManager from '$lib/components/session/LabelManager.svelte';
 	import { page } from '$app/stores';
 	import * as m from '$lib/paraglide/messages.js';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	let { data } = $props();
 	let session = getContext<Readable<Session>>('session');
@@ -15,7 +16,7 @@
 </script>
 
 <svelte:head>
-	<title>Session | Hinagiku</title>
+	<title>Session | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 {#if isHost}

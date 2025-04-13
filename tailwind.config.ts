@@ -12,16 +12,28 @@ export default {
 		extend: {
 			colors: {
 				primary: {
-					50: '#FFF5F2',
-					100: '#FFF1EE',
-					200: '#FFE4DE',
-					300: '#FFD5CC',
-					400: '#FFBCAD',
-					500: '#FE795D',
-					600: '#EF562F',
-					700: '#EB4F27',
-					800: '#CC4522',
-					900: '#A5371B'
+					50: 'var(--color-primary-50, #FFF5F2)',
+					100: 'var(--color-primary-100, #FFF1EE)',
+					200: 'var(--color-primary-200, #FFE4DE)',
+					300: 'var(--color-primary-300, #FFD5CC)',
+					400: 'var(--color-primary-400, #FFBCAD)',
+					500: 'var(--color-primary-500, #FE795D)',
+					600: 'var(--color-primary-600, #EF562F)',
+					700: 'var(--color-primary-700, #EB4F27)',
+					800: 'var(--color-primary-800, #CC4522)',
+					900: 'var(--color-primary-900, #A5371B)'
+				},
+				secondary: {
+					50: 'var(--color-secondary-50, #ecfdf5)',
+					100: 'var(--color-secondary-100, #d1fae5)',
+					200: 'var(--color-secondary-200, #a7f3d0)',
+					300: 'var(--color-secondary-300, #6ee7b7)',
+					400: 'var(--color-secondary-400, #34d399)',
+					500: 'var(--color-secondary-500, #10b981)',
+					600: 'var(--color-secondary-600, #059669)',
+					700: 'var(--color-secondary-700, #047857)',
+					800: 'var(--color-secondary-800, #065f46)',
+					900: 'var(--color-secondary-900, #064e3b)'
 				}
 			},
 			typography: {

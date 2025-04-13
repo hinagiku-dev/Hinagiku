@@ -1,4 +1,7 @@
 <script>
+	import Title from '$lib/components/Title.svelte';
+	import { deploymentConfig } from '$lib/config/deployment';
+
 	let messages = [{ sender: 'other', text: 'Hello! How can I assist you today?' }];
 	let inputText = '';
 
@@ -11,8 +14,10 @@
 </script>
 
 <svelte:head>
-	<title>Chat | Hinagiku</title>
+	<title>Chat | {deploymentConfig.siteTitle}</title>
 </svelte:head>
+
+<Title page="Chat" />
 
 <div class="chat-container">
 	<div class="messages">

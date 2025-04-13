@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	let messages = $state([{ sender: 'Support', text: 'Hello! How can I assist you today?' }]);
 	let inputText = $state('');
@@ -13,7 +14,7 @@
 </script>
 
 <svelte:head>
-	<title>Discussion | Hinagiku</title>
+	<title>Discussion | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <main class="mt-20">

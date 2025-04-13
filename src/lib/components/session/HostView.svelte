@@ -36,6 +36,7 @@
 	import ResolveUsername from '../ResolveUsername.svelte';
 	import * as m from '$lib/paraglide/messages.js';
 	import { Toggle, Input } from 'flowbite-svelte';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -491,7 +492,7 @@
 				selectedParticipant = {
 					displayName: userData.displayName,
 					history: conversations[0].history.map((message) => ({
-						name: message.role === 'user' ? userData.displayName : '小菊(Hinagiku)',
+						name: message.role === 'user' ? userData.displayName : deploymentConfig.siteTitle,
 						content: message.content,
 						self: message.role === 'user',
 						audio: message.audio || undefined

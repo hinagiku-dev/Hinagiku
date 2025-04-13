@@ -12,6 +12,7 @@
 	import { notifications } from '$lib/stores/notifications';
 	import * as m from '$lib/paraglide/messages';
 	import { i18n } from '$lib/i18n';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	let title = '';
 	let task = '';
@@ -132,7 +133,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.editTemplate()} | Hinagiku</title>
+	<title>{m.editTemplate()} | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 {#if template}

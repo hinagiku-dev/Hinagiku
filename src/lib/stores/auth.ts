@@ -53,7 +53,11 @@ export async function signInWithGoogle(url: string, origin?: string) {
 				const sessionPath = `${parsedUrl.pathname}${parsedUrl.search}`;
 
 				// Use SPA navigation to preserve client-side state
-				await goto(i18n.resolveRoute(sessionPath));
+				if (sessionPath.includes('/en/') || sessionPath.includes('/zh/')) {
+					await goto(i18n.resolveRoute(sessionPath.replace(/^\/(en|zh)\//, '/')));
+				} else {
+					await goto(i18n.resolveRoute(sessionPath));
+				}
 			} catch (error) {
 				// Fallback to original redirection if URL parsing fails
 				console.error('Error parsing session URL:', error);

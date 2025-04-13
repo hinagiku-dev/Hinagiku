@@ -7,6 +7,8 @@
 	import type { Template } from '$lib/schema/template';
 	import { page } from '$app/stores';
 	import TemplateCard from '$lib/components/TemplateCard.svelte';
+	import Title from '$lib/components/Title.svelte';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	// Query for public templates
 	let [templates, { unsubscribe }] = subscribeAll<Template>(
@@ -19,8 +21,11 @@
 </script>
 
 <svelte:head>
-	<title>Public Templates | Hinagiku</title>
+	<title>Public Templates | {deploymentConfig.siteTitle}</title>
+	<meta name="description" content="Browse public templates" />
 </svelte:head>
+
+<Title page="Public Templates" />
 
 <div class="container mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-8 flex items-center justify-between">

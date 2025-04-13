@@ -4,8 +4,11 @@
 	import { ArrowRight, Mic, Brain, GraduationCap, Github } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import * as m from '$lib/paraglide/messages.js';
+	import { base } from '$app/paths';
+	import { deploymentConfig } from '$lib/config/deployment';
+	import Title from '$lib/components/Title.svelte';
 
-	let title = $state('Hinagiku');
+	let title = $state(deploymentConfig.siteTitle);
 	let highlight = $state(0);
 
 	onMount(() => {
@@ -21,8 +24,10 @@
 	});
 </script>
 
+<Title page="Home" />
+
 <svelte:head>
-	<title>Home | Hinagiku</title>
+	<title>Home | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <main class="min-h-screen">
@@ -44,7 +49,7 @@
 						</span>
 					</h1>
 					<p class="mb-8 text-xl text-gray-600">
-						{m.intro()}
+						{m.intro({ title: deploymentConfig.siteTitle })}
 					</p>
 					<div class="flex gap-4">
 						{#if $user}
@@ -72,9 +77,11 @@
 	<div id="features" class="bg-white py-24">
 		<div class="mx-auto max-w-6xl px-4">
 			<div class="mb-16 text-center">
-				<h2 class="mb-4 text-3xl font-bold text-gray-900">{m.whyChoose()}</h2>
+				<h2 class="mb-4 text-3xl font-bold text-gray-900">
+					{m.whyChoose({ title: deploymentConfig.siteTitle })}
+				</h2>
 				<p class="mx-auto max-w-2xl text-xl text-gray-600">
-					{m.whyChooseDesc()}
+					{m.whyChooseDesc({ title: deploymentConfig.siteTitle })}
 				</p>
 			</div>
 
@@ -119,12 +126,12 @@
 	</div>
 
 	<!-- Workflow Section -->
-	<div class="bg-gradient-to-b from-white via-primary-50/30 to-white py-24">
+	<div class="via-primary-50/30 bg-gradient-to-b from-white to-white py-24">
 		<div class="mx-auto max-w-6xl px-4">
 			<div class="mb-16 text-center">
 				<h2 class="mb-4 text-3xl font-bold text-gray-900">{m.howItWorks()}</h2>
 				<p class="mx-auto max-w-2xl text-xl text-gray-600">
-					{m.howItWorksDesc()}
+					{m.howItWorksDesc({ title: deploymentConfig.siteTitle })}
 				</p>
 			</div>
 
@@ -176,7 +183,7 @@
 					</h2>
 					<div class="space-y-4 text-gray-600">
 						<p class="text-xl">
-							{m.communityDrivenDesc()}
+							{m.communityDrivenDesc({ title: deploymentConfig.siteTitle })}
 						</p>
 						<ul class="ml-6 list-disc space-y-3">
 							<li>{m.browseTemplates()}</li>
@@ -204,36 +211,33 @@
 	</div>
 
 	<!-- Story Behind Our Name section -->
-	<div class="bg-gradient-to-b from-white via-primary-50/30 to-white py-24">
-		<div class="mx-auto max-w-6xl px-4">
-			<div class="grid items-center gap-12 lg:grid-cols-2">
-				<div class="order-2 lg:order-1">
+	<section class="bg-white py-12 md:py-24">
+		<div class="container mx-auto max-w-5xl px-4">
+			<h2 class="mb-4 text-center text-3xl font-bold">{m.storyBehind()}</h2>
+			<p class="mb-8 text-center text-lg text-gray-600">
+				{m.storyBehindDesc({ title: deploymentConfig.siteTitle })}
+			</p>
+			<div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+				<div class="flex items-center">
 					<img
-						src="/daisy-illustration.webp"
-						alt="Hinagiku Daisy"
-						class="mx-auto max-w-md rounded-lg shadow-lg"
+						src="{base}/daisy-illustration.webp"
+						class="mx-auto max-w-full md:mx-0"
+						alt="{deploymentConfig.siteTitle} Daisy"
 					/>
 				</div>
-				<div class="order-1 lg:order-2">
-					<h2 class="mb-6 text-3xl font-bold text-gray-900">{m.storyBehind()}</h2>
-					<div class="space-y-4 text-gray-600">
-						<p>
-							<span class="font-semibold text-primary-600">Hinagiku (雛菊)</span>, {m.storyBehindDesc()}
-						</p>
-						<p>
-							{m.realTime()}
-						</p>
-						<p>
-							{m.coreValues()}
-						</p>
-						<p>
-							{m.mission()}
-						</p>
-					</div>
+				<div class="space-y-4">
+					<p>
+						<span class="font-semibold text-primary-600">{deploymentConfig.siteTitle} (雛菊)</span>, {m.storyBehindDesc(
+							{ title: deploymentConfig.siteTitle }
+						)}
+					</p>
+					<p>{m.realTime({ title: deploymentConfig.siteTitle })}</p>
+					<p>{m.coreValues({ title: deploymentConfig.siteTitle })}</p>
+					<p>{m.mission({ title: deploymentConfig.siteTitle })}</p>
 				</div>
 			</div>
 		</div>
-	</div>
+	</section>
 
 	<!-- GitHub Section -->
 	<div class="bg-white py-24">
@@ -241,7 +245,7 @@
 			<div class="text-center">
 				<h2 class="mb-4 text-3xl font-bold text-gray-900">{m.openSource()}</h2>
 				<p class="mx-auto mb-8 max-w-2xl text-xl text-gray-600">
-					{m.openSourceDesc()}
+					{m.openSourceDesc({ title: deploymentConfig.siteTitle })}
 				</p>
 				<Button
 					size="xl"

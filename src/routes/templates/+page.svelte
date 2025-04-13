@@ -7,6 +7,7 @@
 	import { subscribeAll } from '$lib/firebase/store';
 	import type { Template } from '$lib/schema/template';
 	import { user } from '$lib/stores/auth';
+	import { deploymentConfig } from '$lib/config/deployment';
 
 	// Query for user's templates
 	let [templates, { unsubscribe }] = subscribeAll<Template>(
@@ -23,7 +24,7 @@
 </script>
 
 <svelte:head>
-	<title>Your Templates | Hinagiku</title>
+	<title>Your Templates | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <div class="container mx-auto max-w-6xl px-4 py-16">
