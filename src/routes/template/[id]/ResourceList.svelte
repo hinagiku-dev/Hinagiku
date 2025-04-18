@@ -6,6 +6,8 @@
 	import type { Template } from '$lib/schema/template';
 	import { notifications } from '$lib/stores/notifications';
 	import { renderMarkdown } from '$lib/utils/renderMarkdown';
+	// Import paraglide messages
+	import * as m from '$lib/paraglide/messages.js';
 
 	// Constants
 	const LIMITS = {
@@ -49,15 +51,15 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to add resource');
+				notifications.error(data.error || m.resourceAddFailed());
 				return;
 			}
 
 			resetForm();
-			notifications.success('Resource added successfully');
+			notifications.success(m.resourceAdded());
 		} catch (e) {
 			console.error('Error adding resource:', e);
-			notifications.error('Failed to add resource');
+			notifications.error(m.resourceAddFailed());
 		}
 	}
 
@@ -70,14 +72,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to delete resource');
+				notifications.error(data.error || m.resourceDeleteFailed());
 				return;
 			}
 
-			notifications.success('Resource deleted successfully');
+			notifications.success(m.resourceDeleted());
 		} catch (e) {
 			console.error('Error deleting resource:', e);
-			notifications.error('Failed to delete resource');
+			notifications.error(m.resourceDeleteFailed());
 		}
 	}
 
@@ -90,7 +92,7 @@
 	async function processFileResource(file: File) {
 		try {
 			if (!isPDFFile(file)) {
-				notifications.error('Only PDF files are allowed');
+				notifications.error(m.onlyPdfAllowed());
 				return;
 			}
 
@@ -105,7 +107,7 @@
 			tempFile = file;
 			await addResource();
 		} catch (e) {
-			notifications.error('Failed to process file');
+			notifications.error(m.failedProcessFile());
 			console.error('Error processing file:', e);
 		} finally {
 			isUploading = false;
@@ -126,7 +128,7 @@
 		if (files?.length) {
 			if (!isPDFFile(files[0])) {
 				dragError = true;
-				notifications.error('Only PDF files are allowed');
+				notifications.error(m.onlyPdfAllowed());
 				return;
 			}
 			processFileResource(files[0]);
@@ -188,7 +190,9 @@
 	}
 </script>
 
-<h2 class="mb-4 text-xl font-semibold">Resource List ({resources.length}/{LIMITS.SOURCES})</h2>
+<h2 class="mb-4 text-xl font-semibold">
+	{m.resourcesCount({ count: resources.length, limit: LIMITS.SOURCES })}
+</h2>
 <div class="space-y-4">
 	{#if success}
 		<Alert color="green" class="mb-4">{success}</Alert>
@@ -208,7 +212,7 @@
 									download
 									target="_blank"
 									class="inline-flex items-center text-blue-600 hover:text-blue-800"
-									title="Open file"
+									title={m.openFile()}
 								>
 									<ExternalLink class="h-4 w-4" />
 								</a>
@@ -235,10 +239,10 @@
 								>
 									{#if expandedResources.has(resource.id)}
 										<ChevronUp class="mr-1 h-4 w-4" />
-										Show Less
+										{m.showLess()}
 									{:else}
 										<ChevronDown class="mr-1 h-4 w-4" />
-										Show More
+										{m.showMore()}
 									{/if}
 								</Button>
 							{/if}
@@ -267,7 +271,7 @@
 				>
 					<div class="flex flex-col items-center gap-2">
 						<FileText class="h-8 w-8" />
-						<span>Add Text Resource</span>
+						<span>{m.addTextResource()}</span>
 					</div>
 				</Button>
 				<Button
@@ -276,7 +280,7 @@
 				>
 					<div class="flex flex-col items-center gap-2">
 						<Upload class="h-8 w-8" />
-						<span>Upload File Resource</span>
+						<span>{m.uploadFileResource()}</span>
 					</div>
 				</Button>
 			</div>
@@ -299,16 +303,16 @@
 				{#if isUploading}
 					<div class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
 						<Spinner size="12" />
-						<span class="ml-2">Uploading...</span>
+						<span class="ml-2">{m.uploading()}</span>
 					</div>
 				{:else if isDragging}
 					<p class="text-center {dragError ? 'text-red-500' : 'text-blue-500'}">
-						{dragError ? 'Invalid file type. Only PDF files are allowed' : 'Drop PDF File Here'}
+						{dragError ? m.invalidFileType() : m.dropPdfHere()}
 					</p>
 				{:else}
 					<div class="text-center">
-						<p>Drop or Click to <br /> Upload PDF File</p>
-						<p class="mt-2 text-sm text-gray-500">(Only PDF files are allowed)</p>
+						<p>{m.dropClickUpload()}</p>
+						<p class="mt-2 text-sm text-gray-500">{m.onlyPdfNote()}</p>
 					</div>
 				{/if}
 				<input
@@ -320,46 +324,53 @@
 					disabled={isUploading}
 				/>
 			</div>
-			<Button color="alternative" on:click={resetForm} disabled={isUploading}>Back</Button>
+			<Button color="alternative" on:click={resetForm} disabled={isUploading}>
+				{m.back()}
+			</Button>
 
 			<!-- text state with text input area -->
 		{:else if uploadMode === 'text'}
 			<form on:submit|preventDefault={addResource} class="space-y-4">
 				<div>
-					<label for="name" class="mb-2 block">Name</label>
+					<label for="name" class="mb-2 block">{m.resourceNameLabel()}</label>
 					<Input
 						id="name"
 						bind:value={newResource.name}
 						on:input={handleNameInput}
 						required
-						placeholder="Resource name (limited to 100 characters)"
+						placeholder={m.resourceNamePlaceholder()}
 					/>
-					<p class="mt-1 text-sm text-gray-500">{newResource.name.length}/{LIMITS.NAME_LENGTH}</p>
+					<p class="mt-1 text-sm text-gray-500">
+						{m.characterCount({ current: newResource.name.length, limit: LIMITS.NAME_LENGTH })}
+					</p>
 				</div>
 
 				<div>
-					<label for="content" class="mb-2 block">Content</label>
+					<label for="content" class="mb-2 block">{m.resourceContentLabel()}</label>
 					<Textarea
 						id="content"
 						bind:value={newResource.content}
 						on:input={handleContentInput}
 						required
 						rows={4}
-						placeholder="Resource content (limited to 1000 characters)"
+						placeholder={m.resourceContentPlaceholder()}
 					/>
 					<p class="mt-1 text-sm text-gray-500">
-						{newResource.content.length}/{LIMITS.CONTENT_LENGTH}
+						{m.characterCount({
+							current: newResource.content.length,
+							limit: LIMITS.CONTENT_LENGTH
+						})}
 					</p>
 				</div>
 				<div class="flex gap-4">
-					<Button type="submit" color="primary">Add</Button>
-					<Button color="alternative" on:click={resetForm}>Back</Button>
+					<Button type="submit" color="primary">{m.add()}</Button>
+					<Button color="alternative" on:click={resetForm}>{m.back()}</Button>
 				</div>
 			</form>
 		{/if}
 	{:else}
 		<p class="font-style: mt-1 text-sm italic text-gray-500">
-			You can only add up to 10 resources.
+			{m.resourcesLimitReached()}
 		</p>
 	{/if}
 </div>

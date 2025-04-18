@@ -8,6 +8,10 @@
 	import type { Template } from '$lib/schema/template';
 	import { user } from '$lib/stores/auth';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import { createTemplate } from '../dashboard/createTemplate';
+	import { notifications } from '$lib/stores/notifications';
+	import { goto } from '$app/navigation';
+	import { i18n } from '$lib/i18n';
 
 	// Query for user's templates
 	let [templates, { unsubscribe }] = subscribeAll<Template>(
@@ -21,6 +25,41 @@
 	onDestroy(() => {
 		unsubscribe();
 	});
+
+	async function handleCreateTemplate() {
+		try {
+			const id = await createTemplate();
+			notifications.success('Template created successfully');
+			await goto(i18n.resolveRoute(`/template/${id}`));
+		} catch (error) {
+			console.error('Error creating template:', error);
+			notifications.error('Failed to create template');
+		}
+	}
+
+	async function startSession(id: string) {
+		try {
+			const res = await fetch('/api/session', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					templateId: id
+				})
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				notifications.error(data.error || 'Failed to create session');
+				return;
+			}
+
+			const data = await res.json();
+			await goto(i18n.resolveRoute(`/session/${data.sessionId}`));
+		} catch (e) {
+			console.error('Error creating session:', e);
+			notifications.error('Failed to create session');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -30,7 +69,7 @@
 <div class="container mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-8 flex items-center justify-between">
 		<h1 class="text-3xl font-bold text-gray-900">Your Templates</h1>
-		<Button href="/create" color="primary">Create Template</Button>
+		<Button onclick={handleCreateTemplate} color="primary">Create Template</Button>
 	</div>
 
 	<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -59,7 +98,7 @@
 						</div>
 						<div class="flex gap-2">
 							<Button href="/template/{doc.id}" class="flex-1">Edit</Button>
-							<Button href="/create/session/{doc.id}" color="alternative" class="flex-1">
+							<Button onclick={() => startSession(doc.id)} color="alternative" class="flex-1">
 								Create Session
 							</Button>
 						</div>
@@ -74,7 +113,7 @@
 					</div>
 					<p class="mb-2 text-lg font-medium text-gray-900">No templates created yet</p>
 					<p class="mb-4 text-gray-600">Create your first template to get started</p>
-					<Button href="/create" color="primary">Create Your First Template</Button>
+					<Button onclick={handleCreateTemplate} color="primary">Create Your First Template</Button>
 				</div>
 			</Card>
 		{/if}
