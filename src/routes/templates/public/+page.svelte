@@ -9,6 +9,10 @@
 	import TemplateCard from '$lib/components/TemplateCard.svelte';
 	import Title from '$lib/components/Title.svelte';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import { createTemplate } from '../../dashboard/createTemplate';
+	import { notifications } from '$lib/stores/notifications';
+	import { goto } from '$app/navigation';
+	import { i18n } from '$lib/i18n';
 
 	// Query for public templates
 	let [templates, { unsubscribe }] = subscribeAll<Template>(
@@ -18,6 +22,17 @@
 	onDestroy(() => {
 		unsubscribe();
 	});
+
+	async function handleCreateTemplate() {
+		try {
+			const id = await createTemplate();
+			notifications.success('Template created successfully');
+			await goto(i18n.resolveRoute(`/template/${id}`));
+		} catch (error) {
+			console.error('Error creating template:', error);
+			notifications.error('Failed to create template');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -31,7 +46,7 @@
 	<div class="mb-8 flex items-center justify-between">
 		<h1 class="text-3xl font-bold text-gray-900">Public Templates</h1>
 		{#if $page.data.user}
-			<Button href="/create" color="primary">Create Template</Button>
+			<Button onclick={handleCreateTemplate} color="primary">Create Template</Button>
 		{/if}
 	</div>
 
@@ -52,7 +67,7 @@
 				<div class="p-8 text-center">
 					<p class="mb-2 text-lg font-medium text-gray-900">No public templates available</p>
 					<p class="mb-4 text-gray-600">Be the first to share a template with the community</p>
-					<Button href="/create" color="primary">Create Template</Button>
+					<Button onclick={handleCreateTemplate} color="primary">Create Template</Button>
 				</div>
 			</Card>
 		{/if}
