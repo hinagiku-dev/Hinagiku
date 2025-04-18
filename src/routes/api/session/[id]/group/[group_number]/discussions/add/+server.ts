@@ -53,7 +53,8 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			});
 		});
 
-		const pattern = /嘿[\p{P}\s]*小[\p{P}\s]*菊/u;
+		const pattern =
+			/(?=.*(?:哈[\p{P}\p{Z}\p{So}]*囉|hello))(?=.*[小曉筱簫][\p{P}\p{Z}\p{So}]*[菊橘局])/iu;
 		if (content.match(pattern)) {
 			await adminDb.runTransaction(async (t) => {
 				const doc = await t.get(group_ref);
