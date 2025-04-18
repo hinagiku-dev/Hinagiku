@@ -112,23 +112,6 @@ export async function isOffTopic(history: LLMChatMessage[], topic: string, subta
 
 export async function containForeignLanguage(content: string) {
 	// Pre-process content to identify conversation format markers
-	const conversationMarkers = [
-		/以下是對話紀錄[：:].*/g,
-		/^user[:：]?\s*.*/gim,
-		/^assistant[:：]?\s*.*/gim,
-		/^system[:：]?\s*.*/gim,
-		/^對話紀錄[:：]?\s*.*/gim,
-		/^conversation history[:：]?\s*.*/gim
-	];
-
-	// Check if the content starts with any of these markers
-	let hasFormatMarkers = false;
-	for (const marker of conversationMarkers) {
-		if (marker.test(content)) {
-			hasFormatMarkers = true;
-			break;
-		}
-	}
 
 	const history = [
 		{
