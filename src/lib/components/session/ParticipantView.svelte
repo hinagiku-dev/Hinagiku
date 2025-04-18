@@ -672,8 +672,7 @@
 					<div class="space-y-4">
 						<div class="flex items-center justify-between">
 							<div class="flex items-center gap-2">
-								<span class="font-medium">Group </span>
-								<span class="text-lg">#{groupDoc.data.number}</span>
+								{m.groupIndicator({ number: groupDoc.data.number })}
 							</div>
 						</div>
 						<div>

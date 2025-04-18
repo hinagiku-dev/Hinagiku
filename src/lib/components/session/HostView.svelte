@@ -444,27 +444,27 @@
 
 	const stageButton = $derived({
 		preparing: {
-			text: 'Start Individual Stage',
+			text: m.startIndividualStage(),
 			action: handleStartSession,
 			show: true
 		},
 		individual: {
-			text: 'End Individual Stage',
+			text: m.endIndividualStage(),
 			action: handleEndIndividual,
 			show: true
 		},
 		'before-group': {
-			text: 'Start Group Stage',
+			text: m.startGroupStage(),
 			action: handleStartGroup,
 			show: true
 		},
 		group: {
-			text: 'End Group Stage',
+			text: m.endGroupStage(),
 			action: handleEndGroup,
 			show: true
 		},
 		ended: {
-			text: 'Session Ended',
+			text: m.sessionEnded(),
 			action: () => {
 				notifications.error('Already Ended', 3000);
 			},
