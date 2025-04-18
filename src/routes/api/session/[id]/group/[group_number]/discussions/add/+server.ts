@@ -31,10 +31,10 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		const { harmfulContent } = await isHarmfulContent(originalContent);
 
 		// Check for foreign language
-		const { containsForeignLanguage, revised_text } = await cleanForeignLanguage(originalContent);
+		const { containsForeignLanguage, revisedText } = await cleanForeignLanguage(originalContent);
 
 		// Use the cleaned content if foreign language is detected, otherwise use original
-		const content = containsForeignLanguage ? revised_text : originalContent;
+		const content = containsForeignLanguage ? revisedText : originalContent;
 
 		// Log if foreign language was detected and cleaned
 		if (containsForeignLanguage) {
