@@ -5,6 +5,7 @@ import {
 	CHAT_SUMMARY_PROMPT,
 	CONCEPT_SUMMARY_PROMPT,
 	DOCS_CONTEXT_SYSTEM_PROMPT,
+	FOREIGN_LANGUAGE_DETECTION_PROMPT,
 	GROUP_OPINION_SUMMARY_PROMPT,
 	HARMFUL_CONTENT_DETECTION_PROMPT,
 	HEY_HELP_PROMPT,
@@ -109,6 +110,75 @@ export async function isOffTopic(history: LLMChatMessage[], topic: string, subta
 	}
 }
 
+export async function containForeignLanguage(content: string) {
+	// Pre-process content to identify conversation format markers
+	const conversationMarkers = [
+		/以下是對話紀錄[：:].*/g,
+		/^user[:：]?\s*.*/gim,
+		/^assistant[:：]?\s*.*/gim,
+		/^system[:：]?\s*.*/gim,
+		/^對話紀錄[:：]?\s*.*/gim,
+		/^conversation history[:：]?\s*.*/gim
+	];
+
+	// Check if the content starts with any of these markers
+	let hasFormatMarkers = false;
+	for (const marker of conversationMarkers) {
+		if (marker.test(content)) {
+			hasFormatMarkers = true;
+			break;
+		}
+	}
+
+	const history = [
+		{
+			role: 'user' as const,
+			content: content
+		}
+	];
+
+	try {
+		const schema = z.object({
+			containsForeignLanguage: z.boolean(),
+			revised_text: z.string()
+		});
+
+		const { result } = await requestLLM(FOREIGN_LANGUAGE_DETECTION_PROMPT, history, schema, 0.1);
+		const parsed_result = schema.parse(result);
+
+		// Post-process the revised text to ensure formatting markers are removed
+		let revised_text = parsed_result.revised_text;
+
+		// Handle post-processing to make sure format markers are removed
+		if (hasFormatMarkers) {
+			// Remove common conversation format markers
+			revised_text = revised_text
+				.replace(/^以下是對話紀錄[：:].*/gim, '')
+				.replace(/^對話紀錄[:：]?\s*.*/gim, '')
+				.replace(/^conversation history[:：]?\s*.*/gim, '')
+				.replace(/^user[:：]?\s*.*/gim, '')
+				.replace(/^assistant[:：]?\s*.*/gim, '')
+				.replace(/^system[:：]?\s*.*/gim, '')
+				.trim();
+		}
+
+		return {
+			success: true,
+			containsForeignLanguage: parsed_result.containsForeignLanguage,
+			revised_text: normalizeText(revised_text),
+			error: ''
+		};
+	} catch (error) {
+		console.error('Error in containForeignLanguage:', error);
+		return {
+			success: false,
+			containsForeignLanguage: false,
+			revised_text: normalizeText(content),
+			error: 'Error in containForeignLanguage'
+		};
+	}
+}
+
 async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string[]) {
 	const formatted_history = history.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
 	const system_prompt = SUBTASKS_COMPLETED_PROMPT.replace(
@@ -193,9 +263,16 @@ export async function chatWithLLMByDocs(
 			typeof schema
 		>;
 
-		const normalized_response = `${normalizeText(affirmation)}\n\n${normalizeText(elaboration)}\n\n${normalizeText(
+		let normalized_response = `${normalizeText(affirmation)}\n\n${normalizeText(elaboration)}\n\n${normalizeText(
 			question
 		)}`;
+
+		// Check for foreign language in the response and replace if needed
+		const languageCheck = await containForeignLanguage(normalized_response);
+		if (languageCheck.success && languageCheck.containsForeignLanguage) {
+			console.log('Foreign language detected in LLM response, replacing with cleaned version');
+			normalized_response = languageCheck.revised_text;
+		}
 
 		return {
 			success: true,
@@ -231,10 +308,33 @@ export async function summarizeStudentChat(history: LLMChatMessage[]) {
 		const { result } = await requestLLM(CHAT_SUMMARY_PROMPT, history, schema, 0.9);
 		const parsed_result = schema.parse(result);
 
+		let summary = normalizeText(parsed_result.student_summary);
+		let key_points = parsed_result.student_key_points.map((point) => normalizeText(point));
+
+		// Check for foreign language in the summary and replace if needed
+		const summaryCheck = await containForeignLanguage(summary);
+		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
+			console.log('Foreign language detected in summary, replacing with cleaned version');
+			summary = summaryCheck.revised_text;
+		}
+
+		// Check for foreign language in each key point and replace if needed
+		const checkedKeyPoints = await Promise.all(
+			key_points.map(async (point) => {
+				const pointCheck = await containForeignLanguage(point);
+				if (pointCheck.success && pointCheck.containsForeignLanguage) {
+					console.log('Foreign language detected in key point, replacing with cleaned version');
+					return pointCheck.revised_text;
+				}
+				return point;
+			})
+		);
+		key_points = checkedKeyPoints;
+
 		return {
 			success: true,
-			summary: normalizeText(parsed_result.student_summary),
-			key_points: parsed_result.student_key_points.map((point) => normalizeText(point)),
+			summary: summary,
+			key_points: key_points,
 			error: ''
 		};
 	} catch (error) {
@@ -263,13 +363,58 @@ export async function summarizeConcepts(
 		});
 		const { result } = await requestLLM(CONCEPT_SUMMARY_PROMPT, history, schema, 0.9);
 		const parsed_result = schema.parse(result);
+
+		// Normalize the content
+		let similar_view_points = parsed_result.similar_view_points.map((point) =>
+			normalizeText(point)
+		);
+		let different_view_points = parsed_result.different_view_points.map((point) =>
+			normalizeText(point)
+		);
+		let students_summary = normalizeText(parsed_result.students_summary);
+
+		// Check for foreign language in the students_summary and replace if needed
+		const summaryCheck = await containForeignLanguage(students_summary);
+		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
+			console.log('Foreign language detected in students summary, replacing with cleaned version');
+			students_summary = summaryCheck.revised_text;
+		}
+
+		// Check for foreign language in each similar view point and replace if needed
+		const checkedSimilarPoints = await Promise.all(
+			similar_view_points.map(async (point) => {
+				const pointCheck = await containForeignLanguage(point);
+				if (pointCheck.success && pointCheck.containsForeignLanguage) {
+					console.log(
+						'Foreign language detected in similar view point, replacing with cleaned version'
+					);
+					return pointCheck.revised_text;
+				}
+				return point;
+			})
+		);
+		similar_view_points = checkedSimilarPoints;
+
+		// Check for foreign language in each different view point and replace if needed
+		const checkedDifferentPoints = await Promise.all(
+			different_view_points.map(async (point) => {
+				const pointCheck = await containForeignLanguage(point);
+				if (pointCheck.success && pointCheck.containsForeignLanguage) {
+					console.log(
+						'Foreign language detected in different view point, replacing with cleaned version'
+					);
+					return pointCheck.revised_text;
+				}
+				return point;
+			})
+		);
+		different_view_points = checkedDifferentPoints;
+
 		return {
 			success: true,
-			similar_view_points: parsed_result.similar_view_points.map((point) => normalizeText(point)),
-			different_view_points: parsed_result.different_view_points.map((point) =>
-				normalizeText(point)
-			),
-			students_summary: normalizeText(parsed_result.students_summary),
+			similar_view_points: similar_view_points,
+			different_view_points: different_view_points,
+			students_summary: students_summary,
 			error: ''
 		};
 	} catch (error) {
@@ -310,18 +455,35 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 		const { result } = await requestLLM(system_prompt, history, schema, 0.9);
 		const parsed_result = schema.parse(result);
 
-		const summary = parsed_result.group_summary;
-		const keywords = parsed_result.group_keywords.reduce(
-			(acc: Record<string, number>, keyword: { keyword: string; strength: number }) => ({
-				...acc,
-				[keyword.keyword]: keyword.strength
-			}),
-			{} as Record<string, number>
-		);
+		// Normalize summary
+		let summary = normalizeText(parsed_result.group_summary);
+
+		// Check for foreign language in the summary and replace if needed
+		const summaryCheck = await containForeignLanguage(summary);
+		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
+			console.log('Foreign language detected in group summary, replacing with cleaned version');
+			summary = summaryCheck.revised_text;
+		}
+
+		// Process and check keywords
+		const keywords: Record<string, number> = {};
+
+		// Check each keyword for foreign language
+		for (const keywordObj of parsed_result.group_keywords) {
+			let keyword = keywordObj.keyword;
+			const keywordCheck = await containForeignLanguage(keyword);
+
+			if (keywordCheck.success && keywordCheck.containsForeignLanguage) {
+				console.log('Foreign language detected in keyword, replacing with cleaned version');
+				keyword = keywordCheck.revised_text;
+			}
+
+			keywords[keyword] = keywordObj.strength;
+		}
 
 		return {
 			success: true,
-			summary: normalizeText(summary),
+			summary: summary,
 			keywords: keywords,
 			error: ''
 		};
@@ -375,9 +537,16 @@ export async function getHeyHelpMessage(
 			typeof schema
 		>;
 
-		const normalized_response = `${normalizeText(affirmation)}\n\n${normalizeText(elaboration)}\n\n${normalizeText(
+		let normalized_response = `${normalizeText(affirmation)}\n\n${normalizeText(elaboration)}\n\n${normalizeText(
 			question
 		)}`;
+
+		// Check for foreign language in the response and replace if needed
+		const languageCheck = await containForeignLanguage(normalized_response);
+		if (languageCheck.success && languageCheck.containsForeignLanguage) {
+			console.log('Foreign language detected in HeyHelp response, replacing with cleaned version');
+			normalized_response = languageCheck.revised_text;
+		}
 
 		return {
 			success: true,

@@ -1,6 +1,6 @@
 import type { Group } from '$lib/schema/group';
 import { adminDb, getGroupRef, getSessionData, getSessionRef } from '$lib/server/firebase';
-import { getHeyHelpMessage, isHarmfulContent } from '$lib/server/gemini';
+import { containForeignLanguage, getHeyHelpMessage, isHarmfulContent } from '$lib/server/gemini';
 import type { Discussion } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
@@ -25,8 +25,21 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 			throw error(400, 'Missing parameters');
 		}
 
-		const { content, speaker, audio } = await getRequestData(request);
-		const { harmfulContent } = await isHarmfulContent(content);
+		const { content: originalContent, speaker, audio } = await getRequestData(request);
+
+		// Check for harmful content
+		const { harmfulContent } = await isHarmfulContent(originalContent);
+
+		// Check for foreign language
+		const { containsForeignLanguage, revised_text } = await containForeignLanguage(originalContent);
+
+		// Use the cleaned content if foreign language is detected, otherwise use original
+		const content = containsForeignLanguage ? revised_text : originalContent;
+
+		// Log if foreign language was detected and cleaned
+		if (containsForeignLanguage) {
+			console.log('Foreign language detected in discussion content, using cleaned version');
+		}
 
 		const group_ref = getGroupRef(id, group_number);
 		await adminDb.runTransaction(async (t) => {
@@ -81,7 +94,13 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 				}
 			});
 		}
-		return json({ success: true }, { status: 200 });
+		return json(
+			{
+				success: true,
+				containedForeignLanguage: containsForeignLanguage
+			},
+			{ status: 200 }
+		);
 	} catch (error) {
 		console.error('Error adding discussion:', error);
 		return json({ error: 'Error adding discussion' }, { status: 500 });
