@@ -214,5 +214,9 @@
 	"view": "View",
 	"fork": "Fork",
 	"useTemplate": "Use Template",
-	"loginToFork": "Login to Fork"
+	"loginToFork": "Login to Fork",
+	"enableVADIndividual": "Enable Voice Activity Detection (Individual Stage)",
+	"enableVADHelpIndividual": "Voice Activity Detection for the individual stage - automatic detection of when you're speaking during individual tasks",
+	"enableVADGroup": "Enable Voice Activity Detection (Group Stage)",
+	"enableVADHelpGroup": "Voice Activity Detection for the group stage - automatic detection of when you're speaking during group discussions"
 }

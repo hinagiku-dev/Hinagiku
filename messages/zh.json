@@ -215,5 +215,9 @@
 	"view": "查看",
 	"fork": "使用此模板",
 	"useTemplate": "使用模板",
-	"loginToFork": "登入以使用此模板"
+	"loginToFork": "登入以使用此模板",
+	"enableVADIndividual": "啟用語音活動檢測（個人階段）",
+	"enableVADHelpIndividual": "個人階段的語音活動檢測 - 在個人任務期間自動檢測您何時在說話",
+	"enableVADGroup": "啟用語音活動檢測（群組階段）",
+	"enableVADHelpGroup": "群組階段的語音活動檢測 - 在群組討論期間自動檢測您何時在說話"
 }

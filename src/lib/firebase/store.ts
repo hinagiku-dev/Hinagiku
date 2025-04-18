@@ -6,6 +6,7 @@ import {
 	type QueryDocumentSnapshot
 } from 'firebase/firestore';
 import { writable, type Readable } from 'svelte/store';
+import type { z } from 'zod';
 
 const log = debug('app:store');
 
@@ -47,7 +48,8 @@ export function subscribeAll<T = unknown>(
 
 export function subscribe<T = unknown>(
 	ref: DocumentReference,
-	store = writable<T | null>(null)
+	store = writable<T | null>(null),
+	schema?: z.ZodType<T>
 ): DocumentStore<T> {
 	log('subscribe', ref.path);
 
@@ -56,7 +58,17 @@ export function subscribe<T = unknown>(
 		(snapshot) => {
 			const data = (snapshot.data() as T) ?? null;
 			log('onSnapshot', ref.path, data);
-			store.set(data);
+			if (schema) {
+				const parseResult = schema.safeParse(data);
+				if (!parseResult.success) {
+					log('onSnapshot:error', ref.path, parseResult.error);
+					store.set(null);
+					return;
+				}
+				store.set(parseResult.data);
+			} else {
+				store.set(data);
+			}
 		},
 		(error) => {
 			log('onSnapshot:error', ref.path, error);

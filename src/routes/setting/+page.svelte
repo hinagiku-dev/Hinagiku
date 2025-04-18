@@ -10,13 +10,15 @@
 	let success = $state<boolean | null>(null);
 	let error = $state<string | null>(null);
 
-	let enableVAD = $state(false);
+	let enableVADIndividual = $state(false);
+	let enableVADGroup = $state(true);
 
 	onMount(() => {
 		const unsubscribe = setting.subscribe((value) => {
 			console.log('setting', value);
 			if (value) {
-				enableVAD = value.enableVAD || false;
+				enableVADIndividual = value.enableVADIndividual ?? false;
+				enableVADGroup = value.enableVADGroup ?? true;
 			}
 		});
 
@@ -35,7 +37,8 @@
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					enableVAD
+					enableVADIndividual,
+					enableVADGroup
 				})
 			});
 
@@ -90,11 +93,33 @@
 			<div class="space-y-6">
 				<div>
 					<div class="flex items-center justify-between">
-						<Label for="enableVAD" class="mb-0">{m.enableVAD()}</Label>
-						<Toggle id="enableVAD" bind:checked={enableVAD} />
+						<Label for="enableVADIndividual" class="mb-0"
+							>{m.enableVADIndividual
+								? m.enableVADIndividual()
+								: 'Enable Voice Activity Detection (Individual Stage)'}</Label
+						>
+						<Toggle id="enableVADIndividual" bind:checked={enableVADIndividual} />
 					</div>
 					<p class="mt-2 text-sm text-gray-600">
-						{m.enableVADHelp()}
+						{m.enableVADHelpIndividual
+							? m.enableVADHelpIndividual()
+							: "Voice Activity Detection for the individual stage - automatic detection of when you're speaking during individual tasks"}
+					</p>
+				</div>
+
+				<div>
+					<div class="flex items-center justify-between">
+						<Label for="enableVADGroup" class="mb-0"
+							>{m.enableVADGroup
+								? m.enableVADGroup()
+								: 'Enable Voice Activity Detection (Group Stage)'}</Label
+						>
+						<Toggle id="enableVADGroup" bind:checked={enableVADGroup} />
+					</div>
+					<p class="mt-2 text-sm text-gray-600">
+						{m.enableVADHelpGroup
+							? m.enableVADHelpGroup()
+							: "Voice Activity Detection for the group stage - automatic detection of when you're speaking during group discussions"}
 					</p>
 				</div>
 
