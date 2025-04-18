@@ -252,6 +252,8 @@ export async function chatWithLLMByDocs(
 		const languageCheck = await cleanForeignLanguage(normalized_response);
 		if (languageCheck.success && languageCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in LLM response, replacing with cleaned version');
+			normalized_response = languageCheck.revisedText;
+			console.log(normalized_response);
 		}
 
 		return {
