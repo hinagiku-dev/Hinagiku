@@ -204,6 +204,6 @@ export const FOREIGN_LANGUAGE_DETECTION_PROMPT = `\
 
 請回傳：
 1. containsForeignLanguage：一個布林值，如果包含英文和繁體中文以外的語言，則為 true，否則為 false。
-2. revised_text：如果包含外語，則提供修改後的文本（不包含對話格式標記）；如果沒有，則返回原文本但也應移除對話格式標記。
-
+2. revisedText：如果包含外語，則提供修改後的文本（不包含對話格式標記）；如果沒有，則返回原文本但也應移除對話格式標記。
+注意，須保持原本分段格式，需保留"\n\n"，不要改變原本的段落。
 `;

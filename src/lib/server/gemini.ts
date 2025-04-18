@@ -123,18 +123,18 @@ export async function cleanForeignLanguage(content: string) {
 	try {
 		const schema = z.object({
 			containsForeignLanguage: z.boolean(),
-			revised_text: z.string()
+			revisedText: z.string()
 		});
 
 		const { result } = await requestLLM(FOREIGN_LANGUAGE_DETECTION_PROMPT, history, schema, 0.1);
 		const parsed_result = schema.parse(result);
 
 		// Post-process the revised text to ensure formatting markers are removed
-		let revised_text = parsed_result.revised_text;
+		let revisedText = parsed_result.revisedText;
 
 		// Handle post-processing to make sure format markers are removed
 		// Remove common conversation format markers unconditionally
-		revised_text = revised_text
+		revisedText = revisedText
 			.replace(/^以下是對話紀錄[：:].*/gim, '')
 			.replace(/^對話紀錄[:：]?\s*.*/gim, '')
 			.replace(/^conversation history[:：]?\s*.*/gim, '')
@@ -146,7 +146,7 @@ export async function cleanForeignLanguage(content: string) {
 		return {
 			success: true,
 			containsForeignLanguage: parsed_result.containsForeignLanguage,
-			revised_text: normalizeText(revised_text),
+			revisedText: revisedText,
 			error: ''
 		};
 	} catch (error) {
@@ -154,7 +154,7 @@ export async function cleanForeignLanguage(content: string) {
 		return {
 			success: false,
 			containsForeignLanguage: false,
-			revised_text: normalizeText(content),
+			revisedText: content,
 			error: 'Error in containForeignLanguage'
 		};
 	}
@@ -252,7 +252,8 @@ export async function chatWithLLMByDocs(
 		const languageCheck = await cleanForeignLanguage(normalized_response);
 		if (languageCheck.success && languageCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in LLM response, replacing with cleaned version');
-			normalized_response = languageCheck.revised_text;
+			normalized_response = languageCheck.revisedText;
+			console.log(normalized_response);
 		}
 
 		return {
@@ -296,7 +297,7 @@ export async function summarizeStudentChat(history: LLMChatMessage[]) {
 		const summaryCheck = await cleanForeignLanguage(summary);
 		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in summary, replacing with cleaned version');
-			summary = summaryCheck.revised_text;
+			summary = summaryCheck.revisedText;
 		}
 
 		// Check for foreign language in each key point and replace if needed
@@ -305,7 +306,7 @@ export async function summarizeStudentChat(history: LLMChatMessage[]) {
 				const pointCheck = await cleanForeignLanguage(point);
 				if (pointCheck.success && pointCheck.containsForeignLanguage) {
 					console.log('Foreign language detected in key point, replacing with cleaned version');
-					return pointCheck.revised_text;
+					return pointCheck.revisedText;
 				}
 				return point;
 			})
@@ -358,7 +359,7 @@ export async function summarizeConcepts(
 		const summaryCheck = await cleanForeignLanguage(students_summary);
 		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in students summary, replacing with cleaned version');
-			students_summary = summaryCheck.revised_text;
+			students_summary = summaryCheck.revisedText;
 		}
 
 		// Check for foreign language in each similar view point and replace if needed
@@ -369,7 +370,7 @@ export async function summarizeConcepts(
 					console.log(
 						'Foreign language detected in similar view point, replacing with cleaned version'
 					);
-					return pointCheck.revised_text;
+					return pointCheck.revisedText;
 				}
 				return point;
 			})
@@ -384,7 +385,7 @@ export async function summarizeConcepts(
 					console.log(
 						'Foreign language detected in different view point, replacing with cleaned version'
 					);
-					return pointCheck.revised_text;
+					return pointCheck.revisedText;
 				}
 				return point;
 			})
@@ -443,7 +444,7 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 		const summaryCheck = await cleanForeignLanguage(summary);
 		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in group summary, replacing with cleaned version');
-			summary = summaryCheck.revised_text;
+			summary = summaryCheck.revisedText;
 		}
 
 		// Process and check keywords
@@ -456,7 +457,7 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 
 			if (keywordCheck.success && keywordCheck.containsForeignLanguage) {
 				console.log('Foreign language detected in keyword, replacing with cleaned version');
-				keyword = keywordCheck.revised_text;
+				keyword = keywordCheck.revisedText;
 			}
 
 			keywords[keyword] = keywordObj.strength;
@@ -526,7 +527,7 @@ export async function getHeyHelpMessage(
 		const languageCheck = await cleanForeignLanguage(normalized_response);
 		if (languageCheck.success && languageCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in HeyHelp response, replacing with cleaned version');
-			normalized_response = languageCheck.revised_text;
+			normalized_response = languageCheck.revisedText;
 		}
 
 		return {
