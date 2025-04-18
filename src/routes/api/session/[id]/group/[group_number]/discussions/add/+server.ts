@@ -1,6 +1,6 @@
 import type { Group } from '$lib/schema/group';
 import { adminDb, getGroupRef, getSessionData, getSessionRef } from '$lib/server/firebase';
-import { containForeignLanguage, getHeyHelpMessage, isHarmfulContent } from '$lib/server/gemini';
+import { cleanForeignLanguage, getHeyHelpMessage, isHarmfulContent } from '$lib/server/gemini';
 import type { Discussion } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
@@ -31,7 +31,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		const { harmfulContent } = await isHarmfulContent(originalContent);
 
 		// Check for foreign language
-		const { containsForeignLanguage, revised_text } = await containForeignLanguage(originalContent);
+		const { containsForeignLanguage, revised_text } = await cleanForeignLanguage(originalContent);
 
 		// Use the cleaned content if foreign language is detected, otherwise use original
 		const content = containsForeignLanguage ? revised_text : originalContent;

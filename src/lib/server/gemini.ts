@@ -110,7 +110,7 @@ export async function isOffTopic(history: LLMChatMessage[], topic: string, subta
 	}
 }
 
-export async function containForeignLanguage(content: string) {
+export async function cleanForeignLanguage(content: string) {
 	// Pre-process content to identify conversation format markers
 
 	const history = [
@@ -249,7 +249,7 @@ export async function chatWithLLMByDocs(
 		)}`;
 
 		// Check for foreign language in the response and replace if needed
-		const languageCheck = await containForeignLanguage(normalized_response);
+		const languageCheck = await cleanForeignLanguage(normalized_response);
 		if (languageCheck.success && languageCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in LLM response, replacing with cleaned version');
 			normalized_response = languageCheck.revised_text;
@@ -293,7 +293,7 @@ export async function summarizeStudentChat(history: LLMChatMessage[]) {
 		let key_points = parsed_result.student_key_points.map((point) => normalizeText(point));
 
 		// Check for foreign language in the summary and replace if needed
-		const summaryCheck = await containForeignLanguage(summary);
+		const summaryCheck = await cleanForeignLanguage(summary);
 		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in summary, replacing with cleaned version');
 			summary = summaryCheck.revised_text;
@@ -302,7 +302,7 @@ export async function summarizeStudentChat(history: LLMChatMessage[]) {
 		// Check for foreign language in each key point and replace if needed
 		const checkedKeyPoints = await Promise.all(
 			key_points.map(async (point) => {
-				const pointCheck = await containForeignLanguage(point);
+				const pointCheck = await cleanForeignLanguage(point);
 				if (pointCheck.success && pointCheck.containsForeignLanguage) {
 					console.log('Foreign language detected in key point, replacing with cleaned version');
 					return pointCheck.revised_text;
@@ -355,7 +355,7 @@ export async function summarizeConcepts(
 		let students_summary = normalizeText(parsed_result.students_summary);
 
 		// Check for foreign language in the students_summary and replace if needed
-		const summaryCheck = await containForeignLanguage(students_summary);
+		const summaryCheck = await cleanForeignLanguage(students_summary);
 		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in students summary, replacing with cleaned version');
 			students_summary = summaryCheck.revised_text;
@@ -364,7 +364,7 @@ export async function summarizeConcepts(
 		// Check for foreign language in each similar view point and replace if needed
 		const checkedSimilarPoints = await Promise.all(
 			similar_view_points.map(async (point) => {
-				const pointCheck = await containForeignLanguage(point);
+				const pointCheck = await cleanForeignLanguage(point);
 				if (pointCheck.success && pointCheck.containsForeignLanguage) {
 					console.log(
 						'Foreign language detected in similar view point, replacing with cleaned version'
@@ -379,7 +379,7 @@ export async function summarizeConcepts(
 		// Check for foreign language in each different view point and replace if needed
 		const checkedDifferentPoints = await Promise.all(
 			different_view_points.map(async (point) => {
-				const pointCheck = await containForeignLanguage(point);
+				const pointCheck = await cleanForeignLanguage(point);
 				if (pointCheck.success && pointCheck.containsForeignLanguage) {
 					console.log(
 						'Foreign language detected in different view point, replacing with cleaned version'
@@ -440,7 +440,7 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 		let summary = normalizeText(parsed_result.group_summary);
 
 		// Check for foreign language in the summary and replace if needed
-		const summaryCheck = await containForeignLanguage(summary);
+		const summaryCheck = await cleanForeignLanguage(summary);
 		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in group summary, replacing with cleaned version');
 			summary = summaryCheck.revised_text;
@@ -452,7 +452,7 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 		// Check each keyword for foreign language
 		for (const keywordObj of parsed_result.group_keywords) {
 			let keyword = keywordObj.keyword;
-			const keywordCheck = await containForeignLanguage(keyword);
+			const keywordCheck = await cleanForeignLanguage(keyword);
 
 			if (keywordCheck.success && keywordCheck.containsForeignLanguage) {
 				console.log('Foreign language detected in keyword, replacing with cleaned version');
@@ -523,7 +523,7 @@ export async function getHeyHelpMessage(
 		)}`;
 
 		// Check for foreign language in the response and replace if needed
-		const languageCheck = await containForeignLanguage(normalized_response);
+		const languageCheck = await cleanForeignLanguage(normalized_response);
 		if (languageCheck.success && languageCheck.containsForeignLanguage) {
 			console.log('Foreign language detected in HeyHelp response, replacing with cleaned version');
 			normalized_response = languageCheck.revised_text;
