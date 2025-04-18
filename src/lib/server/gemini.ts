@@ -150,17 +150,15 @@ export async function containForeignLanguage(content: string) {
 		let revised_text = parsed_result.revised_text;
 
 		// Handle post-processing to make sure format markers are removed
-		if (hasFormatMarkers) {
-			// Remove common conversation format markers
-			revised_text = revised_text
-				.replace(/^以下是對話紀錄[：:].*/gim, '')
-				.replace(/^對話紀錄[:：]?\s*.*/gim, '')
-				.replace(/^conversation history[:：]?\s*.*/gim, '')
-				.replace(/^user[:：]?\s*.*/gim, '')
-				.replace(/^assistant[:：]?\s*.*/gim, '')
-				.replace(/^system[:：]?\s*.*/gim, '')
-				.trim();
-		}
+		// Remove common conversation format markers unconditionally
+		revised_text = revised_text
+			.replace(/^以下是對話紀錄[：:].*/gim, '')
+			.replace(/^對話紀錄[:：]?\s*.*/gim, '')
+			.replace(/^conversation history[:：]?\s*.*/gim, '')
+			.replace(/^user[:：]?\s*.*/gim, '')
+			.replace(/^assistant[:：]?\s*.*/gim, '')
+			.replace(/^system[:：]?\s*.*/gim, '')
+			.trim();
 
 		return {
 			success: true,
