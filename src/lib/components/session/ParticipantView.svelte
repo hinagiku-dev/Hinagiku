@@ -279,10 +279,15 @@
 	}: {
 		onMessage: (content: string, audio: string) => Promise<void>;
 	}) {
+		console.log($session, $setting);
 		const vad = await MicVAD.new({
 			model: 'v5',
 			minSpeechFrames: 16, // 0.5s
-			redemptionFrames: $setting?.enableVAD ? 32 : 3200, // 1s if VAD is enabled, 100s if not
+			redemptionFrames: (
+				$session?.status === 'individual' ? $setting?.enableVADIndividual : $setting?.enableVADGroup
+			)
+				? 32 // 1s if VAD is enabled
+				: 3200, // 100s if not enabled
 			onSpeechEnd: async (audio: Float32Array) => {
 				await pInitFFmpeg;
 				console.log('Audio recorded:', audio);
@@ -311,6 +316,7 @@
 			vad.destroy();
 		};
 	}
+
 	async function handleRecord() {
 		if (!conversationDoc || !groupDoc) {
 			notifications.error('No group or conversation found');
