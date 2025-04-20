@@ -201,7 +201,7 @@ export const FOREIGN_LANGUAGE_DETECTION_PROMPT = `\
 "你提到了 espresso、donut 和 cappuccino，這些都是很棒的甜點和飲品選擇！"
 而不是
 "以下是對話紀錄：user: 你提到了 espresso、donut 和 cappuccino，這些都是很棒的甜點和飲品選擇！"
-
+再次提醒:請不要翻譯繁體中文或英文，只翻譯中英文以外的其他語言
 請回傳：
 1. containsForeignLanguage：一個布林值，如果包含英文和繁體中文以外的語言，則為 true，否則為 false。
 2. revisedText：如果包含外語，則提供修改後的文本（不包含對話格式標記）；如果沒有，則返回原文本但也應移除對話格式標記。

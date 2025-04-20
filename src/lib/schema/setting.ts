@@ -5,7 +5,8 @@ export const route = (uid: string) => `/settings/${uid}`;
 
 export const SettingSchema = z.object({
 	updatedAt: Timestamp,
-	enableVAD: z.boolean().optional()
+	enableVADIndividual: z.boolean().default(false),
+	enableVADGroup: z.boolean().default(true)
 });
 
 export type Setting = z.infer<typeof SettingSchema>;
