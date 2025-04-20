@@ -27,7 +27,7 @@
 		<div class="grid grid-cols-1 gap-8 md:grid-cols-2">
 			{#each groups as group, index}
 				<div class="group mb-8">
-					<h3 class="mb-4 text-2xl font-semibold">Group #{index + 1}</h3>
+					<h3 class="mb-4 text-2xl font-semibold">{m.groupIndicator({ number: index + 1 })}</h3>
 					{#if group.participants.length === 0}
 						<Alert color="blue">{m.noParticipantsInGroup()}</Alert>
 					{:else}

@@ -224,7 +224,9 @@
 							<p class="mb-4 text-gray-600">
 								{m.createFirstTemplate()}
 							</p>
-							<Button href="/create" class="w-full">{m.createTemplateButton()}</Button>
+							<Button onclick={handleCreateTemplate} class="w-full"
+								>{m.createTemplateButton()}</Button
+							>
 						</div>
 					</Card>
 				{/each}
