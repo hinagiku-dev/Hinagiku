@@ -1,5 +1,6 @@
 import { adminDb } from '$lib/server/firebase';
 import { json } from '@sveltejs/kit';
+import { Timestamp } from 'firebase-admin/firestore';
 import type { RequestHandler } from './$types';
 
 /**
@@ -50,7 +51,7 @@ export const PUT: RequestHandler = async ({ request, params, locals }) => {
 			announcement: {
 				message: active ? message : '',
 				active: !!active,
-				timestamp: new Date()
+				timestamp: Timestamp.fromDate(new Date())
 			}
 		});
 
