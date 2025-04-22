@@ -7,7 +7,6 @@
 	import { onMount, setContext } from 'svelte';
 	import { writable } from 'svelte/store';
 	import { announcement } from '$lib/stores/announcement';
-	import { browser } from '$app/environment';
 	import DvdAnnouncement from '$lib/components/session/DvdAnnouncement.svelte';
 
 	let { children } = $props();
@@ -22,31 +21,30 @@
 	const session = writable<Session | null>(null);
 	setContext('session', session);
 
-	// Listen for announcement changes
+	// Listen for session updates
 	onMount(() => {
-		if (!browser) return;
-
+		// Subscribe to Firestore updates once
 		const [, { unsubscribe: sessionUnsubscribe }] = subscribe<Session>(ref, session);
-
-		// Set up a real-time listener for announcements
-		let announcementUnsubscribe = () => {};
-
-		// Listen for session updates and handle announcements
-		const unsubSessionAnnouncement = session.subscribe((sessionData) => {
-			currentSessionData = sessionData;
-
-			if (sessionData?.announcement?.active) {
-				announcement.broadcast(sessionData.announcement.message);
-			} else {
-				announcement.cancel();
-			}
-		});
 
 		return () => {
 			sessionUnsubscribe();
-			unsubSessionAnnouncement();
-			announcementUnsubscribe();
 		};
+	});
+
+	// Use $effect to handle announcements based on session data
+	$effect(() => {
+		// Access session data using $ prefix (reactive subscription)
+		const sessionData = $session;
+
+		// Update our local session data
+		currentSessionData = sessionData;
+
+		// Handle announcement state changes
+		if (sessionData?.announcement?.active) {
+			announcement.broadcast(sessionData.announcement.message);
+		} else {
+			announcement.cancel();
+		}
 	});
 </script>
 

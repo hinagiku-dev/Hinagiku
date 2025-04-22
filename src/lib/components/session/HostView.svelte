@@ -617,7 +617,7 @@
 		try {
 			isBroadcasting = true;
 			const response = await fetch(`/api/session/${$page.params.id}/announcement`, {
-				method: 'POST',
+				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json'
 				},
@@ -645,7 +645,7 @@
 	async function cancelAnnouncement() {
 		try {
 			const response = await fetch(`/api/session/${$page.params.id}/announcement`, {
-				method: 'POST',
+				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json'
 				},
