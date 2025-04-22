@@ -29,7 +29,15 @@ export const SessionSchema = z.object({
 		})
 		.optional()
 		.default({ autoGroup: true }),
-	waitlist: z.array(z.string()).default([])
+	waitlist: z.array(z.string()).default([]),
+	announcement: z
+		.object({
+			message: z.string(),
+			active: z.boolean(),
+			timestamp: Timestamp
+		})
+		.optional()
+		.nullable()
 });
 
 export type Session = z.infer<typeof SessionSchema>;
