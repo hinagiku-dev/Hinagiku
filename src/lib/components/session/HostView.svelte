@@ -658,6 +658,8 @@
 			if (response.ok) {
 				// Cancel local announcement for the host
 				announcement.cancel();
+				// Clear the announcement input field
+				announcementMessage = '';
 				notifications.success(m.announcementCancelled());
 			} else {
 				const data = await response.json();
@@ -704,12 +706,12 @@
 				<Input
 					type="text"
 					placeholder={m.enterAnnouncement()}
-					class="min-w-64"
+					class="flex-1 text-sm"
 					bind:value={announcementMessage}
 				/>
 				<Button
 					color="primary"
-					class="flex items-center gap-2"
+					class="flex items-center gap-2 whitespace-nowrap"
 					on:click={broadcastAnnouncement}
 					disabled={isBroadcasting || !announcementMessage.trim()}
 				>
@@ -718,6 +720,7 @@
 				</Button>
 				<Button
 					color="red"
+					class="whitespace-nowrap"
 					on:click={cancelAnnouncement}
 					disabled={!$session?.announcement?.active}
 				>

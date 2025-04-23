@@ -8,6 +8,7 @@
 	import { writable } from 'svelte/store';
 	import { announcement } from '$lib/stores/announcement';
 	import DvdAnnouncement from '$lib/components/session/DvdAnnouncement.svelte';
+	import { browser } from '$app/environment';
 
 	let { children } = $props();
 
@@ -15,25 +16,33 @@
 	const sessionId = page.params.id;
 	const ref = doc(db, route(sessionId));
 
+	// State to track if announcement should be shown
+	let showAnnouncement = $state(false);
+
 	const session = writable<Session | null>(null);
 	setContext('session', session);
 
 	// Listen for session updates
 	onMount(() => {
-		// Subscribe to Firestore updates once
-		const [, { unsubscribe: sessionUnsubscribe }] = subscribe<Session>(ref, session);
+		// Subscribe to Firestore updates
+		const [, { unsubscribe }] = subscribe<Session>(ref, session);
 
 		return () => {
-			sessionUnsubscribe();
+			unsubscribe();
 		};
 	});
 
-	// Use $effect to handle announcements based on session data
+	// Monitor session data for announcement changes
 	$effect(() => {
-		// Access session data using $ prefix (reactive subscription)
+		if (!browser) return;
+
+		// Get the latest session data
 		const sessionData = $session;
 
-		// Handle announcement state changes
+		// Check if we should show the announcement
+		showAnnouncement = Boolean(sessionData?.announcement?.active) && announcement.shouldShow();
+
+		// Update announcement store with the latest data
 		if (sessionData?.announcement?.active) {
 			announcement.broadcast(sessionData.announcement.message);
 		} else {
@@ -42,6 +51,8 @@
 	});
 </script>
 
-<DvdAnnouncement />
+{#if showAnnouncement}
+	<DvdAnnouncement />
+{/if}
 
 {@render children()}
