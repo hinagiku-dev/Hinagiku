@@ -716,7 +716,11 @@
 					<MessageSquarePlus class="h-4 w-4" />
 					{m.broadcast()}
 				</Button>
-				<Button color="red" on:click={cancelAnnouncement}>
+				<Button
+					color="red"
+					on:click={cancelAnnouncement}
+					disabled={!$session?.announcement?.active}
+				>
 					{m.cancelBroadcast()}
 				</Button>
 			</div>

@@ -11,9 +11,6 @@
 
 	let { children } = $props();
 
-	// Use proper typing for state variables
-	let currentSessionData: Session | null = $state(null);
-
 	// Get session ID directly from page data
 	const sessionId = page.params.id;
 	const ref = doc(db, route(sessionId));
@@ -36,9 +33,6 @@
 		// Access session data using $ prefix (reactive subscription)
 		const sessionData = $session;
 
-		// Update our local session data
-		currentSessionData = sessionData;
-
 		// Handle announcement state changes
 		if (sessionData?.announcement?.active) {
 			announcement.broadcast(sessionData.announcement.message);
@@ -48,6 +42,6 @@
 	});
 </script>
 
-<DvdAnnouncement sessionData={currentSessionData} hostId={currentSessionData?.host} />
+<DvdAnnouncement />
 
 {@render children()}

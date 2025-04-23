@@ -3,43 +3,34 @@
 	import { announcement, type Announcement } from '$lib/stores/announcement';
 	import { fly } from 'svelte/transition';
 	import { X } from 'lucide-svelte';
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 	import { getContext } from 'svelte';
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
 	import { user as authUser } from '$lib/stores/auth';
 	import { page } from '$app/state';
 	import debug from 'debug';
-	import { env } from '$env/dynamic/public';
 
 	// Create debugger with namespace
 	const log = debug('app:dvdAnnouncement');
 
 	// Enable debug in development only
-	if (browser && env.PUBLIC_NODE_ENV === 'development') {
+	if (browser && dev) {
 		debug.enable('app:dvdAnnouncement');
 	}
 
-	// Optional props for direct passing of session data
-	let { sessionData = null, hostId = null } = $props<{
-		sessionData?: Session | null;
-		hostId?: string | null;
-	}>();
-
-	// Try multiple ways to get session context
-	const sessionFromContext = getContext<Readable<Session>>('session');
-	const session = sessionFromContext || null;
+	// Get session from context - single source of truth
+	const session = getContext<Readable<Session>>('session');
+	if (!session) {
+		log('WARNING: No session context found');
+	}
 
 	let isHost = $state(false);
 	let currentUserId = '';
 
 	// Handle host detection within onMount
 	onMount(() => {
-		if (!browser) return;
-
 		log('DEBUG: Component mounted, checking for session data');
-		log('DEBUG: Direct sessionData prop:', sessionData);
-		log('DEBUG: Context session:', session);
 
 		// Get user ID from auth store
 		const userUnsubscribe = authUser.subscribe((user) => {
@@ -47,24 +38,8 @@
 				currentUserId = user.uid;
 				log('DEBUG: Auth user detected, userId =', currentUserId);
 
-				// If we have direct hostId, use it first
-				if (hostId) {
-					isHost = hostId === currentUserId;
-					log('DEBUG: Using direct hostId, isHost =', isHost);
-				} else {
-					// Otherwise try to get from session
-					checkHostStatus();
-				}
-
-				// Fallback - check using page data directly
-				if (!isHost && browser) {
-					// Access page data directly, not as a store
-					const pageHostId = page.data?.session?.host;
-					if (pageHostId) {
-						isHost = pageHostId === currentUserId;
-						log('DEBUG: Used page data fallback, isHost =', isHost);
-					}
-				}
+				// Check if user is host based on session data
+				checkHostStatus();
 			}
 		});
 
@@ -75,14 +50,6 @@
 	function checkHostStatus() {
 		log('DEBUG: checkHostStatus() called, currentUserId =', currentUserId);
 
-		// Try direct props first
-		if (sessionData?.host) {
-			log('DEBUG: Using direct sessionData from props');
-			isHost = sessionData.host === currentUserId;
-			log('DEBUG: Host check from props result:', isHost);
-			return;
-		}
-
 		if (!session || !currentUserId) {
 			log(
 				'DEBUG: Missing session or userId, session exists =',
@@ -90,6 +57,15 @@
 				'userId =',
 				currentUserId
 			);
+
+			// Fallback - check using page data directly
+			if (browser) {
+				const pageHostId = page.data?.session?.host;
+				if (pageHostId) {
+					isHost = pageHostId === currentUserId;
+					log('DEBUG: Used page data fallback, isHost =', isHost);
+				}
+			}
 			return;
 		}
 
@@ -154,10 +130,7 @@
 				}, 100);
 			}
 		}
-	});
-
-	onDestroy(() => {
-		announcementUnsubscribe();
+		return () => announcementUnsubscribe();
 	});
 
 	let xSpeed = 2;
