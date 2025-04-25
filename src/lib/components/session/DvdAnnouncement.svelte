@@ -73,8 +73,6 @@
 	$effect(() => {
 		// Only run when we have all required elements and the browser environment
 		if (!browser || !container || !textElement) return;
-		console.log('Updating container dimensions');
-		console.log(innerWidth.current, innerHeight.current);
 
 		// Explicitly depend on window dimensions
 		const width = innerWidth.current;
