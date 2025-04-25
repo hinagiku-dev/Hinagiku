@@ -8,6 +8,7 @@
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
 	import { user as authUser } from '$lib/stores/auth';
+	import { innerWidth, innerHeight } from 'svelte/reactivity/window';
 	import debug from 'debug';
 
 	// Create debugger with namespace
@@ -40,18 +41,20 @@
 	let animationId: number | null = null;
 	let container = $state<HTMLDivElement>();
 	let textElement = $state<HTMLDivElement>();
+
+	// Colors for animation
 	let dvdColors = [
-		'#ff0000', // red
-		'#00ff00', // green
-		'#0000ff', // blue
-		'#ffff00', // yellow
-		'#ff00ff', // magenta
-		'#00ffff', // cyan
-		'#ff8000', // orange
-		'#8000ff' // purple
+		'#ff0000',
+		'#00ff00',
+		'#0000ff',
+		'#ffff00',
+		'#ff00ff',
+		'#00ffff',
+		'#ff8000',
+		'#8000ff'
 	];
 	let currentColorIndex = 0;
-	let textColor = dvdColors[0];
+	let textColor = $state(dvdColors[0]);
 
 	// Store the announcement data
 	let announcementData: Announcement | null = $state(null);
@@ -64,6 +67,25 @@
 		if (browser && value && !animationActive && container && textElement && !isHost) {
 			startAnimation();
 		}
+	});
+
+	// Use reactive window values to update container dimensions when they change
+	$effect(() => {
+		// Only run when we have all required elements and the browser environment
+		if (!browser || !container || !textElement) return;
+		console.log('Updating container dimensions');
+		console.log(innerWidth.current, innerHeight.current);
+
+		// Explicitly depend on window dimensions
+		const width = innerWidth.current;
+		const height = innerHeight.current;
+
+		// Update container dimensions
+		containerWidth = Number(width || 1024);
+		containerHeight = Number(height || 768);
+
+		// Update element bounds
+		updateElementDimensions();
 	});
 
 	// Check if current user is host
@@ -87,12 +109,9 @@
 			}
 		});
 
-		// Set up resize listener
-		window.addEventListener('resize', updateDimensions);
-
 		// Set initial position
-		x = Math.random() * ((window.innerWidth || 1024) - 300);
-		y = Math.random() * ((window.innerHeight || 768) - 100);
+		x = Math.random() * ((containerWidth || 1024) - 300);
+		y = Math.random() * ((containerHeight || 768) - 100);
 
 		// Start animation if conditions are met
 		if (announcementData && !isHost) {
@@ -109,23 +128,29 @@
 	onDestroy(() => {
 		if (!browser) return;
 
-		window.removeEventListener('resize', updateDimensions);
 		stopAnimation();
 		unsubAnnouncement();
 	});
 
-	// Update window dimensions for animation boundaries
-	function updateDimensions() {
-		if (!browser || !container || !textElement) return;
+	// Update element dimensions
+	function updateElementDimensions() {
+		if (!browser || !textElement) return;
 
-		containerWidth = window.innerWidth;
-		containerHeight = window.innerHeight;
 		textWidth = textElement.offsetWidth;
 		textHeight = textElement.offsetHeight;
 
 		// Keep in bounds
 		x = Math.min(x, containerWidth - textWidth);
 		y = Math.min(y, containerHeight - textHeight);
+	}
+
+	// Update all dimensions (window and element)
+	function updateDimensions() {
+		if (!browser || !container || !textElement) return;
+
+		containerWidth = Number(innerWidth.current);
+		containerHeight = Number(innerHeight.current);
+		updateElementDimensions();
 	}
 
 	// Animation function
@@ -184,14 +209,10 @@
 
 		animationActive = true;
 
-		// Set random starting position if not already set
+		// Random position if not set
 		if (x === 0 && y === 0) {
-			x = Math.floor(
-				Math.random() * ((containerWidth || window.innerWidth || 1024) - (textWidth || 100))
-			);
-			y = Math.floor(
-				Math.random() * ((containerHeight || window.innerHeight || 768) - (textHeight || 50))
-			);
+			x = Math.floor(Math.random() * ((containerWidth || 1024) - (textWidth || 100)));
+			y = Math.floor(Math.random() * ((containerHeight || 768) - (textHeight || 50)));
 		}
 
 		// Start animation
@@ -215,7 +236,8 @@
 
 		currentColorIndex = (currentColorIndex + 1) % dvdColors.length;
 		textColor = dvdColors[currentColorIndex];
-		announcementData.color = textColor;
+		// Don't modify announcementData as it may trigger re-renders
+		// announcementData.color = textColor;
 	}
 
 	// Handle user dismissing the announcement
@@ -223,6 +245,8 @@
 		announcement.dismiss();
 	}
 </script>
+
+<svelte:window onresize={updateDimensions} />
 
 {#if announcementData && !isHost}
 	<div
@@ -234,7 +258,7 @@
 		{#if container && announcementData}
 			<div
 				class="pointer-events-auto absolute flex items-center gap-2 rounded-lg px-6 py-3 shadow-lg"
-				style="transform: translate({x}px, {y}px); color: {announcementData.color}; background-color: rgba(0, 0, 0, 0.8); border: 2px solid {announcementData.color};"
+				style="transform: translate({x}px, {y}px); color: {textColor}; background-color: rgba(0, 0, 0, 0.8); border: 2px solid {textColor};"
 				bind:this={textElement}
 			>
 				<span class="whitespace-nowrap text-xl font-bold">{announcementData.message}</span>
