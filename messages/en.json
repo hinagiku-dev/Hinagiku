@@ -293,5 +293,8 @@
 	"announcementBroadcasted": "Announcement broadcasted successfully",
 	"announcementFailed": "Failed to broadcast announcement",
 	"announcementCancelled": "Announcement cancelled successfully",
-	"announcementCancelFailed": "Failed to cancel announcement"
+	"announcementCancelFailed": "Failed to cancel announcement",
+	"enabled": "Enabled",
+	"disabled": "Disabled",
+	"vad": "VAD"
 }
