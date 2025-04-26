@@ -414,7 +414,7 @@
 
 	let loadingSummary = $state(false);
 
-	async function fetchSummary() {
+	async function fetchSummary(presentation: string = 'paragraph', textStyle: string = 'default') {
 		if (!groupDoc || !conversationDoc) {
 			notifications.error('無法獲取總結：找不到群組或對話');
 			return;
@@ -423,7 +423,7 @@
 		loadingSummary = true;
 		try {
 			const response = await fetch(
-				`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/summary`
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/summary?presentation=${presentation}&textStyle=${textStyle}`
 			);
 
 			if (!response.ok) {
@@ -437,6 +437,37 @@
 			notifications.error('無法獲取總結');
 		} finally {
 			loadingSummary = false;
+		}
+	}
+
+	async function handleUpdateSummary(summary: string, keyPoints: string[]) {
+		if (!groupDoc || !conversationDoc) {
+			notifications.error('無法更新總結：找不到群組或對話');
+			return;
+		}
+
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/summary`,
+				{
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						updated_summary: summary,
+						key_points: keyPoints
+					})
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('更新失敗');
+			}
+			notifications.success('成功更新對話總結');
+		} catch (error) {
+			console.error('更新對話總結時出錯:', error);
+			notifications.error('無法更新對話總結');
 		}
 	}
 
@@ -810,6 +841,7 @@
 							conversation={conversationDoc}
 							loading={loadingSummary}
 							onRefresh={fetchSummary}
+							onUpdate={handleUpdateSummary}
 						/>
 					{/if}
 				</div>
