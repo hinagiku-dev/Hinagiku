@@ -294,5 +294,8 @@
 	"announcementBroadcasted": "公告廣播成功",
 	"announcementFailed": "廣播公告失敗",
 	"announcementCancelled": "公告取消成功",
-	"announcementCancelFailed": "取消公告失敗"
+	"announcementCancelFailed": "取消公告失敗",
+	"enabled": "啟用",
+	"disabled": "禁用",
+	"vad": "語音活動檢測"
 }

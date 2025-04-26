@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Card, Textarea } from 'flowbite-svelte';
-	import { Mic, Send, Square } from 'lucide-svelte'; // Added Square icon import
+	import { Mic, Send, Square } from 'lucide-svelte';
 	import AudioPlayer from './AudioPlayer.svelte';
 	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 	import * as m from '$lib/paraglide/messages.js';
@@ -20,7 +20,8 @@
 		conversations,
 		readonly = false,
 		autoscroll = true,
-		isIndividual = false
+		isIndividual = false,
+		vadEnabled = false
 	}: {
 		record?: () => Promise<() => Promise<void>>;
 		send?: (text: string) => Promise<void>;
@@ -28,6 +29,7 @@
 		readonly?: boolean;
 		autoscroll?: boolean;
 		isIndividual?: boolean;
+		vadEnabled?: boolean;
 	} = $props();
 
 	let text = $state('');
@@ -185,29 +187,40 @@
 						{text.length} / 500
 					</div>
 				</div>
-				<div class="ml-auto flex gap-2">
-					<Button
-						color={recording && !operating ? 'red' : 'primary'}
-						class="gap-2"
-						disabled={operating}
-						on:click={handleRecord}
-					>
-						{#if recording && !operating}
-							<Square class="animate-pulse" />
+				<div class="ml-auto flex flex-col">
+					<div class="flex max-h-32 min-h-14 flex-1 gap-2">
+						<Button
+							color={recording && !operating ? 'red' : 'primary'}
+							class="gap-2"
+							disabled={operating}
+							on:click={handleRecord}
+						>
+							{#if recording && !operating}
+								<Square class="animate-pulse" />
+							{:else}
+								<Mic />
+							{/if}
+							{recording ? (operating ? m.waiting() : m.stop()) : m.record()}
+						</Button>
+						<Button
+							color="primary"
+							class="gap-2"
+							disabled={operating || !text.trim()}
+							on:click={handleSend}
+						>
+							<Send class={operating ? 'animate-pulse' : ''} />
+							{m.send()}
+						</Button>
+					</div>
+
+					<div class="text-right text-sm text-gray-500">
+						{m.vad()}
+						{#if vadEnabled}
+							{m.enabled()}
 						{:else}
-							<Mic />
+							{m.disabled()}
 						{/if}
-						{recording ? (operating ? m.waiting() : m.stop()) : m.record()}
-					</Button>
-					<Button
-						color="primary"
-						class="gap-2"
-						disabled={operating || !text.trim()}
-						on:click={handleSend}
-					>
-						<Send class={operating ? 'animate-pulse' : ''} />
-						{m.send()}
-					</Button>
+					</div>
 				</div>
 			</div>
 		</div>
