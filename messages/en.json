@@ -284,5 +284,14 @@
 	"showMore": "Show More",
 	"showLess": "Show Less",
 	"add": "Add",
-	"resourcesLimitReached": "You can only add up to 10 resources."
+	"resourcesLimitReached": "You can only add up to 10 resources.",
+	"announcements": "Announcements",
+	"enterAnnouncement": "Enter announcement message",
+	"broadcast": "Broadcast",
+	"cancelBroadcast": "Cancel Broadcast",
+	"announcementEmpty": "Announcement message cannot be empty",
+	"announcementBroadcasted": "Announcement broadcasted successfully",
+	"announcementFailed": "Failed to broadcast announcement",
+	"announcementCancelled": "Announcement cancelled successfully",
+	"announcementCancelFailed": "Failed to cancel announcement"
 }

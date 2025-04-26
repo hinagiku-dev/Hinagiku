@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { X, TriangleAlert, MessageSquareOff } from 'lucide-svelte';
+	import { X, TriangleAlert, MessageSquareOff, MessageSquarePlus } from 'lucide-svelte';
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
 	import QRCode from '$lib/components/QRCode.svelte';
@@ -37,6 +37,7 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { Toggle, Input } from 'flowbite-svelte';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import { announcement } from '$lib/stores/announcement';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -102,10 +103,13 @@
 	let unGroupedParticipantsNum = $derived(current_waitlist.length - allGroupParticipants.length);
 
 	$effect(() => {
-		console.log('current_waitlist: ', current_waitlist);
-		console.log('allGroupParticipants: ', allGroupParticipants);
-		console.log('unGroupedParticipantsNum: ', unGroupedParticipantsNum);
+		$inspect(current_waitlist, 'current_waitlist');
+		$inspect(allGroupParticipants, 'allGroupParticipants');
+		$inspect(unGroupedParticipantsNum, 'unGroupedParticipantsNum');
 	});
+
+	let announcementMessage = $state('');
+	let isBroadcasting = $state(false);
 
 	async function handleApplyGroups() {
 		if (!current_waitlist || !autoGroup || groupNumber < 1 || isApplyingGroups) return;
@@ -603,6 +607,69 @@
 			loadKeywordData();
 		}
 	});
+
+	async function broadcastAnnouncement() {
+		if (!announcementMessage.trim()) {
+			notifications.warning(m.announcementEmpty());
+			return;
+		}
+
+		try {
+			isBroadcasting = true;
+			const response = await fetch(`/api/session/${$page.params.id}/announcement`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					message: announcementMessage,
+					active: true
+				})
+			});
+
+			if (response.ok) {
+				// Local announcement for the host (shown immediately)
+				notifications.success(m.announcementBroadcasted());
+			} else {
+				const data = await response.json();
+				notifications.error(data.error || m.announcementFailed());
+			}
+		} catch (error) {
+			console.error('Error broadcasting announcement:', error);
+			notifications.error(m.announcementFailed());
+		} finally {
+			isBroadcasting = false;
+		}
+	}
+
+	async function cancelAnnouncement() {
+		try {
+			const response = await fetch(`/api/session/${$page.params.id}/announcement`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					message: '',
+					active: false
+				})
+			});
+
+			if (response.ok) {
+				// Cancel local announcement for the host
+				announcement.cancel();
+				// Clear the announcement input field
+				announcementMessage = '';
+				notifications.success(m.announcementCancelled());
+			} else {
+				const data = await response.json();
+				notifications.error(data.error || m.announcementCancelFailed());
+			}
+		} catch (error) {
+			console.error('Error cancelling announcement:', error);
+			notifications.error(m.announcementCancelFailed());
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
@@ -631,6 +698,36 @@
 				/>
 			</div>
 		</div>
+
+		<!-- Add announcement controls here -->
+		{#if $session?.status !== 'preparing' && $session?.status !== 'ended'}
+			<div class="mt-4 flex items-center gap-2 rounded-lg border bg-gray-50 p-4">
+				<h3 class="mr-4 text-lg font-medium">{m.announcements()}</h3>
+				<Input
+					type="text"
+					placeholder={m.enterAnnouncement()}
+					class="flex-1 text-sm"
+					bind:value={announcementMessage}
+				/>
+				<Button
+					color="primary"
+					class="flex items-center gap-2 whitespace-nowrap"
+					on:click={broadcastAnnouncement}
+					disabled={isBroadcasting || !announcementMessage.trim()}
+				>
+					<MessageSquarePlus class="h-4 w-4" />
+					{m.broadcast()}
+				</Button>
+				<Button
+					color="red"
+					class="whitespace-nowrap"
+					on:click={cancelAnnouncement}
+					disabled={!$session?.announcement?.active}
+				>
+					{m.cancelBroadcast()}
+				</Button>
+			</div>
+		{/if}
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-4">
