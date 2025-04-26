@@ -5,7 +5,8 @@ import { z } from 'zod';
 export const Timestamp = z.custom(
 	(value) =>
 		value instanceof Object &&
-		(value.constructor.name === 'Timestamp' || value.constructor.name === '_Timestamp'),
+		typeof value.seconds === 'number' &&
+		typeof value.nanoseconds === 'number',
 	{
 		message: 'Invalid Timestamp'
 	}
