@@ -58,7 +58,9 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 
 		await conversation_ref.update({
 			summary: summary,
-			keyPoints: key_points
+			keyPoints: key_points,
+			presentation: presentationParam,
+			textStyle: textStyleParam
 		});
 
 		const conversations_ref = getConversationsRef(id, group_number);

@@ -28,6 +28,11 @@
 		editedKeyPoints = [...(summaryData.keyPoints || [])];
 	}
 
+	$: if (conversation.data) {
+		presentation = conversation.data.presentation || 'paragraph';
+		textStyle = conversation.data.textStyle || 'default';
+	}
+
 	async function handleUpdateSummary() {
 		await onUpdate(editedSummary, editedKeyPoints);
 		isEditing = false;
@@ -38,7 +43,7 @@
 	<div class="flex items-center justify-between">
 		<h2 class="text-xl font-semibold">對話總結</h2>
 		<div class="flex items-center space-x-2">
-			{#if !loading && !readonly}
+			{#if !readonly}
 				<button
 					class="rounded-lg bg-gray-500 px-4 py-2 text-white hover:bg-gray-600 disabled:opacity-50"
 					on:click={isEditing ? handleUpdateSummary : () => (isEditing = true)}
@@ -53,7 +58,7 @@
 						on:click={() => onRefresh(presentation, textStyle)}
 						disabled={loading}
 					>
-						更新總結
+						{loading ? '重新生成中...' : '重新生成總結'}
 					</button>
 				{/if}
 			{/if}

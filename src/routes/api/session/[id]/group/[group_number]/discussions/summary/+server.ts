@@ -46,7 +46,9 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 
 		group_ref.update({
 			summary: response.summary,
-			keywords: response.keywords
+			keywords: response.keywords,
+			presentation: presentationParam,
+			textStyle: textStyleParam
 		});
 
 		return json({ success: true }, { status: 200 });

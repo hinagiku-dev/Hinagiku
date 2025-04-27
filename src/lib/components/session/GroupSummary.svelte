@@ -42,6 +42,11 @@
 		editedKeywords = summaryData.keywords.map((k) => ({ text: k.text, weight: k.weight }));
 	}
 
+	$: if (group.data) {
+		presentation = group.data.presentation || 'paragraph';
+		textStyle = group.data.textStyle || 'default';
+	}
+
 	async function handleUpdateSummary() {
 		const keywordsObject = Object.fromEntries(
 			editedKeywords.map((k) => [
@@ -58,7 +63,7 @@
 	<div class="flex items-center justify-between">
 		<h2 class="text-xl font-semibold">小組討論總結</h2>
 		<div class="space-x-2">
-			{#if !loading && !readonly}
+			{#if !readonly}
 				<button
 					class="rounded-lg bg-gray-500 px-4 py-2 text-white hover:bg-gray-600 disabled:opacity-50"
 					on:click={isEditing ? handleUpdateSummary : () => (isEditing = true)}
@@ -73,16 +78,9 @@
 						on:click={() => onRefresh(presentation, textStyle)}
 						disabled={loading}
 					>
-						重新生成總結
+						{loading ? '重新生成中...' : '重新生成總結'}
 					</button>
 				{/if}
-			{:else if loading}
-				<button
-					class="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
-					disabled={true}
-				>
-					生成中...
-				</button>
 			{/if}
 		</div>
 	</div>
