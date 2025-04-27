@@ -60,7 +60,7 @@
 				: 'bg-gray-200'}"
 			onclick={() => (activeTab = 'groupSummary')}
 		>
-			群組總結
+			小組總結
 		</button>
 		<button
 			class="rounded-lg px-4 py-2 {activeTab === 'chat'
@@ -76,7 +76,7 @@
 				: 'bg-gray-200'}"
 			onclick={() => (activeTab = 'groupChat')}
 		>
-			群組討論歷史
+			小組討論歷史
 		</button>
 	</div>
 
@@ -86,6 +86,7 @@
 			loading={false}
 			readonly={true}
 			onRefresh={async () => {}}
+			onUpdate={async () => {}}
 		/>
 	{:else if activeTab === 'groupSummary' && groupDoc}
 		<GroupSummary

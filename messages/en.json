@@ -293,5 +293,7 @@
 	"announcementBroadcasted": "Announcement broadcasted successfully",
 	"announcementFailed": "Failed to broadcast announcement",
 	"announcementCancelled": "Announcement cancelled successfully",
-	"announcementCancelFailed": "Failed to cancel announcement"
+	"announcementCancelFailed": "Failed to cancel announcement",
+	"afterGroup": "After Group Stage",
+	"afterGroupStage": "After Group Stage"
 }

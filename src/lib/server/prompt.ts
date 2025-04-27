@@ -131,6 +131,8 @@ export const CONCEPT_SUMMARY_PROMPT = `\
 export const GROUP_OPINION_SUMMARY_PROMPT = `\
 你是一個專門整理我們討論的 AI，請根據對話內容，總結我們的觀點並提取關鍵字。
 
+📌 **文字風格**：{textStyle}
+
 📌 **請整理以下內容**：
 1. **我們的觀點、想法與結論**：綜合總結我們的討論結果。
 2. **我們的關鍵字**：提取討論中出現的重要詞彙，並標記詞彙的重要度（1-5），數字越大代表詞彙越關鍵。

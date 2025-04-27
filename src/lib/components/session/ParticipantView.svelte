@@ -110,7 +110,7 @@
 			fetchSummary();
 		}
 		if ($session?.status === 'ended' && groupDoc && !groupDoc.data.summary) {
-			fetchGroupSummary();
+			fetchGroupSummary('paragraph', 'default');
 		}
 	});
 
@@ -349,14 +349,14 @@
 
 	async function handleGroupRecord() {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return async () => {};
 		}
 
 		return createAudioHandler({
 			onMessage: async (content, audio) => {
 				if (!groupDoc) {
-					notifications.error('找不到群組');
+					notifications.error('找不到小組');
 					return;
 				}
 				const response = await fetch(
@@ -416,7 +416,7 @@
 
 	async function fetchSummary(presentation: string = 'paragraph', textStyle: string = 'default') {
 		if (!groupDoc || !conversationDoc) {
-			notifications.error('無法獲取總結：找不到群組或對話');
+			notifications.error('無法獲取總結：找不到小組或對話');
 			return;
 		}
 
@@ -442,7 +442,7 @@
 
 	async function handleUpdateSummary(summary: string, keyPoints: string[]) {
 		if (!groupDoc || !conversationDoc) {
-			notifications.error('無法更新總結：找不到群組或對話');
+			notifications.error('無法更新總結：找不到小組或對話');
 			return;
 		}
 
@@ -485,7 +485,7 @@
 
 	async function handleGroupSend(text: string) {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
@@ -515,27 +515,30 @@
 		}
 	}
 
-	async function fetchGroupSummary() {
+	async function fetchGroupSummary(
+		presentation: string = 'paragraph',
+		textStyle: string = 'default'
+	) {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
 		loadingGroupSummary = true;
 		try {
 			const response = await fetch(
-				`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/summary`
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/summary?presentation=${presentation}&textStyle=${textStyle}`
 			);
 
 			if (!response.ok) {
 				const data = await response.json();
-				throw new Error(data.error || '無法獲取群組討論總結');
+				throw new Error(data.error || '無法獲取小組討論總結');
 			}
 
-			notifications.success('成功獲取群組討論總結');
+			notifications.success('成功獲取小組討論總結');
 		} catch (error) {
-			console.error('獲取群組討論總結時出錯:', error);
-			notifications.error('無法獲取群組討論總結');
+			console.error('獲取小組討論總結時出錯:', error);
+			notifications.error('無法獲取小組討論總結');
 		} finally {
 			loadingGroupSummary = false;
 		}
@@ -543,7 +546,7 @@
 
 	async function handleUpdateGroupSummary(summary: string, keywords: Record<string, number>) {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
@@ -565,31 +568,31 @@
 			if (!response.ok) {
 				throw new Error('更新失敗');
 			}
-			notifications.success('成功更新群組討論總結');
+			notifications.success('成功更新小組討論總結');
 		} catch (error) {
-			console.error('更新群組討論總結時出錯:', error);
-			notifications.error('無法更新群組討論總結');
+			console.error('更新小組討論總結時出錯:', error);
+			notifications.error('無法更新小組討論總結');
 		}
 	}
 
 	async function handleEndGroup() {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
 		try {
-			await fetchGroupSummary();
-			notifications.success('成功結束群組討論');
+			await fetchGroupSummary('paragraph', 'default');
+			notifications.success('成功結束小組討論');
 		} catch (error) {
-			console.error('結束群組階段時出錯:', error);
-			notifications.error('無法結束群組階段');
+			console.error('結束小組階段時出錯:', error);
+			notifications.error('無法結束小組階段');
 		}
 	}
 
 	async function handleEndSummarize() {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
@@ -606,7 +609,7 @@
 				throw new Error(errMsg || '無法結束總結階段');
 			}
 
-			notifications.success('成功完成群組總結');
+			notifications.success('成功完成小組總結');
 		} catch (error) {
 			console.error('結束總結階段時出錯:', error);
 			notifications.error('無法結束總結階段');
@@ -674,7 +677,9 @@
 										? 'bg-purple-500'
 										: $session?.status === 'group'
 											? 'bg-green-500'
-											: 'bg-gray-500'}"
+											: $session?.status === 'after-group'
+												? 'bg-orange-500'
+												: 'bg-gray-500'}"
 						/>
 						<span>
 							{#if $session?.status === 'preparing'}
@@ -858,7 +863,8 @@
 							<GroupSummary
 								group={groupDoc}
 								loading={loadingGroupSummary}
-								onRefresh={fetchGroupSummary}
+								onRefresh={(presentation = 'paragraph', textStyle = 'default') =>
+									fetchGroupSummary(presentation, textStyle)}
 								onUpdate={handleUpdateGroupSummary}
 							/>
 						{/if}
@@ -870,12 +876,25 @@
 								readonly
 								group={groupDoc}
 								loading={loadingGroupSummary}
-								onRefresh={fetchGroupSummary}
+								onRefresh={(presentation = 'paragraph', textStyle = 'default') =>
+									fetchGroupSummary(presentation, textStyle)}
 								onUpdate={handleUpdateGroupSummary}
 							/>
 						{/if}
 					</div>
 				{/if}
+			{:else if $session?.status === 'after-group'}
+				<div class="space-y-6">
+					{#if groupDoc}
+						<GroupSummary
+							group={groupDoc}
+							loading={loadingGroupSummary}
+							onRefresh={(presentation = 'paragraph', textStyle = 'default') =>
+								fetchGroupSummary(presentation, textStyle)}
+							onUpdate={handleUpdateGroupSummary}
+						/>
+					{/if}
+				</div>
 			{:else if $session?.status === 'ended'}
 				<EndedView {conversationDoc} {groupDoc} {user} />
 			{/if}

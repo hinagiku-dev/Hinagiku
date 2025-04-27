@@ -8,7 +8,7 @@ import { z } from 'zod';
 // Summary the group discussions
 // GET /api/session/[id]/group/[group_number]/discussions/summary/+server
 
-export const GET: RequestHandler = async ({ params, locals }) => {
+export const GET: RequestHandler = async ({ params, locals, url }) => {
 	try {
 		if (!locals.user) {
 			return json({ error: 'Unauthorized' }, { status: 401 });
@@ -31,7 +31,15 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			return discussion as Discussion;
 		});
 
-		const response = await summarizeGroupOpinions(student_opinions);
+		// Extract presentation and textStyle from query parameters
+		const presentationParam = url.searchParams.get('presentation') || 'paragraph';
+		const textStyleParam = url.searchParams.get('textStyle') || 'default';
+
+		const response = await summarizeGroupOpinions(
+			student_opinions,
+			presentationParam,
+			textStyleParam
+		);
 		if (!response.success) {
 			return json({ error: response.error }, { status: 500 });
 		}

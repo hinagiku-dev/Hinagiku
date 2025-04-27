@@ -141,8 +141,15 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			'end-group': {
 				fromStatus: 'group',
 				updates: {
-					status: 'ended',
+					status: 'after-group',
 					'timing.group.end': now
+				}
+			},
+			'end-after-group': {
+				fromStatus: 'after-group',
+				updates: {
+					status: 'ended',
+					'timing.after_group.end': now
 				}
 			},
 			preparing: {

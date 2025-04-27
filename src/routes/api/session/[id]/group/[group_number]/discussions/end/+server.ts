@@ -25,6 +25,6 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		return json({ status: 'success' });
 	} catch (e) {
 		console.error('Error ending group summarize phase:', e);
-		return json({ error: '無法結束群組總結階段' }, { status: 500 });
+		return json({ error: '無法結束小組總結階段' }, { status: 500 });
 	}
 };

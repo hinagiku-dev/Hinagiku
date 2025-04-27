@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Group } from '$lib/schema/group';
+	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 
 	const tagColors = [
 		'bg-blue-100 text-blue-700',
@@ -14,13 +15,15 @@
 		id: string;
 	};
 	export let loading = false;
-	export let onRefresh: () => Promise<void>;
+	export let onRefresh: (presentation?: string, textStyle?: string) => Promise<void>;
 	export let onUpdate: (summary: string, keywords: Record<string, number>) => Promise<void>;
 	export let readonly = false;
 
 	let isEditing = false;
 	let editedSummary = '';
 	let editedKeywords: { text: string; weight: number }[] = [];
+	let presentation = 'paragraph';
+	let textStyle = 'default';
 
 	$: summaryData = group.data.summary
 		? {
@@ -53,7 +56,7 @@
 
 <div class="space-y-6 p-6">
 	<div class="flex items-center justify-between">
-		<h2 class="text-xl font-semibold">群組討論總結</h2>
+		<h2 class="text-xl font-semibold">小組討論總結</h2>
 		<div class="space-x-2">
 			{#if !loading && !readonly}
 				<button
@@ -67,7 +70,7 @@
 				{#if !isEditing}
 					<button
 						class="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
-						on:click={onRefresh}
+						on:click={() => onRefresh(presentation, textStyle)}
 						disabled={loading}
 					>
 						重新生成總結
@@ -87,7 +90,23 @@
 	{#if summaryData}
 		<div class="space-y-4">
 			<div>
-				<h3 class="mb-2 font-medium">討論總結：</h3>
+				<h3 class="mb-2 font-medium">
+					討論總結：
+					<select bind:value={presentation} class="rounded border px-2 py-1 text-sm">
+						<option value="paragraph">段落(預設)</option>
+						<option value="list2">列 2 點</option>
+						<option value="list3">列 3 點</option>
+						<option value="list4">列 4 點</option>
+						<option value="list5">列 5 點</option>
+					</select>
+					<select bind:value={textStyle} class="rounded border px-2 py-1 text-sm">
+						<option value="default">預設</option>
+						<option value="humor">幽默</option>
+						<option value="serious">嚴肅</option>
+						<option value="casual">輕鬆</option>
+						<option value="cute">可愛</option>
+					</select>
+				</h3>
 				{#if isEditing && !readonly}
 					<textarea
 						class="w-full rounded-lg border p-4 text-gray-700"
@@ -95,7 +114,14 @@
 						rows="4"
 					></textarea>
 				{:else}
-					<p class="rounded-lg bg-gray-50 p-4 text-gray-700">{summaryData.summary}</p>
+					<p class="rounded-lg bg-gray-50 p-4 text-gray-700">
+						{#await renderMarkdown(summaryData.summary)}
+							Loading ...
+						{:then content}
+							<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+							{@html content}
+						{/await}
+					</p>
 				{/if}
 			</div>
 
