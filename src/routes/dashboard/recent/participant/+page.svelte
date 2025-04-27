@@ -17,6 +17,7 @@
 	import { onMount } from 'svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import * as m from '$lib/paraglide/messages.js';
 
 	let { data } = $props();
 
@@ -51,16 +52,16 @@
 </script>
 
 <svelte:head>
-	<title>Recent Participant Sessions | {deploymentConfig.siteTitle}</title>
+	<title>{m.recentParticipatedSessions()} | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <main class="mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-12 flex items-center justify-between">
 		<div>
-			<h1 class="text-3xl font-bold text-gray-900">Recent Participated Sessions</h1>
+			<h1 class="text-3xl font-bold text-gray-900">{m.recentParticipatedSessions()}</h1>
 		</div>
 		<div class="text-right">
-			<Button href="/dashboard">Back to Dashboard</Button>
+			<Button href="/dashboard">{m.backToDashboard()}</Button>
 		</div>
 	</div>
 
@@ -84,8 +85,12 @@
 						<div class="mb-4 inline-flex rounded-full bg-primary-100 p-4">
 							<MessageSquarePlus size={32} class="text-primary-600" />
 						</div>
-						<p class="mb-2 text-lg font-medium text-gray-900">No sessions joined yet</p>
-						<Button href="/join" color="primary" class="w-full">Join a session</Button>
+						<p class="mb-2 text-lg font-medium text-gray-900">
+							{m.noSessionsJoined()}
+						</p>
+						<Button href="/join" color="primary" class="w-full">
+							{m.joinASession()}
+						</Button>
 					</div>
 				</Card>
 			{/if}
