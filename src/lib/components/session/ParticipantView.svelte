@@ -55,6 +55,9 @@
 
 	let waitlistjoined = $state(false);
 	let isGroupManagementEnabled = $state(false);
+	let vadEnabled = $derived(
+		$session?.status === 'individual' ? $setting?.enableVADIndividual : $setting?.enableVADGroup
+	);
 	$effect(() => {
 		if ($session?.settings?.autoGroup) {
 			isGroupManagementEnabled = false;
@@ -838,7 +841,13 @@
 					<p class="text-gray-600">{m.hostBeginShortly()}</p>
 				</div>
 			{:else if $session?.status === 'individual'}
-				<Chatroom record={handleRecord} send={handleSend} {conversations} isIndividual />
+				<Chatroom
+					record={handleRecord}
+					send={handleSend}
+					{conversations}
+					{vadEnabled}
+					isIndividual
+				/>
 			{:else if $session?.status === 'before-group'}
 				<div class="space-y-6">
 					{#if groupDoc && conversationDoc}
@@ -856,6 +865,7 @@
 						conversations={groupDiscussions}
 						record={handleGroupRecord}
 						send={handleGroupSend}
+						{vadEnabled}
 					/>
 				{:else if groupStatus === 'summarize' || loadingGroupSummary}
 					<div class="space-y-6">
