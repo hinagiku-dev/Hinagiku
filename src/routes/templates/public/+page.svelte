@@ -13,6 +13,7 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { goto } from '$app/navigation';
 	import { i18n } from '$lib/i18n';
+	import * as m from '$lib/paraglide/messages.js';
 
 	// Query for public templates
 	let [templates, { unsubscribe }] = subscribeAll<Template>(
@@ -44,9 +45,11 @@
 
 <div class="container mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-8 flex items-center justify-between">
-		<h1 class="text-3xl font-bold text-gray-900">Public Templates</h1>
+		<h1 class="text-3xl font-bold text-gray-900">{m.publicTemplates()}</h1>
 		{#if $page.data.user}
-			<Button onclick={handleCreateTemplate} color="primary">Create Template</Button>
+			<Button onclick={handleCreateTemplate} color="primary">
+				{m.createTemplateButton()}
+			</Button>
 		{/if}
 	</div>
 

@@ -12,7 +12,7 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { goto } from '$app/navigation';
 	import { i18n } from '$lib/i18n';
-
+	import * as m from '$lib/paraglide/messages.js';
 	// Query for user's templates
 	let [templates, { unsubscribe }] = subscribeAll<Template>(
 		query(
@@ -63,13 +63,15 @@
 </script>
 
 <svelte:head>
-	<title>Your Templates | {deploymentConfig.siteTitle}</title>
+	<title>{m.yourTemplates()} | {deploymentConfig.siteTitle}</title>
 </svelte:head>
 
 <div class="container mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-8 flex items-center justify-between">
-		<h1 class="text-3xl font-bold text-gray-900">Your Templates</h1>
-		<Button onclick={handleCreateTemplate} color="primary">Create Template</Button>
+		<h1 class="text-3xl font-bold text-gray-900">{m.yourTemplates()}</h1>
+		<Button onclick={handleCreateTemplate} color="primary">
+			{m.createTemplateButton()}
+		</Button>
 	</div>
 
 	<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -84,7 +86,7 @@
 									? 'bg-green-100 text-green-600'
 									: 'bg-gray-100 text-gray-600'}"
 							>
-								{template.public ? 'Public' : 'Private'}
+								{template.public ? m.Tpublic() : m.Tprivate()}
 							</span>
 						</div>
 						<p class="mb-4 line-clamp-2 text-gray-600">{template.task}</p>
@@ -97,9 +99,9 @@
 							</span>
 						</div>
 						<div class="flex gap-2">
-							<Button href="/template/{doc.id}" class="flex-1">Edit</Button>
+							<Button href="/template/{doc.id}" class="flex-1">{m.edit()}</Button>
 							<Button onclick={() => startSession(doc.id)} color="alternative" class="flex-1">
-								Create Session
+								{m.createSession()}
 							</Button>
 						</div>
 					</div>
@@ -111,9 +113,15 @@
 					<div class="mb-4 inline-flex rounded-full bg-primary-100 p-4">
 						<MessageSquarePlus size={32} class="text-primary-600" />
 					</div>
-					<p class="mb-2 text-lg font-medium text-gray-900">No templates created yet</p>
-					<p class="mb-4 text-gray-600">Create your first template to get started</p>
-					<Button onclick={handleCreateTemplate} color="primary">Create Your First Template</Button>
+					<p class="mb-2 text-lg font-medium text-gray-900">
+						{m.noTemplates()}
+					</p>
+					<p class="mb-4 text-gray-600">
+						{m.createYourFirstTemplate()}
+					</p>
+					<Button onclick={handleCreateTemplate} color="primary">
+						{m.createYourFirstTemplate()}
+					</Button>
 				</div>
 			</Card>
 		{/if}

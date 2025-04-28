@@ -886,7 +886,7 @@
 									onclick={() => handleGroupClick(group)}
 									onkeydown={(e) => e.key === 'Enter' && handleGroupClick(group)}
 								>
-									Group #{group.number}
+									{m.groupVocabulary()} #{group.number}
 								</button>
 								<Tooltip>{m.openGroupChatHistory()}</Tooltip>
 								<GroupStatus {group} showStatus={$session?.status === 'group'} />

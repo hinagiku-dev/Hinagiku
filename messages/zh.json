@@ -117,7 +117,6 @@
 	"sessionLabels": "會話標籤",
 	"welcomeDashboard": "歡迎來到您的儀表板",
 	"stats": "統計數據",
-	"recentHostActivity": "最近主持的活動",
 	"recentActivity": "最近參加的活動",
 	"createTemplate": "創建模板",
 	"createTemplateDesc": "創建一個新的討論模板",
@@ -301,4 +300,7 @@
 	"afterGroup": "小組討論總結",
 	"afterGroupStage": "小組討論總結階段",
 	"endAfterGroupStage": "結束小組討論總結階段"
+	"groupVocabulary": "組別",
+	"recentHostActivity": "最近主持的活動",
+	"createYourFirstTemplate": "創建您的第一個模板以開始"
 }

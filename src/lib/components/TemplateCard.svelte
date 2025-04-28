@@ -67,7 +67,7 @@
 						? 'bg-green-100 text-green-600'
 						: 'bg-gray-100 text-gray-600'}"
 				>
-					{isPublic ? 'Public' : 'Private'}
+					{isPublic ? m.Tpublic() : m.Tprivate()}
 				</span>
 			{/if}
 		</div>

@@ -37,7 +37,15 @@
 								? 'bg-green-100 text-green-600'
 								: 'bg-gray-100 text-gray-600'}"
 			>
-				{status}
+				{status === 'preparing'
+					? m.preparingStage()
+					: status === 'individual'
+						? m.individualStage()
+						: status === 'before-group'
+							? m.beforeGroupStage()
+							: status === 'group'
+								? m.groupStage()
+								: m.ended()}
 			</span>
 		</div>
 		{#if labels?.length}
