@@ -281,24 +281,59 @@ export async function chatWithLLMByDocs(
 	}
 }
 
-export async function summarizeStudentChat(history: LLMChatMessage[]) {
+export async function summarizeStudentChat(
+	history: LLMChatMessage[],
+	presentation: string = 'paragraph',
+	textStyle: string = 'default'
+) {
 	try {
+		const presentationMap: Record<string, number> = {
+			paragraph: 1,
+			list2: 2,
+			list3: 3,
+			list4: 4,
+			list5: 5
+		};
 		const schema = z.object({
-			student_summary: z.string(),
+			student_summary: z.array(z.string()).length(presentationMap[presentation] || 1),
 			student_key_points: z.array(z.string())
 		});
-		const { result } = await requestLLM(CHAT_SUMMARY_PROMPT, history, schema, 0.9);
+		const textStyleMap: Record<string, string> = {
+			default: '預設',
+			humor: '幽默',
+			serious: '嚴肅',
+			casual: '輕鬆',
+			cute: '可愛'
+		};
+		// Prepare the system prompt with desired format and style
+		const prompt = CHAT_SUMMARY_PROMPT.replace(
+			'{presentation}',
+			(presentationMap[presentation] || presentationMap.paragraph).toString()
+		).replace('{textStyle}', textStyleMap[textStyle] || textStyleMap.default);
+		const { result } = await requestLLM(prompt, history, schema, 0.9);
 		const parsed_result = schema.parse(result);
 
-		let summary = normalizeText(parsed_result.student_summary);
+		let summary = parsed_result.student_summary.map((point, index) => {
+			// Add numbers for formats with 2 or more points
+			if (presentationMap[presentation] >= 2) {
+				return normalizeText(`${index + 1}. ${point}`);
+			}
+			return normalizeText(point);
+		});
 		let key_points = parsed_result.student_key_points.map((point) => normalizeText(point));
 
-		// Check for foreign language in the summary and replace if needed
-		const summaryCheck = await cleanForeignLanguage(summary);
-		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
-			console.log('Foreign language detected in summary, replacing with cleaned version');
-			summary = summaryCheck.revisedText;
-		}
+		// Check for foreign language in each summary point and replace if needed
+		const checkedSummary = await Promise.all(
+			summary.map(async (point) => {
+				const summaryCheck = await cleanForeignLanguage(point);
+				if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
+					console.log('Foreign language detected in summary point, replacing with cleaned version');
+					return summaryCheck.revisedText;
+				}
+				return point;
+			})
+		);
+		summary = checkedSummary;
 
 		// Check for foreign language in each key point and replace if needed
 		const checkedKeyPoints = await Promise.all(
@@ -313,9 +348,12 @@ export async function summarizeStudentChat(history: LLMChatMessage[]) {
 		);
 		key_points = checkedKeyPoints;
 
+		// Join summary points into a single string with line breaks
+		const finalSummary = summary.join('\n\n');
+
 		return {
 			success: true,
-			summary: summary,
+			summary: finalSummary,
 			key_points: key_points,
 			error: ''
 		};
@@ -411,7 +449,11 @@ export async function summarizeConcepts(
 	}
 }
 
-export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
+export async function summarizeGroupOpinions(
+	student_opinion: Discussion[],
+	presentation: string = 'paragraph',
+	textStyle: string = 'default'
+) {
 	const formatted_opinions = student_opinion
 		.filter((opinion) => opinion.speaker !== '摘要小幫手')
 		.map((opinion) => `${opinion.speaker}: ${opinion.content}`)
@@ -422,11 +464,32 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 			content: formatted_opinions
 		}
 	];
-	const system_prompt = GROUP_OPINION_SUMMARY_PROMPT;
+
+	const presentationMap: Record<string, number> = {
+		paragraph: 1,
+		list2: 2,
+		list3: 3,
+		list4: 4,
+		list5: 5
+	};
+
+	const textStyleMap: Record<string, string> = {
+		default: '預設',
+		humor: '幽默',
+		serious: '嚴肅',
+		casual: '輕鬆',
+		cute: '可愛'
+	};
+
+	// Prepare the system prompt with desired format and style
+	const system_prompt = GROUP_OPINION_SUMMARY_PROMPT.replace(
+		'{presentation}',
+		(presentationMap[presentation] || presentationMap.paragraph).toString()
+	).replace('{textStyle}', textStyleMap[textStyle] || textStyleMap.default);
 
 	try {
 		const schema = z.object({
-			group_summary: z.string(),
+			group_summary: z.array(z.string()).length(presentationMap[presentation] || 1),
 			group_keywords: z.array(
 				z.object({
 					keyword: z.string(),
@@ -438,7 +501,15 @@ export async function summarizeGroupOpinions(student_opinion: Discussion[]) {
 		const parsed_result = schema.parse(result);
 
 		// Normalize summary
-		let summary = normalizeText(parsed_result.group_summary);
+		let summary = parsed_result.group_summary
+			.map((point, index) => {
+				// Add numbers for formats with 2 or more points
+				if (presentationMap[presentation] >= 2) {
+					return normalizeText(`${index + 1}. ${point}`);
+				}
+				return normalizeText(point);
+			})
+			.join('\n\n');
 
 		// Check for foreign language in the summary and replace if needed
 		const summaryCheck = await cleanForeignLanguage(summary);

@@ -276,7 +276,7 @@
 				});
 				unsubscribes.push(unsubscribe);
 			} catch (error) {
-				console.error('無法載入群組資料:', error);
+				console.error('無法載入小組資料:', error);
 			}
 		};
 
@@ -319,7 +319,7 @@
 
 	async function handleStartSession() {
 		try {
-			// 為每個群組的個參與者創建對話
+			// 為每個小組的個參與者創建對話
 			const responses = await Promise.all(
 				$groups.map((group) =>
 					fetch(`/api/session/${$page.params.id}/group/${group.id}/conversations`, {
@@ -335,7 +335,7 @@
 			const failedResponse = responses.find((response) => !response.ok);
 			if (failedResponse) {
 				const data = await failedResponse.json();
-				notifications.error(data.error || '無法為部分群組的參與者創建對話');
+				notifications.error(data.error || '無法為部分小組的參與者創建對話');
 				return;
 			}
 
@@ -390,6 +390,17 @@
 		if (!response.ok) {
 			const data = await response.json();
 			console.error('Failed to end group stage:', data.error);
+		}
+	}
+
+	async function handleEndAfterGroup() {
+		const response = await fetch(`/api/session/${$page.params.id}/action/end-after-group`, {
+			method: 'POST'
+		});
+
+		if (!response.ok) {
+			const data = await response.json();
+			console.error('Failed to end after-group stage:', data.error);
 		}
 	}
 
@@ -467,6 +478,11 @@
 			action: handleEndGroup,
 			show: true
 		},
+		'after-group': {
+			text: m.endAfterGroupStage(),
+			action: handleEndAfterGroup,
+			show: true
+		},
 		ended: {
 			text: m.sessionEnded(),
 			action: () => {
@@ -527,8 +543,8 @@
 			};
 			showGroupChatHistory = true;
 		} catch (error) {
-			console.error('無法載入群組討論:', error);
-			notifications.error('無法載入群組討論');
+			console.error('無法載入小組討論:', error);
+			notifications.error('無法載入小組討論');
 		}
 	}
 
@@ -544,7 +560,8 @@
 			individual: handleStartSession,
 			'before-group': handleEndIndividual,
 			group: handleStartGroup,
-			ended: handleEndGroup
+			'after-group': handleEndGroup,
+			ended: handleEndAfterGroup
 		};
 
 		try {

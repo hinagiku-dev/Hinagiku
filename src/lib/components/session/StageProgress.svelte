@@ -9,6 +9,7 @@
 		{ id: 'individual', name: 'individual', color: 'bg-blue-500' },
 		{ id: 'before-group', name: 'beforeGroup', color: 'bg-purple-500' },
 		{ id: 'group', name: 'group', color: 'bg-green-500' },
+		{ id: 'after-group', name: 'afterGroup', color: 'bg-orange-500' },
 		{ id: 'ended', name: 'ended', color: 'bg-gray-500' }
 	] as const;
 
@@ -36,6 +37,8 @@
 				return m.beforeGroupStage();
 			case 'group':
 				return m.groupStage();
+			case 'afterGroup':
+				return m.afterGroupStage();
 			case 'ended':
 				return m.ended();
 			default:

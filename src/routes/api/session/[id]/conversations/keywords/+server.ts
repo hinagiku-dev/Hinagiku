@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		// 建立關鍵字頻率統計
 		const keywordFrequency: Record<string, number> = {};
 
-		// 遍歷所有群組的關鍵字
+		// 遍歷所有小組的關鍵字
 		groups.forEach((group) => {
 			if (group.keywords) {
 				Object.entries(group.keywords).forEach(([keyword, count]) => {

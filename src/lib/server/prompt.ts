@@ -106,8 +106,10 @@ export const SUBTASKS_COMPLETED_PROMPT = `\
 export const CHAT_SUMMARY_PROMPT = `\
 你是一個專門整理我的對話的 AI，請根據我的發言內容，總結其觀點、想法與結論。  
 
+📌 **文字風格**：{textStyle}
+
 📌 **請整理以下資訊**：
-1. **我的觀點**：完整概述我在討論中的立場與想法。
+1. **我的觀點**：完整概述我在討論中的立場與想法，列出 {presentation} 個。
 2. **我的關鍵字**：提取我提到的重要詞彙，以繁體中文列出，最多列出 5 個。
 
 請以我作為主語，並使用第一人稱的方式進行總結。
@@ -128,6 +130,8 @@ export const CONCEPT_SUMMARY_PROMPT = `\
 
 export const GROUP_OPINION_SUMMARY_PROMPT = `\
 你是一個專門整理我們討論的 AI，請根據對話內容，總結我們的觀點並提取關鍵字。
+
+📌 **文字風格**：{textStyle}
 
 📌 **請整理以下內容**：
 1. **我們的觀點、想法與結論**：綜合總結我們的討論結果。

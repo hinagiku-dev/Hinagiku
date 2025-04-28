@@ -24,7 +24,7 @@ describe('Firebase Server Functions', () => {
 	});
 
 	describe('getGroupsData', () => {
-		it('應該正確返回群組資料', async () => {
+		it('應該正確返回小組資料', async () => {
 			const mockGroups = {
 				empty: false,
 				docs: [
@@ -55,7 +55,7 @@ describe('Firebase Server Functions', () => {
 			expect(result[1].participants).toContain('user3');
 		});
 
-		it('當沒有找到群組時應該拋出404錯誤', async () => {
+		it('當沒有找到小組時應該拋出404錯誤', async () => {
 			const groupsRef = {
 				get: vi.fn().mockResolvedValue({ empty: true })
 			} as unknown as CollectionReference;

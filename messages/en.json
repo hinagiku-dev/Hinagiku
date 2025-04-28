@@ -293,6 +293,8 @@
 	"announcementFailed": "Failed to broadcast announcement",
 	"announcementCancelled": "Announcement cancelled successfully",
 	"announcementCancelFailed": "Failed to cancel announcement",
+	"afterGroup": "After Group Stage",
+	"afterGroupStage": "After Group Stage",
 	"enabled": "Enabled",
 	"disabled": "Disabled",
 	"vad": "VAD",
