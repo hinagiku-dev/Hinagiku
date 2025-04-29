@@ -225,7 +225,7 @@ export async function chatWithLLMByDocs(
 
 	try {
 		const [response, subtask_completed, moderation, off_topic] = await Promise.all([
-			requestLLM(system_prompt, history, schema, 0.1),
+			requestLLM(system_prompt, history, schema, 0.5),
 			checkSubtaskCompleted(history, subtasks),
 			isHarmfulContent(history.length > 0 ? history[history.length - 1].content : ''),
 			isOffTopic(history, task, subtasks)
