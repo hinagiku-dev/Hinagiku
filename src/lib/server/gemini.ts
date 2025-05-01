@@ -1,4 +1,4 @@
-import { GoogleGeminiFlash, z } from '$lib/ai';
+import { llmModel, z } from '$lib/ai';
 import type { Resource } from '$lib/schema/resource';
 import type { Discussion, LLMChatMessage } from '$lib/server/types';
 import {
@@ -25,7 +25,7 @@ export async function requestLLM(
 	topP: number = 0.5
 ) {
 	try {
-		const { output } = await GoogleGeminiFlash.generate({
+		const { output } = await llmModel.generate({
 			system: system_prompt,
 			prompt: HISTORY_PROMPT.replace(
 				'{chatHistory}',

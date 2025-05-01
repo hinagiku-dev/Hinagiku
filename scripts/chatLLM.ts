@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { HARMFUL_CONTENT_DETECTION_PROMPT } from '../src/lib/server/prompt';
 import type { LLMChatMessage } from '../src/lib/server/types';
 
-export const GoogleGeminiFlash = genkit({
+export const llmModel = genkit({
 	plugins: [googleAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY })],
 	model: gemini15Flash
 });
@@ -16,7 +16,7 @@ export async function requestLLM(
 	schema: z.ZodSchema,
 	system_prompt?: string
 ) {
-	const { output } = await GoogleGeminiFlash.generate({
+	const { output } = await llmModel.generate({
 		prompt: [
 			...(system_prompt ? [{ text: system_prompt }] : []),
 			...history.map((msg) => ({

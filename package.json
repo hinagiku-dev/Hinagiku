@@ -90,6 +90,7 @@
 	},
 	"packageManager": "pnpm@10.6.3",
 	"dependencies": {
-		"@inlang/paraglide-sveltekit": "0.15.5"
+		"@inlang/paraglide-sveltekit": "0.15.5",
+		"genkitx-openai": "^0.22.3"
 	}
 }
