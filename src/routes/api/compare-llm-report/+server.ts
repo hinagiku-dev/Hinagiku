@@ -1,4 +1,3 @@
-import { getConversationsData, getConversationsRef } from '$lib/server/firebase';
 import { requestLLM, summarizeConcepts } from '$lib/server/gemini';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -6,12 +5,15 @@ import { z } from 'zod';
 import type { Conversation } from '$lib/schema/conversation';
 
 export async function GET() {
-	// 這裡可改為從 query 取得參數，暫時寫死
-	const sessionId = 'V5J7eTOAihp3hNazbxTl';
-	const groupId = 'DO1nAnON7EBqvmhULLKc';
-
-	const conversations_ref = getConversationsRef(sessionId, groupId);
-	const conversation = await getConversationsData(conversations_ref);
+	// From groups == 'DO1nAnON7EBqvmhULLKc' in sessions == 'V5J7eTOAihp3hNazbxTl';
+	const conversation = [
+		{
+			userId: 'WnfUaKDJGfYxEjtBRjxvz77q4mb2',
+			summary:
+				'學生認為幸福感來自於睡覺、吃到好吃的東西，以及和朋友分享事情。他很重視生活中的享受，以及與人建立連結和情感交流。',
+			keyPoints: ['睡覺', '吃到好吃的東西', '和朋友分享事情', '人際關係', '情感交流']
+		}
+	] as Conversation[];
 
 	const { similar_view_points, different_view_points, students_summary } = await summarizeConcepts(
 		conversation.map((conv: Conversation) => ({
@@ -157,6 +159,10 @@ export async function GET() {
 		suggestions: dialogQualityResult.suggestions,
 		message: `對話品質評分: ${dialogQualityResult.score}/10`
 	};
+	console.log('similar_view_points', similar_view_points);
+	console.log('different_view_points', different_view_points);
+	console.log('students_summary', students_summary);
+	console.log('testResults', testResults);
 
 	return json({
 		similar_view_points,
