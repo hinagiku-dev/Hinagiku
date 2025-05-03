@@ -2,25 +2,120 @@ import { requestLLM, summarizeConcepts } from '$lib/server/gemini';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
 
-import type { Conversation } from '$lib/schema/conversation';
-
 export async function GET() {
-	// From groups == 'DO1nAnON7EBqvmhULLKc' in sessions == 'V5J7eTOAihp3hNazbxTl';
+	// From groups == 'DO1nAnON7EBqvmhULLKc' in sessions == 'V5J7eTOAihp3hNazbxTl', conversations == 'jlTkN3xaaYWpvYI2D9W'
 	const conversation = [
 		{
-			userId: 'WnfUaKDJGfYxEjtBRjxvz77q4mb2',
-			summary:
-				'學生認為幸福感來自於睡覺、吃到好吃的東西，以及和朋友分享事情。他很重視生活中的享受，以及與人建立連結和情感交流。',
-			keyPoints: ['睡覺', '吃到好吃的東西', '和朋友分享事情', '人際關係', '情感交流']
+			role: 'assistant',
+			content:
+				'嗨！我是小菊，一位專門輔導學生使用教育相關文件的 AI 助教。我會盡力協助你理解文件內容，達成學習目標。首先，為了更了解你對幸福的看法，可以請你分享一下你對「幸福」的定義嗎？'
+		},
+		{
+			role: 'user',
+			content: '整天睡覺'
+		},
+		{
+			role: 'assistant',
+			content:
+				'睡覺是很棒的享受，能讓人感到放鬆和舒適。但如果只是一直睡覺，你覺得這樣能算是你對「幸福」的完整定義嗎？幸福對你來說，是不是還包含其他的面向呢？'
+		},
+		{
+			role: 'user',
+			content: '整天睡覺'
+		},
+		{
+			role: 'assistant',
+			content:
+				'你說的「整天睡覺」確實是一種享受，能帶來放鬆和舒適。這很棒！不過，如果我們要更完整地定義「幸福」，只包含睡覺可能不夠全面。幸福對你來說，除了放鬆和舒適之外，還有沒有其他更深層的意義或感受呢？例如，有沒有什麼事情會讓你感到特別滿足或快樂？'
+		},
+		{
+			role: 'user',
+			content: '吃到好吃的東西'
+		},
+		{
+			role: 'assistant',
+			content:
+				'吃到好吃的東西也是一種幸福的感覺！這很棒，看來你很懂得享受生活中的美好事物。那麼，除了睡覺和美食，還有沒有其他事情會讓你覺得幸福呢？ 幸福感是不是也可能來自於成就感、人際關係，或是幫助他人呢？'
+		},
+		{
+			role: 'user',
+			content: '吃到好吃的東西'
+		},
+		{
+			role: 'assistant',
+			content:
+				'吃到好吃的東西也是一種幸福的感覺！這很棒，看來你很懂得享受生活中的美好事物。那麼，除了睡覺和美食，還有沒有其他事情會讓你覺得幸福呢？ 幸福感是不是也可能來自於成就感、人際關係，或是幫助他人呢？'
+		},
+		{
+			role: 'user',
+			content: '幸福感是不是也可能來自於成就感、人際關係，或是幫助他人呢？'
+		},
+		{
+			role: 'assistant',
+			content:
+				'你問到幸福感是否可能來自成就感、人際關係或是幫助他人，這些想法都很好！仔細想想，對你來說，做什麼事情會讓你覺得自己是有價值的、有能力的，或是對別人有貢獻的呢？這些感覺，會不會也讓你感到幸福？'
+		},
+		{
+			role: 'user',
+			content: '吃到好吃的東西'
+		},
+		{
+			role: 'assistant',
+			content:
+				'你問到幸福感是否可能來自成就感、人際關係或是幫助他人，這些想法都很好！仔細想想，對你來說，做什麼事情會讓你覺得自己是有價值的、有能力的，或是對別人有貢獻的呢？這些感覺，會不會也讓你感到幸福？'
+		},
+		{
+			role: 'user',
+			content: '吃到好吃的東西'
+		},
+		{
+			role: 'assistant',
+			content:
+				'吃到好吃的東西很棒！這表示你很重視生活中的享受。現在，我們來想想，除了這些能直接帶來快樂的事物，還有沒有其他更深層的幸福來源？例如，你覺得幫助別人、達成目標，或是和家人朋友相處，會不會也讓你感到幸福呢？'
+		},
+		{
+			role: 'user',
+			content: '吃到好吃的東西'
+		},
+		{
+			role: 'assistant',
+			content:
+				'吃到好吃的東西很棒！這表示你很重視生活中的享受。現在，我們來想想，除了這些能直接帶來快樂的事物，還有沒有其他更深層的幸福來源？例如，你覺得幫助別人、達成目標，或是和家人朋友相處，會不會也讓你感到幸福呢？'
+		},
+		{
+			role: 'user',
+			content: '吃到好吃的東西'
+		},
+		{
+			role: 'assistant',
+			content:
+				'吃到好吃的東西很棒！這表示你很重視生活中的享受。現在，我們來想想，除了這些能直接帶來快樂的事物，還有沒有其他更深層的幸福來源？例如，你覺得幫助別人、達成目標，或是和家人朋友相處，會不會也讓你感到幸福呢？'
+		},
+		{
+			role: 'user',
+			content: '我認為和朋友分享事情可以讓我感到幸福'
+		},
+		{
+			role: 'assistant',
+			content:
+				'和朋友分享事情讓你感到幸福，這真是太棒了！這表示你很重視人際關係和情感交流。這麼說來，對你而言，幸福的其中一個重要來源就是與人建立連結。既然你提到了與朋友分享事情，這是一個很好的起點。你能不能再具體地說說，通常是哪些類型的事情，或是怎麼樣的分享方式，會讓你感到特別幸福呢？'
 		}
-	] as Conversation[];
+	];
 
-	const { similar_view_points, different_view_points, students_summary } = await summarizeConcepts(
-		conversation.map((conv: Conversation) => ({
-			summary: conv.summary as string,
-			keyPoints: conv.keyPoints as string[]
-		}))
-	);
+	// Extract user messages and prepare data structure for summarizeConcepts
+	const userMessages = conversation.filter((msg) => msg.role === 'user').map((msg) => msg.content);
+	const assistantMessages = conversation
+		.filter((msg) => msg.role === 'assistant')
+		.map((msg) => msg.content);
+
+	// Create input for summarizeConcepts with required structure
+	const summaryInput = userMessages.map((content, index) => ({
+		summary: content, // Using user message content as summary
+		keyPoints: [assistantMessages[index] || ''] // Using corresponding assistant message as key point if available
+	}));
+
+	const { similar_view_points, different_view_points, students_summary } =
+		await summarizeConcepts(summaryInput);
 
 	// 測試結果集合
 	const testResults = {
@@ -43,17 +138,18 @@ export async function GET() {
 	const personalFirstPersonPrompt =
 		'請檢查以下內容是否有使用「我」、「我的」等第一人稱單數作為主詞或描述';
 
-	// 針對每個人的總結進行檢測
+	// 針對每個使用者訊息進行檢測
+	// 使用 userMessages 而不是 conversation 來匹配類型
 	const personalFirstPersonResults = await Promise.all(
-		conversation.map(async (conv: Conversation) => {
+		userMessages.map(async (content, index) => {
 			const { result } = await requestLLM(
 				personalFirstPersonPrompt,
-				[{ role: 'user', content: conv.summary || '' }],
+				[{ role: 'user', content: content || '' }],
 				personalFirstPersonSchema
 			);
 
 			return {
-				userId: conv.userId,
+				userId: `user_${index}`, // 替代 userId，因為原始資料沒有此欄位
 				pass: result.having,
 				message: result.having ? '有使用第一人稱單數' : '沒有使用第一人稱單數'
 			};
