@@ -301,5 +301,7 @@
 	"groupVocabulary": "Group",
 	"recentHostActivity": "Recent Host Activity",
 	"createYourFirstTemplate": "Create your first template to get started",
-	"endAfterGroupStage": "End After Group Stage"
+	"endAfterGroupStage": "End After Group Stage",
+	"stopRecordingReminderWithoutVAD": "Remember to press the stop button after speaking!",
+	"stopRecordingReminderWithVAD": "Feel free to speak until the discussion ends :D"
 }
