@@ -693,6 +693,8 @@
 								{m.beforeGroupStage()}
 							{:else if $session?.status === 'group'}
 								{m.groupStage()}
+							{:else if $session?.status === 'after-group'}
+								{m.afterGroupStage()}
 							{:else if $session?.status === 'ended'}
 								{m.ended()}
 							{:else}
