@@ -119,7 +119,7 @@ export async function GET() {
 
 	// 測試結果集合
 	const testResults = {
-		personalFirstPersonCheck: null as null | { userId: string; pass: boolean; message: string }[],
+		personalFirstPersonCheck: null as null | { pass: boolean; message: string },
 		conceptFirstPersonCheck: null as null | { pass: boolean; message: string },
 		groupSummaryFirstPersonCheck: null as null | { pass: boolean; message: string },
 		foreignLanguageCheck: null as null | { pass: boolean; message: string },
@@ -135,28 +135,18 @@ export async function GET() {
 
 	// 1. 個人總結第一人稱檢測
 	const personalFirstPersonSchema = z.object({ having: z.boolean() });
-	const personalFirstPersonPrompt =
-		'請檢查以下內容是否有使用「我」、「我的」等第一人稱單數作為主詞或描述';
-
-	// 針對每個使用者訊息進行檢測
-	// 使用 userMessages 而不是 conversation 來匹配類型
-	const personalFirstPersonResults = await Promise.all(
-		userMessages.map(async (content, index) => {
-			const { result } = await requestLLM(
-				personalFirstPersonPrompt,
-				[{ role: 'user', content: content || '' }],
-				personalFirstPersonSchema
-			);
-
-			return {
-				userId: `user_${index}`, // 替代 userId，因為原始資料沒有此欄位
-				pass: result.having,
-				message: result.having ? '有使用第一人稱單數' : '沒有使用第一人稱單數'
-			};
-		})
+	const { result: personalFirstPersonResult } = await requestLLM(
+		'請檢查以下內容是否有使用「我」、「我的」等第一人稱單數作為主詞或描述',
+		[{ role: 'user', content: students_summary }],
+		personalFirstPersonSchema
 	);
 
-	testResults['personalFirstPersonCheck'] = personalFirstPersonResults;
+	testResults['personalFirstPersonCheck'] = {
+		pass: personalFirstPersonResult.having,
+		message: personalFirstPersonResult.having
+			? '有使用「我」、「我的」等第一人稱單數作為主詞或描述'
+			: '沒有使用「我」、「我的」等第一人稱單數作為主詞或描述'
+	};
 
 	// 2. 小組 Concept 生成第一人稱檢測 (已完成)
 	const conceptFirstPersonSchema = z.object({ having: z.boolean() });
@@ -168,7 +158,9 @@ export async function GET() {
 
 	testResults['conceptFirstPersonCheck'] = {
 		pass: conceptFirstPersonResult.having,
-		message: conceptFirstPersonResult.having ? '有使用「我們」作為主詞' : '沒有使用「我們」作為主詞'
+		message: conceptFirstPersonResult.having
+			? '有使用「我們」、「大家」這類型的第一人稱作為主詞'
+			: '沒有使用「我們」、「大家」這類型的第一人稱作為主詞'
 	};
 
 	// 3. 小組總結第一人稱檢測
@@ -187,8 +179,8 @@ export async function GET() {
 	testResults['groupSummaryFirstPersonCheck'] = {
 		pass: groupSummaryFirstPersonResult.having,
 		message: groupSummaryFirstPersonResult.having
-			? '有使用「我們」作為主詞'
-			: '沒有使用「我們」作為主詞'
+			? '有使用「我們」、「大家」這類型的第一人稱作為主詞'
+			: '沒有使用「我們」、「大家」這類型的第一人稱作為主詞'
 	};
 
 	// 4. 對話外文檢測
