@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Card, Textarea } from 'flowbite-svelte';
+	import { Button, Card, Textarea, Tooltip } from 'flowbite-svelte';
 	import { Mic, Send, Square } from 'lucide-svelte';
 	import AudioPlayer from './AudioPlayer.svelte';
 	import { renderMarkdown } from '$lib/utils/renderMarkdown';
@@ -202,6 +202,15 @@
 							{/if}
 							{recording ? (operating ? m.waiting() : m.stop()) : m.record()}
 						</Button>
+						{#if recording}
+							<Tooltip trigger="focus" open={true}>
+								{#if vadEnabled}
+									{m.stopRecordingReminderWithVAD()}
+								{:else}
+									{m.stopRecordingReminderWithoutVAD()}
+								{/if}
+							</Tooltip>
+						{/if}
 						<Button
 							color="primary"
 							class="gap-2"
@@ -211,15 +220,6 @@
 							<Send class={operating ? 'animate-pulse' : ''} />
 							{m.send()}
 						</Button>
-					</div>
-
-					<div class="text-right text-sm text-gray-500">
-						{m.vad()}
-						{#if vadEnabled}
-							{m.enabled()}
-						{:else}
-							{m.disabled()}
-						{/if}
 					</div>
 				</div>
 			</div>
