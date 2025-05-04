@@ -300,5 +300,6 @@
 	"vad": "VAD",
 	"groupVocabulary": "Group",
 	"recentHostActivity": "Recent Host Activity",
-	"createYourFirstTemplate": "Create your first template to get started"
+	"createYourFirstTemplate": "Create your first template to get started",
+	"endAfterGroupStage": "End After Group Stage"
 }
