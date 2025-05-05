@@ -1,13 +1,8 @@
 import { env } from '$env/dynamic/private';
+import { gemini15Flash, googleAI } from '@genkit-ai/googleai';
 import { genkit } from 'genkit';
-import { gpt41Mini, gpt4oTranscribe, openAI } from 'genkitx-openai';
 
-export const llmModel = genkit({
-	plugins: [openAI({ apiKey: env.OPENAI_API_KEY })],
-	model: gpt41Mini
-});
-
-export const asrModel = genkit({
-	plugins: [openAI({ apiKey: env.OPENAI_API_KEY })],
-	model: gpt4oTranscribe
+export const GoogleGeminiFlash = genkit({
+	plugins: [googleAI({ apiKey: env.GOOGLE_GENAI_API_KEY })],
+	model: gemini15Flash
 });
