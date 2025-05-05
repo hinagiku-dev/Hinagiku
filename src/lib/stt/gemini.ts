@@ -1,8 +1,8 @@
-import { GoogleGeminiFlash, z } from '$lib/ai';
+import { llmModel, z } from '$lib/ai';
 
 export async function transcribe(data: Buffer): Promise<string> {
 	const dataurl = `data:audio/wav;base64,${data.toString('base64')}`;
-	const { output } = await GoogleGeminiFlash.generate({
+	const { output } = await llmModel.generate({
 		system: '(zh-tw)請將語音確實轉錄，使用的主要語言為臺灣繁體中文，次要語言為英語。',
 		prompt: [{ text: '' }, { media: { url: dataurl } }],
 		output: {
