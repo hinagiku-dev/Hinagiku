@@ -4,12 +4,14 @@ import type { Discussion, LLMChatMessage } from '$lib/server/types';
 import {
 	CHAT_SUMMARY_PROMPT,
 	CONCEPT_SUMMARY_PROMPT,
+	DOCS_CONTEXT_RESPONSE_PROMPT,
 	DOCS_CONTEXT_SYSTEM_PROMPT,
 	FOREIGN_LANGUAGE_DETECTION_PROMPT,
 	GROUP_OPINION_SUMMARY_PROMPT,
 	HARMFUL_CONTENT_DETECTION_PROMPT,
 	HEY_HELP_PROMPT,
 	HISTORY_PROMPT,
+	INTRODUCTION_PROMPT,
 	OFF_TOPIC_DETECTION_PROMPT,
 	SUBTASKS_COMPLETED_PROMPT,
 	SUBTASK_PREFIX_PROMPT
@@ -193,6 +195,69 @@ async function checkSubtaskCompleted(history: LLMChatMessage[], subtasks: string
 	}
 }
 
+export async function generateIntroduction(
+	task: string,
+	subtasks: string[],
+	resources: Resource[]
+) {
+	const formatted_docs = resources
+		.map((doc, index) => {
+			const title = doc.name || `Document ${index + 1}`;
+			return `[${title}]:\n${doc.content}`;
+		})
+		.join('\n\n');
+
+	const formattedSubtasks = subtasks.map((subtask) => {
+		return SUBTASK_PREFIX_PROMPT.replace('{subtask}', subtask);
+	});
+
+	const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
+		.replace('{subtasks}', formattedSubtasks.join('\n'))
+		.replace('{resources}', formatted_docs)
+		.replace('{response_prompt}', '');
+
+	const schema = z.object({
+		introduction: z.string()
+	});
+
+	try {
+		const response = await requestLLM(
+			system_prompt,
+			[{ role: 'user', content: INTRODUCTION_PROMPT }],
+			schema,
+			0.5
+		);
+		if (!response.success) {
+			throw new Error('Failed to get response');
+		}
+
+		const { introduction } = schema.parse(response.result) as z.infer<typeof schema>;
+
+		let normalized_response = normalizeText(introduction);
+
+		// Check for foreign language in the response and replace if needed
+		const languageCheck = await cleanForeignLanguage(normalized_response);
+		if (languageCheck.success && languageCheck.containsForeignLanguage) {
+			console.log('Foreign language detected in LLM response, replacing with cleaned version');
+			normalized_response = languageCheck.revisedText;
+			console.log(normalized_response);
+		}
+
+		return {
+			success: true,
+			response: normalized_response,
+			error: ''
+		};
+	} catch (error) {
+		console.error('Error in introduce:', error);
+		return {
+			success: false,
+			response: '',
+			error: 'Error in introduce'
+		};
+	}
+}
+
 export async function chatWithLLMByDocs(
 	history: LLMChatMessage[],
 	task: string,
@@ -215,7 +280,8 @@ export async function chatWithLLMByDocs(
 
 	const system_prompt = DOCS_CONTEXT_SYSTEM_PROMPT.replace('{task}', task)
 		.replace('{subtasks}', formattedSubtasks.join('\n'))
-		.replace('{resources}', formatted_docs);
+		.replace('{resources}', formatted_docs)
+		.replace('{response_prompt}', DOCS_CONTEXT_RESPONSE_PROMPT);
 
 	const schema = z.object({
 		affirmation: z.string(),
