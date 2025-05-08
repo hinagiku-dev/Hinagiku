@@ -150,7 +150,7 @@
 	let selectAllStatus = writable(false);
 
 	async function handleSelectTemplate() {
-		$selectStatus = $selectStatus ? false : true;
+		$selectStatus = !$selectStatus;
 	}
 
 	function toggleTemplateSelection(id: string, isChecked: boolean) {
