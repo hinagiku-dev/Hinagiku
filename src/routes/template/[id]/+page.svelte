@@ -22,7 +22,8 @@
 	let isUploading = false;
 	let backgroundImage: File | null = null;
 	let uploadingBackground = false;
-	let backgroundPreview: string | null = null;
+	let backgroundPreview: string | null = null; // Permanent URL from Cloud Storage
+	let localPreviewUrl: string | null = null; // Temporary blob URL for local preview
 
 	const templateRef = doc(db, 'templates', $page.params.id);
 	const [template, { unsubscribe }] = subscribe<Template>(templateRef);
@@ -44,7 +45,8 @@
 				title.trim() !== $template.title ||
 				task.trim() !== $template.task ||
 				isPublic !== $template.public ||
-				subtasks.join() !== $template.subtasks.join();
+				subtasks.join() !== $template.subtasks.join() ||
+				backgroundPreview !== $template.backgroundImage;
 		}
 	}
 
@@ -52,9 +54,9 @@
 	onDestroy(() => {
 		unsubscribe();
 
-		// Clean up any object URLs created for background preview
-		if (backgroundPreview && !$template?.backgroundImage) {
-			URL.revokeObjectURL(backgroundPreview);
+		// Clean up any blob URLs created for local preview
+		if (localPreviewUrl) {
+			URL.revokeObjectURL(localPreviewUrl);
 		}
 	});
 
@@ -62,14 +64,14 @@
 	function handleFileInput(event: Event) {
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
-			// Revoke previous object URL if it exists and wasn't from Firestore
-			if (backgroundPreview && !$template?.backgroundImage) {
-				URL.revokeObjectURL(backgroundPreview);
+			// Revoke previous blob URL if it exists
+			if (localPreviewUrl) {
+				URL.revokeObjectURL(localPreviewUrl);
 			}
 
 			backgroundImage = input.files[0];
-			// Create a preview URL
-			backgroundPreview = URL.createObjectURL(backgroundImage);
+			// Create a local preview URL
+			localPreviewUrl = URL.createObjectURL(backgroundImage);
 		}
 	}
 
@@ -94,8 +96,15 @@
 			}
 
 			const data = await res.json();
+			// Update with permanent URL from Cloud Storage
 			backgroundPreview = data.imageUrl;
 			notifications.success('Background image uploaded successfully');
+
+			// Clean up local preview
+			if (localPreviewUrl) {
+				URL.revokeObjectURL(localPreviewUrl);
+				localPreviewUrl = null;
+			}
 			backgroundImage = null;
 		} catch (e) {
 			console.error('Error uploading background image:', e);
@@ -108,9 +117,9 @@
 	// Clear selected background image
 	function clearBackgroundImage() {
 		backgroundImage = null;
-		if (backgroundPreview && !$template?.backgroundImage) {
-			URL.revokeObjectURL(backgroundPreview);
-			backgroundPreview = null;
+		if (localPreviewUrl) {
+			URL.revokeObjectURL(localPreviewUrl);
+			localPreviewUrl = null;
 		}
 	}
 
@@ -309,11 +318,11 @@
 								</Button>
 							{/if}
 						</div>
-					{:else if backgroundImage}
+					{:else if backgroundImage && localPreviewUrl}
 						<div class="relative mb-4">
 							<Card padding="none" class="overflow-hidden">
 								<img
-									src={backgroundPreview}
+									src={localPreviewUrl}
 									alt="Background preview"
 									class="h-48 w-full object-cover"
 								/>
