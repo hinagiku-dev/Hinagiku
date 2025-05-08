@@ -144,9 +144,60 @@
 		unsubscribe2();
 		unsubscribe3();
 	});
-</script>
 
-<Title page="Dashboard" />
+	let selectStatus = writable(false);
+	let selectedTemplates = writable<string[]>([]);
+	let selectAllStatus = writable(false);
+
+	async function handleSelectTemplate() {
+		$selectStatus = $selectStatus ? false : true;
+	}
+
+	function toggleTemplateSelection(id: string, isChecked: boolean) {
+		if (isChecked) {
+			$selectedTemplates = [...$selectedTemplates, id];
+		} else {
+			$selectedTemplates = $selectedTemplates.filter((templateId) => templateId !== id);
+		}
+	}
+
+	function selectAllTemplates() {
+		if ($selectAllStatus) {
+			$selectedTemplates = [];
+			$selectAllStatus = false;
+		} else {
+			if ($templates) {
+				$selectedTemplates = $templates.map(([doc]) => doc.id);
+			}
+			$selectAllStatus = true;
+		}
+	}
+
+	async function deleteSelectedTemplates() {
+		if ($selectedTemplates.length === 0) {
+			notifications.error('請選擇至少一個模板來刪除');
+			return;
+		}
+
+		try {
+			if (!confirm(`確定要刪除 ${$selectedTemplates.length} 個模板嗎？`)) {
+				return;
+			}
+
+			const deletePromises = $selectedTemplates.map((id) =>
+				fetch(`/api/template/${id}`, { method: 'DELETE' })
+			);
+
+			await Promise.all(deletePromises);
+			notifications.success(`成功刪除 ${$selectedTemplates.length} 個模板`);
+			$selectedTemplates = [];
+			$selectStatus = false;
+		} catch (e) {
+			console.error('刪除模板時出錯:', e);
+			notifications.error('刪除模板失敗');
+		}
+	}
+</script>
 
 <main class="mx-auto max-w-6xl px-4 py-16">
 	<div class="mb-12">
@@ -238,20 +289,47 @@
 	<div>
 		<div class="mb-6 flex items-center justify-between">
 			<h2 class="text-2xl font-semibold text-gray-900">{m.yourTemplates()}</h2>
-			<Button color="alternative" href="/templates">{m.viewAll()}</Button>
+			<div class="ml-auto flex space-x-4">
+				{#if $selectStatus}
+					<Button color="red" onclick={deleteSelectedTemplates}>{m.deleteSelectedTemplate()}</Button
+					>
+					<Button color="primary" onclick={selectAllTemplates}>
+						{#if $selectAllStatus}
+							{m.deselectAll()}
+						{:else}
+							{m.selectAll()}
+						{/if}
+					</Button>
+					<Button color="alternative" onclick={handleSelectTemplate}>{m.selectTemplate()}</Button>
+				{:else}
+					<Button color="primary" onclick={handleSelectTemplate}>{m.selectTemplate()}</Button>
+				{/if}
+
+				<Button color="alternative" href="/templates">{m.viewAll()}</Button>
+			</div>
 		</div>
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $templates?.length}
 				{#each $templates as [doc, template]}
-					<TemplateCard
-						id={doc.id}
-						title={template.title}
-						task={template.task}
-						subtaskSize={template.subtasks.length}
-						resourceSize={template.resources.length}
-						owner={template.owner}
-						isPublic={template.public}
-					/>
+					<div class="relative h-full">
+						{#if $selectStatus}
+							<input
+								type="checkbox"
+								class="absolute right-3 top-3 z-10"
+								checked={$selectedTemplates.includes(doc.id)}
+								onchange={(e) => toggleTemplateSelection(doc.id, e.currentTarget.checked)}
+							/>
+						{/if}
+						<TemplateCard
+							id={doc.id}
+							title={template.title}
+							task={template.task}
+							subtaskSize={template.subtasks.length}
+							resourceSize={template.resources.length}
+							owner={template.owner}
+							isPublic={template.public}
+						/>
+					</div>
 				{/each}
 			{:else}
 				<Card class="md:col-span-2 lg:col-span-3">
