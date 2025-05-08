@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button, Input, Toggle, Textarea, Modal, Tooltip } from 'flowbite-svelte';
-	import { Plus, Trash2, Save, Play } from 'lucide-svelte';
+	import { Button, Input, Toggle, Textarea, Modal, Tooltip, Card, Spinner } from 'flowbite-svelte';
+	import { Plus, Trash2, Save, Play, Upload, X } from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import type { Template } from '$lib/schema/template';
 	import ResourceList from './ResourceList.svelte';
@@ -20,6 +20,9 @@
 	let subtasks: string[] = [];
 	let showDeleteModal = false;
 	let isUploading = false;
+	let backgroundImage: File | null = null;
+	let uploadingBackground = false;
+	let backgroundPreview: string | null = null;
 
 	const templateRef = doc(db, 'templates', $page.params.id);
 	const [template, { unsubscribe }] = subscribe<Template>(templateRef);
@@ -30,6 +33,7 @@
 			task = t.task;
 			isPublic = t.public;
 			subtasks = [...t.subtasks];
+			backgroundPreview = t.backgroundImage || null;
 		}
 	});
 
@@ -49,6 +53,57 @@
 		unsubscribe();
 	});
 
+	// Handle file input change
+	function handleFileInput(event: Event) {
+		const input = event.target as HTMLInputElement;
+		if (input.files && input.files.length > 0) {
+			backgroundImage = input.files[0];
+			// Create a preview URL
+			backgroundPreview = URL.createObjectURL(backgroundImage);
+		}
+	}
+
+	// Upload background image
+	async function uploadBackgroundImage() {
+		if (!backgroundImage) return;
+
+		try {
+			uploadingBackground = true;
+			const formData = new FormData();
+			formData.append('backgroundImage', backgroundImage);
+
+			const res = await fetch(`/api/template/${$page.params.id}/background`, {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				notifications.error(data.error || 'Failed to upload background image');
+				return;
+			}
+
+			const data = await res.json();
+			backgroundPreview = data.imageUrl;
+			notifications.success('Background image uploaded successfully');
+			backgroundImage = null;
+		} catch (e) {
+			console.error('Error uploading background image:', e);
+			notifications.error('Failed to upload background image');
+		} finally {
+			uploadingBackground = false;
+		}
+	}
+
+	// Clear selected background image
+	function clearBackgroundImage() {
+		backgroundImage = null;
+		if (backgroundPreview && !$template?.backgroundImage) {
+			URL.revokeObjectURL(backgroundPreview);
+			backgroundPreview = null;
+		}
+	}
+
 	async function saveTemplate() {
 		if (!template) return;
 
@@ -60,7 +115,8 @@
 					title: title.trim(),
 					task: task.trim(),
 					public: isPublic,
-					subtasks: subtasks.filter((subtask) => subtask.trim())
+					subtasks: subtasks.filter((subtask) => subtask.trim()),
+					backgroundImage: backgroundPreview
 				})
 			});
 
@@ -208,6 +264,98 @@
 			<div class="flex items-center gap-2">
 				<Toggle bind:checked={isPublic} />
 				<label for="public">{m.makePublic()}</label>
+			</div>
+
+			<div class="border-t pt-6">
+				<h2 class="mb-4 text-xl font-semibold">Background Image</h2>
+				<div class="mb-4">
+					<p class="mb-2 text-sm text-gray-600">
+						Upload a background image for this template. It will be used as the background for all
+						sessions created from this template.
+					</p>
+
+					{#if backgroundPreview}
+						<div class="relative mb-4">
+							<Card padding="none" class="overflow-hidden">
+								<img
+									src={backgroundPreview}
+									alt="Background preview"
+									class="h-48 w-full object-cover"
+								/>
+							</Card>
+							{#if !uploadingBackground}
+								<Button
+									color="red"
+									size="xs"
+									class="absolute right-2 top-2"
+									on:click={() => {
+										if (confirm('Are you sure you want to remove the background image?')) {
+											backgroundPreview = null;
+											saveTemplate();
+										}
+									}}
+								>
+									<X class="h-4 w-4" />
+								</Button>
+							{/if}
+						</div>
+					{:else if backgroundImage}
+						<div class="relative mb-4">
+							<Card padding="none" class="overflow-hidden">
+								<img
+									src={URL.createObjectURL(backgroundImage)}
+									alt="Background preview"
+									class="h-48 w-full object-cover"
+								/>
+							</Card>
+							{#if !uploadingBackground}
+								<Button
+									color="red"
+									size="xs"
+									class="absolute right-2 top-2"
+									on:click={clearBackgroundImage}
+								>
+									<X class="h-4 w-4" />
+								</Button>
+							{/if}
+						</div>
+					{/if}
+
+					{#if !backgroundPreview || backgroundImage}
+						<div class="flex items-center gap-2">
+							<input
+								type="file"
+								id="backgroundImage"
+								accept="image/jpeg,image/png,image/gif,image/webp"
+								on:change={handleFileInput}
+								class="hidden"
+							/>
+							<label
+								for="backgroundImage"
+								class="flex cursor-pointer items-center justify-center rounded-lg bg-gray-100 p-3 hover:bg-gray-200"
+							>
+								<Upload class="mr-2 h-4 w-4" />
+								{backgroundImage ? 'Change image' : 'Select image'}
+							</label>
+
+							{#if backgroundImage}
+								<Button
+									color="primary"
+									on:click={uploadBackgroundImage}
+									disabled={uploadingBackground}
+								>
+									{#if uploadingBackground}
+										<Spinner class="mr-2" size="4" color="white" />
+										Uploading...
+									{:else}
+										<Save class="mr-2 h-4 w-4" />
+										Upload Image
+									{/if}
+								</Button>
+							{/if}
+						</div>
+					{/if}
+				</div>
 			</div>
 
 			<div class="border-t pt-6">

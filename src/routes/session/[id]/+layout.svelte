@@ -55,4 +55,27 @@
 	<DvdAnnouncement />
 {/if}
 
-{@render children()}
+{#if $session?.backgroundImage}
+	<div
+		class="app-background bg-cover bg-center bg-no-repeat opacity-15"
+		style="background-image: url('{$session.backgroundImage}');"
+	></div>
+{/if}
+
+<div class="relative z-10 min-h-screen">
+	{@render children()}
+</div>
+
+<style>
+	:global(html, body) {
+		background-color: transparent;
+	}
+	:global(.app-background) {
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		z-index: -10;
+	}
+</style>
