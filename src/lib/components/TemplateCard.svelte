@@ -57,7 +57,7 @@
 	}
 </script>
 
-<Card padding="lg" class="transition-all hover:border-primary-500">
+<Card padding="lg" class="h-full transition-all hover:border-primary-500">
 	<div class="flex h-full flex-col">
 		<div class="mb-4 flex items-start justify-between">
 			<h3 class="line-clamp-1 text-xl font-bold">{title}</h3>
