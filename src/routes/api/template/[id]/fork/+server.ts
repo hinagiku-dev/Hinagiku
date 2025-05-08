@@ -25,6 +25,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			title: `${sourceData.title} (Fork)`,
 			owner: locals.user.uid,
 			public: false, // Set forked template as private by default
+			backgroundImage: sourceData.backgroundImage || null, // Preserve background image
 			createdAt: Timestamp.now(),
 			updatedAt: Timestamp.now()
 		};

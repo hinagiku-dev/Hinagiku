@@ -8,6 +8,7 @@
 	import { i18n } from '$lib/i18n';
 	import { signInWithGoogle, user } from '$lib/stores/auth';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import { UI_CLASSES } from '$lib/config/ui';
 
 	async function handleScan(code: string) {
 		try {
@@ -61,7 +62,7 @@
 <main class="mx-auto max-w-2xl px-4 py-16">
 	<h1 class="mb-8 text-3xl font-bold">{m.joinSession()}</h1>
 
-	<div class="space-y-6">
+	<div class="space-y-6 {UI_CLASSES.PANEL_BG} rounded-lg border p-6">
 		<p class="text-gray-600">
 			{m.scanQr()}
 		</p>

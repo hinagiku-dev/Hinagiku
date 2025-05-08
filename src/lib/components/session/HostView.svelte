@@ -38,6 +38,7 @@
 	import { Toggle, Input } from 'flowbite-svelte';
 	import { deploymentConfig } from '$lib/config/deployment';
 	import { announcement } from '$lib/stores/announcement';
+	import { UI_CLASSES } from '$lib/config/ui';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -690,66 +691,71 @@
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
-	<div class="mb-8 flex flex-col gap-4">
-		{#if $session?.status === 'preparing'}
-			<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
-		{:else if $session?.labels?.length}
-			<div class="flex items-center gap-2">
-				{#each $session.labels as label}
-					<span class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
-						{label}
-					</span>
-				{/each}
-			</div>
-		{/if}
-		<div class="flex items-center justify-between">
-			<h1 class="text-3xl font-bold">
-				{$session?.title}
-			</h1>
+	<div class="mb-8 space-y-6">
+		<!-- Labels and Title Section -->
+		<div class="rounded-lg border p-6 {UI_CLASSES.PANEL_BG}">
+			{#if $session?.status === 'preparing'}
+				<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
+			{:else if $session?.labels?.length}
+				<div class="flex items-center gap-2">
+					{#each $session.labels as label}
+						<span class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
+							{label}
+						</span>
+					{/each}
+				</div>
+			{/if}
+			<div class="mt-4 flex items-center justify-between">
+				<h1 class="text-3xl font-bold">
+					{$session?.title}
+				</h1>
 
-			<div class="flex items-center gap-6">
-				<StageProgress
-					session={$session}
-					onStageChange={handleStageChange}
-					showAction={$session && stageButton[$session.status].show}
-				/>
+				<div class="flex items-center gap-6">
+					<StageProgress
+						session={$session}
+						onStageChange={handleStageChange}
+						showAction={$session && stageButton[$session.status].show}
+					/>
+				</div>
 			</div>
 		</div>
 
-		<!-- Add announcement controls here -->
+		<!-- Announcement Section - Only visible during active sessions -->
 		{#if $session?.status !== 'preparing' && $session?.status !== 'ended'}
-			<div class="mt-4 flex items-center gap-2 rounded-lg border bg-gray-50 p-4">
-				<h3 class="mr-4 text-lg font-medium">{m.announcements()}</h3>
-				<Input
-					type="text"
-					placeholder={m.enterAnnouncement()}
-					class="flex-1 text-sm"
-					bind:value={announcementMessage}
-				/>
-				<Button
-					color="primary"
-					class="flex items-center gap-2 whitespace-nowrap"
-					on:click={broadcastAnnouncement}
-					disabled={isBroadcasting || !announcementMessage.trim()}
-				>
-					<MessageSquarePlus class="h-4 w-4" />
-					{m.broadcast()}
-				</Button>
-				<Button
-					color="red"
-					class="whitespace-nowrap"
-					on:click={cancelAnnouncement}
-					disabled={!$session?.announcement?.active}
-				>
-					{m.cancelBroadcast()}
-				</Button>
+			<div class="rounded-lg border p-4 {UI_CLASSES.PANEL_BG}">
+				<h3 class="mb-2 text-lg font-medium">{m.announcements()}</h3>
+				<div class="flex flex-wrap items-center gap-2">
+					<Input
+						type="text"
+						placeholder={m.enterAnnouncement()}
+						class="flex-1 text-sm"
+						bind:value={announcementMessage}
+					/>
+					<Button
+						color="primary"
+						class="flex items-center gap-2 whitespace-nowrap"
+						on:click={broadcastAnnouncement}
+						disabled={isBroadcasting || !announcementMessage.trim()}
+					>
+						<MessageSquarePlus class="h-4 w-4" />
+						{m.broadcast()}
+					</Button>
+					<Button
+						color="red"
+						class="whitespace-nowrap"
+						on:click={cancelAnnouncement}
+						disabled={!$session?.announcement?.active}
+					>
+						{m.cancelBroadcast()}
+					</Button>
+				</div>
 			</div>
 		{/if}
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-4">
 		{#if $session?.status && $session.status === 'preparing'}
-			<div class="rounded-lg border p-6">
+			<div class="rounded-lg border p-6 {UI_CLASSES.PANEL_BG}">
 				<h2 class="mb-4 text-xl font-semibold">
 					{m.joinSessionHost()}
 				</h2>
@@ -783,7 +789,7 @@
 		{/if}
 
 		{#if $session?.status === 'ended'}
-			<div class="col-span-4 rounded-lg border p-6">
+			<div class="col-span-4 rounded-lg border p-6 {UI_CLASSES.PANEL_BG}">
 				<h2 class="mb-4 text-xl font-semibold">
 					{m.finalSummary()}
 				</h2>
@@ -804,11 +810,12 @@
 		{/if}
 
 		<div
-			class="col-span-3 rounded-lg border p-6 {$session?.status !== 'preparing'
+			class="col-span-3 rounded-lg border p-6 {UI_CLASSES.PANEL_BG} {$session?.status !==
+			'preparing'
 				? 'md:col-span-4'
 				: ''}"
 		>
-			<!-- Replace the waitlist participants section with this -->
+			<!-- Current Participants Section -->
 			<div class="mb-6 border-b pb-4">
 				<h3 class="mb-3 text-lg font-semibold">
 					{m.currentParticipants()} ({current_waitlist?.length || 0})
@@ -831,159 +838,164 @@
 				</div>
 			</div>
 
-			<!-- Existing Groups Section -->
-			<div class="mb-4 flex items-center justify-between">
-				<div class="flex items-center gap-2">
-					<h2 class="text-xl font-semibold">{m.Groups()}</h2>
-					{#if unGroupedParticipantsNum > 0}
-						<span class="rounded-full bg-orange-100 px-2 py-0.5 text-sm text-orange-600">
-							{m.unGrouped()}: {unGroupedParticipantsNum}
-						</span>
-					{:else}
-						<span class="rounded-full bg-green-100 px-2 py-0.5 text-sm text-green-600">
-							{m.allGrouped()}
-						</span>
+			<!-- Groups Section -->
+			<div class="mb-4">
+				<!-- Group Header with Status -->
+				<div class="mb-4 flex items-center justify-between">
+					<div class="flex items-center gap-2">
+						<h2 class="text-xl font-semibold">{m.Groups()}</h2>
+						{#if unGroupedParticipantsNum > 0}
+							<span class="rounded-full bg-orange-100 px-2 py-0.5 text-sm text-orange-600">
+								{m.unGrouped()}: {unGroupedParticipantsNum}
+							</span>
+						{:else}
+							<span class="rounded-full bg-green-100 px-2 py-0.5 text-sm text-green-600">
+								{m.allGrouped()}
+							</span>
+						{/if}
+					</div>
+					{#if $session?.status === 'preparing'}
+						<div class="flex items-center gap-4">
+							<div class="flex items-center gap-2">
+								<Toggle bind:checked={autoGroup} on:change={handleAutoGroupToggle}>
+									{autoGroup ? m.autoGrouping() : m.manualGrouping()}
+								</Toggle>
+								<Tooltip placement="right">
+									{autoGroup ? m.autoGroupingDesc() : m.manualGroupingDesc()}
+								</Tooltip>
+							</div>
+							{#if autoGroup}
+								<div class="flex items-center gap-2">
+									<Input type="number" min="1" max="50" class="w-20" bind:value={groupNumber} />
+									<span class="text-sm text-gray-500">{m.autoGroupingUnit()}</span>
+								</div>
+							{/if}
+							{#if autoGroup}
+								<Button
+									color="primary"
+									size="sm"
+									on:click={handleApplyGroups}
+									disabled={isApplyingGroups}
+								>
+									{isApplyingGroups ? m.applyingAutoGroup() : m.groupModeApplied()}
+								</Button>
+							{/if}
+						</div>
 					{/if}
 				</div>
-				{#if $session?.status === 'preparing'}
-					<div class="flex items-center gap-4">
-						<div class="flex items-center gap-2">
-							<Toggle bind:checked={autoGroup} on:change={handleAutoGroupToggle}>
-								{autoGroup ? m.autoGrouping() : m.manualGrouping()}
-							</Toggle>
-							<Tooltip placement="right">
-								{autoGroup ? m.autoGroupingDesc() : m.manualGroupingDesc()}
-							</Tooltip>
-						</div>
-						{#if autoGroup}
-							<div class="flex items-center gap-2">
-								<Input type="number" min="1" max="50" class="w-20" bind:value={groupNumber} />
-								<span class="text-sm text-gray-500">{m.autoGroupingUnit()}</span>
+
+				<!-- Group Display -->
+				{#if $groups.length === 0}
+					<Alert>{m.waitingForParticipants()}</Alert>
+				{:else}
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+						{#each $groups.sort((a, b) => a.number - b.number) as group}
+							<div class="rounded border p-3 {UI_CLASSES.PANEL_BG} shadow-sm">
+								<div class="mb-2 flex items-center justify-between">
+									<button
+										class="cursor-pointer text-sm font-semibold hover:text-primary-600"
+										onclick={() => handleGroupClick(group)}
+										onkeydown={(e) => e.key === 'Enter' && handleGroupClick(group)}
+									>
+										{m.groupVocabulary()} #{group.number}
+									</button>
+									<Tooltip>{m.openGroupChatHistory()}</Tooltip>
+									<GroupStatus {group} showStatus={$session?.status === 'group'} />
+								</div>
+								{#if group.participants.length === 0}
+									<p class="text-xs text-gray-500">
+										{m.noParticipants()}
+									</p>
+								{:else}
+									<ul class="space-y-1.5">
+										{#each group.participants as participant}
+											<li>
+												<div class="flex items-center gap-1.5">
+													<div class="flex flex-1 items-center gap-1.5">
+														<span
+															class="min-w-[60px] max-w-[60px] cursor-pointer truncate text-xs hover:text-primary-600"
+															onclick={() => handleParticipantClick(group.id, participant)}
+															onkeydown={(e) =>
+																e.key === 'Enter' && handleParticipantClick(group.id, participant)}
+															role="button"
+															tabindex="0"
+														>
+															{#key participant}
+																<ResolveUsername id={participant} />
+															{/key}
+														</span>
+														<Tooltip>{m.openChatHistory()}</Tooltip>
+
+														{#if participantProgress.has(participant)}
+															<div class="flex flex-1 items-center gap-1.5">
+																<div class="flex h-1.5 flex-1">
+																	{#each participantProgress.get(participant)?.completedTasks || [] as completed, i}
+																		<div
+																			class="h-full flex-1 border-r border-white first:rounded-l last:rounded-r last:border-r-0 {completed
+																				? 'bg-green-500'
+																				: 'bg-gray-300'}"
+																		></div>
+																		<Tooltip>{$session?.subtasks[i] || `Subtask ${i + 1}`}</Tooltip>
+																	{/each}
+																</div>
+
+																{#if participantProgress.get(participant)?.warning}
+																	{@const warning = participantProgress.get(participant)?.warning}
+																	{#if warning}
+																		<div
+																			class="flex h-full min-w-[3rem] shrink-0 items-center justify-center rounded-full px-1.5 {warning.moderation
+																				? 'bg-red-500'
+																				: warning.offTopic >= 3
+																					? 'bg-orange-400'
+																					: ''}"
+																		>
+																			{#if warning.moderation}
+																				<button
+																					class="flex items-center justify-center"
+																					onclick={() => handleRemoveWarning(group.id, participant)}
+																				>
+																					<TriangleAlert
+																						class="h-3 w-3 text-white hover:text-gray-200"
+																					/>
+																				</button>
+																			{:else if warning.offTopic >= 3}
+																				<MessageSquareOff
+																					class="h-3 w-3 text-white"
+																					aria-label="離題警告"
+																				/>
+																			{/if}
+																		</div>
+																		{#if warning.moderation}
+																			<Tooltip>{m.warningInappropriate()}</Tooltip>
+																		{:else if warning.offTopic >= 3}
+																			<Tooltip>{m.warningOffTopic()}</Tooltip>
+																		{/if}
+																	{/if}
+																{/if}
+															</div>
+														{/if}
+													</div>
+													<button
+														class="shrink-0 rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-red-500"
+														onclick={() => handleRemoveParticipant(group.id, participant)}
+													>
+														<X class="h-3 w-3" />
+													</button>
+													<Tooltip>{m.removeParticipant()}</Tooltip>
+												</div>
+											</li>
+										{/each}
+									</ul>
+								{/if}
 							</div>
-						{/if}
-						{#if autoGroup}
-							<Button
-								color="primary"
-								size="sm"
-								on:click={handleApplyGroups}
-								disabled={isApplyingGroups}
-							>
-								{isApplyingGroups ? m.applyingAutoGroup() : m.groupModeApplied()}
-							</Button>
-						{/if}
+						{/each}
 					</div>
 				{/if}
 			</div>
-			{#if $groups.length === 0}
-				<Alert>{m.waitingForParticipants()}</Alert>
-			{:else}
-				<div class="grid grid-cols-3 gap-4">
-					{#each $groups.sort((a, b) => a.number - b.number) as group}
-						<div class="rounded border p-3">
-							<div class="mb-2 flex items-center justify-between">
-								<button
-									class="cursor-pointer text-sm font-semibold hover:text-primary-600"
-									onclick={() => handleGroupClick(group)}
-									onkeydown={(e) => e.key === 'Enter' && handleGroupClick(group)}
-								>
-									{m.groupVocabulary()} #{group.number}
-								</button>
-								<Tooltip>{m.openGroupChatHistory()}</Tooltip>
-								<GroupStatus {group} showStatus={$session?.status === 'group'} />
-							</div>
-							{#if group.participants.length === 0}
-								<p class="text-xs text-gray-500">
-									{m.noParticipants()}
-								</p>
-							{:else}
-								<ul class="space-y-1.5">
-									{#each group.participants as participant}
-										<li>
-											<div class="flex items-center gap-1.5">
-												<div class="flex flex-1 items-center gap-1.5">
-													<span
-														class="min-w-[60px] max-w-[60px] cursor-pointer truncate text-xs hover:text-primary-600"
-														onclick={() => handleParticipantClick(group.id, participant)}
-														onkeydown={(e) =>
-															e.key === 'Enter' && handleParticipantClick(group.id, participant)}
-														role="button"
-														tabindex="0"
-													>
-														{#key participant}
-															<ResolveUsername id={participant} />
-														{/key}
-													</span>
-													<Tooltip>{m.openChatHistory()}</Tooltip>
-
-													{#if participantProgress.has(participant)}
-														<div class="flex flex-1 items-center gap-1.5">
-															<div class="flex h-1.5 flex-1">
-																{#each participantProgress.get(participant)?.completedTasks || [] as completed, i}
-																	<div
-																		class="h-full flex-1 border-r border-white first:rounded-l last:rounded-r last:border-r-0 {completed
-																			? 'bg-green-500'
-																			: 'bg-gray-300'}"
-																	></div>
-																	<Tooltip>{$session?.subtasks[i] || `Subtask ${i + 1}`}</Tooltip>
-																{/each}
-															</div>
-
-															{#if participantProgress.get(participant)?.warning}
-																{@const warning = participantProgress.get(participant)?.warning}
-																{#if warning}
-																	<div
-																		class="flex h-full min-w-[3rem] shrink-0 items-center justify-center rounded-full px-1.5 {warning.moderation
-																			? 'bg-red-500'
-																			: warning.offTopic >= 3
-																				? 'bg-orange-400'
-																				: ''}"
-																	>
-																		{#if warning.moderation}
-																			<button
-																				class="flex items-center justify-center"
-																				onclick={() => handleRemoveWarning(group.id, participant)}
-																			>
-																				<TriangleAlert
-																					class="h-3 w-3 text-white hover:text-gray-200"
-																				/>
-																			</button>
-																		{:else if warning.offTopic >= 3}
-																			<MessageSquareOff
-																				class="h-3 w-3 text-white"
-																				aria-label="離題警告"
-																			/>
-																		{/if}
-																	</div>
-																	{#if warning.moderation}
-																		<Tooltip>{m.warningInappropriate()}</Tooltip>
-																	{:else if warning.offTopic >= 3}
-																		<Tooltip>{m.warningOffTopic()}</Tooltip>
-																	{/if}
-																{/if}
-															{/if}
-														</div>
-													{/if}
-												</div>
-												<button
-													class="shrink-0 rounded p-0.5 text-gray-500 hover:bg-gray-100 hover:text-red-500"
-													onclick={() => handleRemoveParticipant(group.id, participant)}
-												>
-													<X class="h-3 w-3" />
-												</button>
-												<Tooltip>{m.removeParticipant()}</Tooltip>
-											</div>
-										</li>
-									{/each}
-								</ul>
-							{/if}
-						</div>
-					{/each}
-				</div>
-			{/if}
 		</div>
 
 		<!-- Task Section -->
-		<div class="col-span-4 rounded-lg border p-6">
+		<div class="col-span-4 mt-8 rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow">
 			<h2 class="mb-4 text-xl font-semibold">
 				{m.mainTask()}
 			</h2>
@@ -1004,7 +1016,7 @@
 		</div>
 
 		<!-- Resources Section -->
-		<div class="col-span-4 rounded-lg border p-6">
+		<div class="col-span-4 mt-6 rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow">
 			<h2 class="mb-4 text-xl font-semibold">
 				{m.resources()}
 			</h2>
@@ -1015,7 +1027,7 @@
 			{:else}
 				<div class="space-y-4">
 					{#each $session?.resources as resource}
-						<div class="rounded-lg border p-4">
+						<div class="rounded-lg border bg-gray-50/80 p-4">
 							<h3 class="font-medium">{resource.name}</h3>
 							<p class="prose prose-hina mt-2 text-gray-700">
 								{#await renderMarkdown(resource.content)}

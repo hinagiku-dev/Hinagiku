@@ -30,9 +30,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			resources: templateData.resources,
 			task: templateData.task,
 			subtasks: templateData.subtasks,
+			backgroundImage: templateData.backgroundImage || null,
 			createdAt: Timestamp.now(),
 			status: 'preparing',
 			labels: [],
+			waitlist: [],
 			timing: {
 				individual: {
 					start: null,

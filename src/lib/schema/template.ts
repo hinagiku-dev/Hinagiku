@@ -11,6 +11,7 @@ export const TemplateSchema = z.object({
 	resources: z.array(ResourceSchema).max(10),
 	task: z.string().min(1).max(200),
 	subtasks: z.array(z.string().min(1).max(200)).max(10),
+	backgroundImage: z.string().nullable().optional(),
 	createdAt: Timestamp,
 	updatedAt: Timestamp
 });

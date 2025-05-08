@@ -23,6 +23,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			public: data.public ?? false,
 			owner: locals.user.uid,
 			resources: [],
+			backgroundImage: null,
 			createdAt: Timestamp.now(),
 			updatedAt: Timestamp.now()
 		};
