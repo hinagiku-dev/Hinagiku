@@ -57,7 +57,7 @@
 
 {#if $session?.backgroundImage}
 	<div
-		class="app-background bg-cover bg-center bg-no-repeat opacity-15"
+		class="app-background bg-cover bg-center bg-no-repeat opacity-50"
 		style="background-image: url('{$session.backgroundImage}');"
 	></div>
 {/if}
