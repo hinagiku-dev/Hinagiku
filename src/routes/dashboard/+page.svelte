@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { writable, derived } from 'svelte/store';
-	import { Card, Button } from 'flowbite-svelte';
+	import { Card, Button, Modal } from 'flowbite-svelte';
 	import { MessageSquarePlus, UserPlus, UserCog } from 'lucide-svelte';
 	import {
 		collection,
@@ -173,17 +173,19 @@
 		}
 	}
 
+
+	let showDeleteModal = writable(false);
+
 	async function deleteSelectedTemplates() {
 		if ($selectedTemplates.length === 0) {
 			notifications.error('請選擇至少一個模板來刪除');
 			return;
 		}
+		$showDeleteModal = true;
+	}
 
+	async function confirmDeleteTemplates() {
 		try {
-			if (!confirm(`確定要刪除 ${$selectedTemplates.length} 個模板嗎？`)) {
-				return;
-			}
-
 			const deletePromises = $selectedTemplates.map((id) =>
 				fetch(`/api/template/${id}`, { method: 'DELETE' })
 			);
@@ -197,6 +199,8 @@
 			notifications.error('刪除模板失敗');
 		}
 	}
+	
+
 </script>
 
 <main class="mx-auto max-w-6xl px-4 py-16">
@@ -420,3 +424,16 @@
 		</div>
 	{/if}
 </main>
+
+
+<Modal bind:open={$showDeleteModal} size="xs" autoclose>
+	<div class="text-center">
+		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+			{m.deleteBatchConfirmation()}
+		</h3>
+		<div class="flex justify-center gap-4">
+			<Button color="red" on:click={confirmDeleteTemplates}>{m.yesBatchDelete()}</Button>
+			<Button color="alternative" on:click={() => ($showDeleteModal = false)}>{m.noCancel()}</Button>
+		</div>
+	</div>
+</Modal>
