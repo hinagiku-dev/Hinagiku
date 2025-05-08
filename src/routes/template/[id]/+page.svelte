@@ -51,12 +51,22 @@
 	// Cleanup subscription on component destroy
 	onDestroy(() => {
 		unsubscribe();
+
+		// Clean up any object URLs created for background preview
+		if (backgroundPreview && !$template?.backgroundImage) {
+			URL.revokeObjectURL(backgroundPreview);
+		}
 	});
 
 	// Handle file input change
 	function handleFileInput(event: Event) {
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
+			// Revoke previous object URL if it exists and wasn't from Firestore
+			if (backgroundPreview && !$template?.backgroundImage) {
+				URL.revokeObjectURL(backgroundPreview);
+			}
+
 			backgroundImage = input.files[0];
 			// Create a preview URL
 			backgroundPreview = URL.createObjectURL(backgroundImage);
@@ -303,7 +313,7 @@
 						<div class="relative mb-4">
 							<Card padding="none" class="overflow-hidden">
 								<img
-									src={URL.createObjectURL(backgroundImage)}
+									src={backgroundPreview}
 									alt="Background preview"
 									class="h-48 w-full object-cover"
 								/>
