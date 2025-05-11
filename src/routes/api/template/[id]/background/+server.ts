@@ -2,9 +2,9 @@ import { json } from '@sveltejs/kit';
 import { Timestamp } from 'firebase-admin/firestore';
 import type { RequestHandler } from './$types';
 
+import type { Template } from '$lib/schema/template';
 import { adminDb } from '$lib/server/firebase';
 import { upload_object } from '$lib/server/object-storage';
-//import type { Template } from '$lib/schema/template';
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
 	// Authorization check
@@ -21,10 +21,10 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			return json({ error: 'Template not found' }, { status: 404 });
 		}
 
-		// const templateData = template.data() as Template;
-		// if (templateData.owner !== locals.user.uid) {
-		// 	return json({ error: 'Unauthorized' }, { status: 403 });
-		// }
+		const templateData = template.data() as Template;
+		if (templateData.owner !== locals.user.uid) {
+			return json({ error: 'Unauthorized' }, { status: 403 });
+		}
 
 		// Process form data
 		const formData = await request.formData();
