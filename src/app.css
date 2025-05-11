@@ -26,4 +26,7 @@
 	--color-secondary-700: #047857;
 	--color-secondary-800: #065f46;
 	--color-secondary-900: #064e3b;
+
+	/* UI Configuration Variables */
+	--panel-bg-opacity: 0.9; /* Adjust this value between 0 and 1 to control transparency */
 }
