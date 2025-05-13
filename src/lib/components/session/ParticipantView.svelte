@@ -22,6 +22,7 @@
 	import { setting } from '$lib/stores/setting';
 	import * as m from '$lib/paraglide/messages.js';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import { UI_CLASSES } from '$lib/config/ui';
 
 	interface ChatroomConversation {
 		name: string;
@@ -644,29 +645,31 @@
 </script>
 
 <main class="mx-auto max-w-7xl px-2 py-8">
-	<div class="flex items-center justify-between">
-		<h1 class="mb-8 text-3xl font-bold">{$session?.title}</h1>
-		{#if $session?.status === 'group' && groupDoc && groupDoc.data.participants[0] === user.uid}
-			{#if groupStatus === 'discussion'}
-				<Button color="green" on:click={handleEndGroup}>
-					<CircleCheck class="mr-2 h-4 w-4" />
-					{m.finishgroup()}
-				</Button>
-			{:else if groupStatus === 'summarize'}
-				<Button color="green" on:click={handleEndSummarize}>
-					<CircleCheck class="mr-2 h-4 w-4" />
-					{m.confirmEndSummarize()}
-				</Button>
-			{:else if groupStatus === 'end'}
-				<p class="text-gray-600">{m.end()}</p>
+	<div class="mb-8 rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow-sm">
+		<div class="flex items-center justify-between">
+			<h1 class="text-3xl font-bold">{$session?.title}</h1>
+			{#if $session?.status === 'group' && groupDoc && groupDoc.data.participants[0] === user.uid}
+				{#if groupStatus === 'discussion'}
+					<Button color="green" on:click={handleEndGroup}>
+						<CircleCheck class="mr-2 h-4 w-4" />
+						{m.finishgroup()}
+					</Button>
+				{:else if groupStatus === 'summarize'}
+					<Button color="green" on:click={handleEndSummarize}>
+						<CircleCheck class="mr-2 h-4 w-4" />
+						{m.confirmEndSummarize()}
+					</Button>
+				{:else if groupStatus === 'end'}
+					<p class="text-gray-600">{m.end()}</p>
+				{/if}
 			{/if}
-		{/if}
+		</div>
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-4">
 		<div class="space-y-8 md:col-span-1">
 			<!-- Status Section -->
-			<div class="rounded-lg border p-6">
+			<div class="rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow-sm">
 				<h2 class="mb-4 text-xl font-semibold">{m.status()}</h2>
 				<div class="space-y-4">
 					<div class="flex items-center gap-2">
@@ -713,7 +716,7 @@
 			</div>
 
 			<!-- Group Section -->
-			<div class="rounded-lg border p-6">
+			<div class="rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow-sm">
 				<h2 class="mb-4 text-xl font-semibold">{m.groupInfo()}</h2>
 				{#if groupDoc}
 					<div class="space-y-4">
@@ -835,7 +838,7 @@
 		</div>
 
 		<div
-			class="max-h-[calc(100vh-12rem)] min-h-[calc(100vh-12rem)] overflow-y-auto rounded-lg border p-6 md:col-span-3"
+			class="max-h-[calc(100vh-12rem)] min-h-[calc(100vh-12rem)] overflow-y-auto rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow md:col-span-3"
 		>
 			{#if $session?.status === 'preparing'}
 				<div class="mt-4">
