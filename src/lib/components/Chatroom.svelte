@@ -236,4 +236,10 @@
 		padding: 0;
 		overflow: hidden;
 	}
+
+	.prose {
+		max-width: fit-content;
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+	}
 </style>
