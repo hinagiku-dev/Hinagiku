@@ -28,7 +28,9 @@ export const ConversationSchema = z.object({
 	}),
 	subtaskCompleted: z.array(z.boolean().default(false)),
 	summary: z.string().nullable(),
-	keyPoints: z.array(z.string()).nullable()
+	keyPoints: z.array(z.string()).nullable(),
+	presentation: z.enum(['paragraph', 'list2', 'list3', 'list4', 'list5']).default('paragraph'),
+	textStyle: z.enum(['default', 'humor', 'serious', 'casual', 'cute']).default('default')
 });
 
 export type Conversation = z.infer<typeof ConversationSchema>;

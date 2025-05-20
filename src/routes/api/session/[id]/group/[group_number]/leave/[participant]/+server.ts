@@ -21,29 +21,29 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 			throw error(403, '您沒有權限移除此參與者');
 		}
 
-		// 找到群組
+		// 找到小組
 		const groupsRef = adminDb.collection('sessions').doc(id).collection('groups');
 		const groupDoc = await groupsRef.doc(group_number).get();
 
 		if (!groupDoc.exists) {
-			throw error(404, '找不到群組');
+			throw error(404, '找不到小組');
 		}
 
 		const groupData = groupDoc.data();
 		if (!groupData) {
-			throw error(404, '找不到群組資料');
+			throw error(404, '找不到小組資料');
 		}
 
-		// 確認參與者在群組中
+		// 確認參與者在小組中
 		if (!groupData.participants.includes(participant)) {
-			throw error(400, '參與者不在此群組中');
+			throw error(400, '參與者不在此小組中');
 		}
 
 		// 計算移除參與者後的新參與者列表
 		const updatedParticipants = groupData.participants.filter((p: string) => p !== participant);
 
 		if (updatedParticipants.length === 0) {
-			// 如果群組將變成空的，直接刪除整個群組
+			// 如果小組將變成空的，直接刪除整個小組
 			await groupDoc.ref.delete();
 		} else {
 			// 否則只更新參與者列表

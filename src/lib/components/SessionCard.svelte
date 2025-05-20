@@ -27,7 +27,8 @@
 		<div class="mb-4 flex items-start justify-between">
 			<h3 class="line-clamp-1 text-xl font-bold">{title}</h3>
 			<span
-				class="rounded-full px-3 py-1 text-sm font-medium {status === 'preparing'
+				class="ml-2 inline-flex shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium {status ===
+				'preparing'
 					? 'bg-yellow-100 text-yellow-600'
 					: status === 'individual'
 						? 'bg-blue-100 text-blue-600'
@@ -37,7 +38,15 @@
 								? 'bg-green-100 text-green-600'
 								: 'bg-gray-100 text-gray-600'}"
 			>
-				{status}
+				{status === 'preparing'
+					? m.preparingStage()
+					: status === 'individual'
+						? m.individualStage()
+						: status === 'before-group'
+							? m.beforeGroupStage()
+							: status === 'group'
+								? m.groupStage()
+								: m.ended()}
 			</span>
 		</div>
 		{#if labels?.length}

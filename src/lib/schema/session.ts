@@ -10,8 +10,9 @@ export const SessionSchema = z.object({
 	resources: z.array(ResourceSchema).max(10), // frozen, from template
 	task: z.string().min(1).max(200), // frozen, from template
 	subtasks: z.array(z.string().min(1).max(200)).max(10), // frozen, from template
+	backgroundImage: z.string().min(5).max(500).url().nullable(), // frozen, from template
 	createdAt: Timestamp,
-	status: z.enum(['preparing', 'individual', 'before-group', 'group', 'ended']),
+	status: z.enum(['preparing', 'individual', 'before-group', 'group', 'after-group', 'ended']),
 	labels: z.array(z.string()),
 	timing: z.object({
 		individual: z.object({

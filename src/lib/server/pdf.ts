@@ -1,5 +1,5 @@
 // import pdf from 'pdf-parse';
-import { GoogleGeminiFlash, z } from '$lib/ai';
+import { llmModel, z } from '$lib/ai';
 import { PDF_PARSE_PROMPT } from './prompt';
 
 // export async function pdf2Text(fileBuffer: ArrayBuffer, apiKey: string): Promise<string | null> {
@@ -15,7 +15,7 @@ import { PDF_PARSE_PROMPT } from './prompt';
 
 export async function pdf2Text(fileBuffer: ArrayBuffer): Promise<string | null> {
 	try {
-		const { output } = await GoogleGeminiFlash.generate({
+		const { output } = await llmModel.generate({
 			system: PDF_PARSE_PROMPT,
 			prompt: [
 				{

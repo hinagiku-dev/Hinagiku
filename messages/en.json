@@ -117,7 +117,6 @@
 	"sessionLabels": "Session Labels",
 	"welcomeDashboard": "Welcome to your dashboard",
 	"stats": "Statistics",
-	"recentHostActivity": "Recent Host Activity",
 	"recentActivity": "Recent Participant Activity",
 	"createTemplate": "Create Template",
 	"createTemplateDesc": "Create a new discussion template",
@@ -294,7 +293,15 @@
 	"announcementFailed": "Failed to broadcast announcement",
 	"announcementCancelled": "Announcement cancelled successfully",
 	"announcementCancelFailed": "Failed to cancel announcement",
+	"afterGroup": "After Group Stage",
+	"afterGroupStage": "After Group Stage",
 	"enabled": "Enabled",
 	"disabled": "Disabled",
-	"vad": "VAD"
+	"vad": "VAD",
+	"groupVocabulary": "Group",
+	"recentHostActivity": "Recent Host Activity",
+	"createYourFirstTemplate": "Create your first template to get started",
+	"endAfterGroupStage": "End After Group Stage",
+	"stopRecordingReminderWithoutVAD": "Remember to press the stop button after speaking!",
+	"stopRecordingReminderWithVAD": "Feel free to speak until the discussion ends :D"
 }

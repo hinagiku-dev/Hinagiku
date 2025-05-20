@@ -155,7 +155,7 @@ export async function getSessionData(
 export async function getConversationsFromAllParticipantsData(
 	id: string
 ): Promise<Array<Conversation & { groupId: string; conversationId: string }>> {
-	// 先獲取所有群組
+	// 先獲取所有小組
 	const groupsRef = getGroupsRef(id);
 	const groups = await groupsRef.get();
 
@@ -163,7 +163,7 @@ export async function getConversationsFromAllParticipantsData(
 		throw error(404, 'No groups found');
 	}
 
-	// 獲取每個群組中的所有對話
+	// 獲取每個小組中的所有對話
 	const conversationsPromises = groups.docs.map(async (groupDoc) => {
 		const conversationsRef = getConversationsRef(id, groupDoc.id);
 		const conversations = await conversationsRef.get();

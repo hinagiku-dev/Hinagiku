@@ -5,8 +5,7 @@ import {
 	getSessionData,
 	getSessionRef
 } from '$lib/server/firebase';
-import { chatWithLLMByDocs } from '$lib/server/gemini';
-import { INTRODUCTION_PROMPT } from '$lib/server/prompt';
+import { generateIntroduction } from '$lib/server/gemini';
 import type { LLMChatMessage } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
@@ -26,13 +25,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		const group_ref = getGroupRef(id, group_number);
 		const group_data = await getGroupData(group_ref);
 
-		const { response } = await chatWithLLMByDocs(
-			[{ role: 'user', content: INTRODUCTION_PROMPT }],
-			task,
-			subtasks,
-			new Array(subtasks.length).fill(false),
-			resources
-		);
+		const { response } = await generateIntroduction(task, subtasks, resources);
 
 		if (!response) {
 			throw error(500, 'Error generating intro message');

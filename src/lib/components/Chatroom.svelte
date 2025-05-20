@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { Button, Card, Textarea } from 'flowbite-svelte';
+	import { Button, Card, Textarea, Tooltip } from 'flowbite-svelte';
 	import { Mic, Send, Square } from 'lucide-svelte';
 	import AudioPlayer from './AudioPlayer.svelte';
 	import { renderMarkdown } from '$lib/utils/renderMarkdown';
 	import * as m from '$lib/paraglide/messages.js';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import { UI_CLASSES } from '$lib/config/ui';
 
 	interface Conversation {
 		name: string;
@@ -171,9 +172,9 @@
 	</div>
 
 	{#if !readonly}
-		<div class="border-t bg-white p-4">
+		<div class="border-t p-4 {UI_CLASSES.PANEL_BG}">
 			<div class="flex flex-wrap gap-2">
-				<div class="flex min-w-[200px] flex-1 flex-col">
+				<div class="flex min-w-[200px] flex-1 flex-col {UI_CLASSES.PANEL_BG}">
 					<Textarea
 						class="max-h-32 min-h-14 flex-1"
 						placeholder={m.placeholder()}
@@ -202,6 +203,15 @@
 							{/if}
 							{recording ? (operating ? m.waiting() : m.stop()) : m.record()}
 						</Button>
+						{#if recording}
+							<Tooltip trigger="focus" open={true}>
+								{#if vadEnabled}
+									{m.stopRecordingReminderWithVAD()}
+								{:else}
+									{m.stopRecordingReminderWithoutVAD()}
+								{/if}
+							</Tooltip>
+						{/if}
 						<Button
 							color="primary"
 							class="gap-2"
@@ -211,15 +221,6 @@
 							<Send class={operating ? 'animate-pulse' : ''} />
 							{m.send()}
 						</Button>
-					</div>
-
-					<div class="text-right text-sm text-gray-500">
-						{m.vad()}
-						{#if vadEnabled}
-							{m.enabled()}
-						{:else}
-							{m.disabled()}
-						{/if}
 					</div>
 				</div>
 			</div>

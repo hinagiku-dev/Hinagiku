@@ -7,12 +7,13 @@ import {
 } from '$lib/server/firebase';
 import { summarizeConcepts, summarizeStudentChat } from '$lib/server/gemini';
 import type { RequestHandler } from '@sveltejs/kit';
-import { error, redirect } from '@sveltejs/kit';
+import { error, json, redirect } from '@sveltejs/kit';
+import { z } from 'zod';
 
 // Endpoint for summarizing a student chat
 // GET /api/session/[id]/group/[group_number]/conversations/[conv_id]/summary/+server
 
-export const GET: RequestHandler = async ({ params, locals }) => {
+export const GET: RequestHandler = async ({ params, locals, url }) => {
 	try {
 		if (!locals.user) {
 			redirect(303, '/login');
@@ -46,7 +47,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 			console.log('Filtered history:', filteredHistory);
 		}
 
-		const response = await summarizeStudentChat(filteredHistory);
+		// Extract presentation and textStyle from query parameters
+		const presentationParam = url.searchParams.get('presentation') || 'paragraph';
+		const textStyleParam = url.searchParams.get('textStyle') || 'default';
+		const response = await summarizeStudentChat(filteredHistory, presentationParam, textStyleParam);
 		if (!response.success) {
 			throw error(500, response.error);
 		}
@@ -54,7 +58,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 		await conversation_ref.update({
 			summary: summary,
-			keyPoints: key_points
+			keyPoints: key_points,
+			presentation: presentationParam,
+			textStyle: textStyleParam
 		});
 
 		const conversations_ref = getConversationsRef(id, group_number);
@@ -103,6 +109,59 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		return new Response(JSON.stringify({ success: false, error: error }), { status: 500 });
 	}
 };
+
+// Update the conversation summary
+// PUT /api/session/[id]/group/[group_number]/conversations/[conv_id]/summary/+server
+// Request data format
+const requestDataFormat = z.object({
+	updated_summary: z.string(),
+	key_points: z.array(z.string())
+});
+
+export const PUT: RequestHandler = async ({ request, params, locals }) => {
+	try {
+		if (!locals.user) {
+			return json({ error: 'Unauthorized' }, { status: 401 });
+		}
+
+		const { id, group_number, conv_id } = params;
+		if (!id || !group_number || !conv_id) {
+			return json({ error: 'Missing parameters' }, { status: 400 });
+		}
+
+		const conversation_ref = getConversationRef(id, group_number, conv_id);
+		const { userId } = await getConversationData(conversation_ref);
+
+		if (userId !== locals.user.uid) {
+			return json({ error: 'Forbidden' }, { status: 403 });
+		}
+
+		const { updated_summary, key_points } = await getRequestData(request);
+		console.log('Updating conversation summary...', updated_summary, key_points);
+
+		await conversation_ref.update({
+			summary: updated_summary,
+			keyPoints: key_points
+		});
+
+		return json({ success: true }, { status: 200 });
+	} catch (error) {
+		console.error('Error updating conversation summary:', error);
+		return json({ error: 'Error updating conversation summary' }, { status: 500 });
+	}
+};
+
+async function getRequestData(request: Request): Promise<z.infer<typeof requestDataFormat>> {
+	const data = await request.json();
+	const result = requestDataFormat.parse(data);
+	if (!result.updated_summary) {
+		throw error(400, 'Missing parameters');
+	}
+	if (typeof result.updated_summary !== 'string') {
+		throw error(400, 'Invalid parameters');
+	}
+	return result;
+}
 
 async function isAllSummarized(conversations: FirebaseFirestore.DocumentData[]) {
 	return conversations.every((conversation) => conversation.summary && conversation.keyPoints);

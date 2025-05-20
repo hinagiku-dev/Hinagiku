@@ -25,6 +25,16 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 		}
 
 		const updates = await request.json();
+
+		// Handle background image updates specifically
+		if (updates.backgroundImage === null && templateData.backgroundImage) {
+			// If backgroundImage is explicitly set to null, clear it
+			updates.backgroundImage = null;
+		} else if (updates.backgroundImage === undefined && templateData.backgroundImage) {
+			// If backgroundImage is not included in the update, keep the existing value
+			updates.backgroundImage = templateData.backgroundImage;
+		}
+
 		const updatedTemplate: Template = {
 			...templateData,
 			...updates,

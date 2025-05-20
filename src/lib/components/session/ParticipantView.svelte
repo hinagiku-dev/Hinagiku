@@ -22,6 +22,7 @@
 	import { setting } from '$lib/stores/setting';
 	import * as m from '$lib/paraglide/messages.js';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import { UI_CLASSES } from '$lib/config/ui';
 
 	interface ChatroomConversation {
 		name: string;
@@ -113,7 +114,7 @@
 			fetchSummary();
 		}
 		if ($session?.status === 'ended' && groupDoc && !groupDoc.data.summary) {
-			fetchGroupSummary();
+			fetchGroupSummary('paragraph', 'default');
 		}
 	});
 
@@ -352,14 +353,14 @@
 
 	async function handleGroupRecord() {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return async () => {};
 		}
 
 		return createAudioHandler({
 			onMessage: async (content, audio) => {
 				if (!groupDoc) {
-					notifications.error('找不到群組');
+					notifications.error('找不到小組');
 					return;
 				}
 				const response = await fetch(
@@ -417,16 +418,16 @@
 
 	let loadingSummary = $state(false);
 
-	async function fetchSummary() {
+	async function fetchSummary(presentation: string = 'paragraph', textStyle: string = 'default') {
 		if (!groupDoc || !conversationDoc) {
-			notifications.error('無法獲取總結：找不到群組或對話');
+			notifications.error('無法獲取總結：找不到小組或對話');
 			return;
 		}
 
 		loadingSummary = true;
 		try {
 			const response = await fetch(
-				`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/summary`
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/summary?presentation=${presentation}&textStyle=${textStyle}`
 			);
 
 			if (!response.ok) {
@@ -440,6 +441,37 @@
 			notifications.error('無法獲取總結');
 		} finally {
 			loadingSummary = false;
+		}
+	}
+
+	async function handleUpdateSummary(summary: string, keyPoints: string[]) {
+		if (!groupDoc || !conversationDoc) {
+			notifications.error('無法更新總結：找不到小組或對話');
+			return;
+		}
+
+		try {
+			const response = await fetch(
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/conversations/${conversationDoc.id}/summary`,
+				{
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						updated_summary: summary,
+						key_points: keyPoints
+					})
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('更新失敗');
+			}
+			notifications.success('成功更新對話總結');
+		} catch (error) {
+			console.error('更新對話總結時出錯:', error);
+			notifications.error('無法更新對話總結');
 		}
 	}
 
@@ -457,7 +489,7 @@
 
 	async function handleGroupSend(text: string) {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
@@ -487,27 +519,30 @@
 		}
 	}
 
-	async function fetchGroupSummary() {
+	async function fetchGroupSummary(
+		presentation: string = 'paragraph',
+		textStyle: string = 'default'
+	) {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
 		loadingGroupSummary = true;
 		try {
 			const response = await fetch(
-				`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/summary`
+				`/api/session/${$page.params.id}/group/${groupDoc.id}/discussions/summary?presentation=${presentation}&textStyle=${textStyle}`
 			);
 
 			if (!response.ok) {
 				const data = await response.json();
-				throw new Error(data.error || '無法獲取群組討論總結');
+				throw new Error(data.error || '無法獲取小組討論總結');
 			}
 
-			notifications.success('成功獲取群組討論總結');
+			notifications.success('成功獲取小組討論總結');
 		} catch (error) {
-			console.error('獲取群組討論總結時出錯:', error);
-			notifications.error('無法獲取群組討論總結');
+			console.error('獲取小組討論總結時出錯:', error);
+			notifications.error('無法獲取小組討論總結');
 		} finally {
 			loadingGroupSummary = false;
 		}
@@ -515,7 +550,7 @@
 
 	async function handleUpdateGroupSummary(summary: string, keywords: Record<string, number>) {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
@@ -537,31 +572,31 @@
 			if (!response.ok) {
 				throw new Error('更新失敗');
 			}
-			notifications.success('成功更新群組討論總結');
+			notifications.success('成功更新小組討論總結');
 		} catch (error) {
-			console.error('更新群組討論總結時出錯:', error);
-			notifications.error('無法更新群組討論總結');
+			console.error('更新小組討論總結時出錯:', error);
+			notifications.error('無法更新小組討論總結');
 		}
 	}
 
 	async function handleEndGroup() {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
 		try {
-			await fetchGroupSummary();
-			notifications.success('成功結束群組討論');
+			await fetchGroupSummary('paragraph', 'default');
+			notifications.success('成功結束小組討論');
 		} catch (error) {
-			console.error('結束群組階段時出錯:', error);
-			notifications.error('無法結束群組階段');
+			console.error('結束小組階段時出錯:', error);
+			notifications.error('無法結束小組階段');
 		}
 	}
 
 	async function handleEndSummarize() {
 		if (!groupDoc) {
-			notifications.error('找不到群組');
+			notifications.error('找不到小組');
 			return;
 		}
 
@@ -578,7 +613,7 @@
 				throw new Error(errMsg || '無法結束總結階段');
 			}
 
-			notifications.success('成功完成群組總結');
+			notifications.success('成功完成小組總結');
 		} catch (error) {
 			console.error('結束總結階段時出錯:', error);
 			notifications.error('無法結束總結階段');
@@ -610,29 +645,31 @@
 </script>
 
 <main class="mx-auto max-w-7xl px-2 py-8">
-	<div class="flex items-center justify-between">
-		<h1 class="mb-8 text-3xl font-bold">{$session?.title}</h1>
-		{#if $session?.status === 'group' && groupDoc && groupDoc.data.participants[0] === user.uid}
-			{#if groupStatus === 'discussion'}
-				<Button color="green" on:click={handleEndGroup}>
-					<CircleCheck class="mr-2 h-4 w-4" />
-					{m.finishgroup()}
-				</Button>
-			{:else if groupStatus === 'summarize'}
-				<Button color="green" on:click={handleEndSummarize}>
-					<CircleCheck class="mr-2 h-4 w-4" />
-					{m.confirmEndSummarize()}
-				</Button>
-			{:else if groupStatus === 'end'}
-				<p class="text-gray-600">{m.end()}</p>
+	<div class="mb-8 rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow-sm">
+		<div class="flex items-center justify-between">
+			<h1 class="text-3xl font-bold">{$session?.title}</h1>
+			{#if $session?.status === 'group' && groupDoc && groupDoc.data.participants[0] === user.uid}
+				{#if groupStatus === 'discussion'}
+					<Button color="green" on:click={handleEndGroup}>
+						<CircleCheck class="mr-2 h-4 w-4" />
+						{m.finishgroup()}
+					</Button>
+				{:else if groupStatus === 'summarize'}
+					<Button color="green" on:click={handleEndSummarize}>
+						<CircleCheck class="mr-2 h-4 w-4" />
+						{m.confirmEndSummarize()}
+					</Button>
+				{:else if groupStatus === 'end'}
+					<p class="text-gray-600">{m.end()}</p>
+				{/if}
 			{/if}
-		{/if}
+		</div>
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-4">
 		<div class="space-y-8 md:col-span-1">
 			<!-- Status Section -->
-			<div class="rounded-lg border p-6">
+			<div class="rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow-sm">
 				<h2 class="mb-4 text-xl font-semibold">{m.status()}</h2>
 				<div class="space-y-4">
 					<div class="flex items-center gap-2">
@@ -646,7 +683,9 @@
 										? 'bg-purple-500'
 										: $session?.status === 'group'
 											? 'bg-green-500'
-											: 'bg-gray-500'}"
+											: $session?.status === 'after-group'
+												? 'bg-orange-500'
+												: 'bg-gray-500'}"
 						/>
 						<span>
 							{#if $session?.status === 'preparing'}
@@ -657,6 +696,8 @@
 								{m.beforeGroupStage()}
 							{:else if $session?.status === 'group'}
 								{m.groupStage()}
+							{:else if $session?.status === 'after-group'}
+								{m.afterGroupStage()}
 							{:else if $session?.status === 'ended'}
 								{m.ended()}
 							{:else}
@@ -675,7 +716,7 @@
 			</div>
 
 			<!-- Group Section -->
-			<div class="rounded-lg border p-6">
+			<div class="rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow-sm">
 				<h2 class="mb-4 text-xl font-semibold">{m.groupInfo()}</h2>
 				{#if groupDoc}
 					<div class="space-y-4">
@@ -797,7 +838,7 @@
 		</div>
 
 		<div
-			class="max-h-[calc(100vh-12rem)] min-h-[calc(100vh-12rem)] overflow-y-auto rounded-lg border p-6 md:col-span-3"
+			class="max-h-[calc(100vh-12rem)] min-h-[calc(100vh-12rem)] overflow-y-auto rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow md:col-span-3"
 		>
 			{#if $session?.status === 'preparing'}
 				<div class="mt-4">
@@ -819,6 +860,7 @@
 							conversation={conversationDoc}
 							loading={loadingSummary}
 							onRefresh={fetchSummary}
+							onUpdate={handleUpdateSummary}
 						/>
 					{/if}
 				</div>
@@ -836,7 +878,8 @@
 							<GroupSummary
 								group={groupDoc}
 								loading={loadingGroupSummary}
-								onRefresh={fetchGroupSummary}
+								onRefresh={(presentation = 'paragraph', textStyle = 'default') =>
+									fetchGroupSummary(presentation, textStyle)}
 								onUpdate={handleUpdateGroupSummary}
 							/>
 						{/if}
@@ -848,12 +891,25 @@
 								readonly
 								group={groupDoc}
 								loading={loadingGroupSummary}
-								onRefresh={fetchGroupSummary}
+								onRefresh={(presentation = 'paragraph', textStyle = 'default') =>
+									fetchGroupSummary(presentation, textStyle)}
 								onUpdate={handleUpdateGroupSummary}
 							/>
 						{/if}
 					</div>
 				{/if}
+			{:else if $session?.status === 'after-group'}
+				<div class="space-y-6">
+					{#if groupDoc}
+						<GroupSummary
+							group={groupDoc}
+							loading={loadingGroupSummary}
+							onRefresh={(presentation = 'paragraph', textStyle = 'default') =>
+								fetchGroupSummary(presentation, textStyle)}
+							onUpdate={handleUpdateGroupSummary}
+						/>
+					{/if}
+				</div>
 			{:else if $session?.status === 'ended'}
 				<EndedView {conversationDoc} {groupDoc} {user} />
 			{/if}
