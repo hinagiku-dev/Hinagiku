@@ -285,7 +285,7 @@
 			</div>
 
 			<div>
-				<p class="mb-4 font-medium">Tags</p>
+				<p class="mb-4 font-medium">{m.tags()}</p>
 				<TemplateLabelManager templateId={$page.params.id} {labels} />
 			</div>
 

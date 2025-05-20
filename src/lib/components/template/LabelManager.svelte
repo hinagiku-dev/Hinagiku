@@ -3,6 +3,7 @@
 	import { Plus, X } from 'lucide-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { onMount } from 'svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let { templateId, labels } = $props<{
 		templateId: string;
@@ -12,7 +13,7 @@
 	let showInput = $state(false);
 	let newLabel = $state('');
 	let inputRef = $state<HTMLDivElement | null>(null);
-	const MAX_LABEL_LENGTH = 20;
+	const MAX_LABEL_LENGTH = 10;
 
 	onMount(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -30,7 +31,12 @@
 		if (!newLabel.trim()) return;
 
 		if (newLabel.length > MAX_LABEL_LENGTH) {
-			notifications.error(`Label must be ${MAX_LABEL_LENGTH} characters or less`);
+			notifications.error(
+				m.characterCount({
+					current: newLabel.length.toString(),
+					limit: MAX_LABEL_LENGTH.toString()
+				})
+			);
 			return;
 		}
 
@@ -48,9 +54,9 @@
 
 			newLabel = '';
 			showInput = false;
-			notifications.success('Label added successfully');
+			notifications.success(m.labelAdded());
 		} catch {
-			notifications.error('Failed to add labels');
+			notifications.error(m.labelAddFailed());
 		}
 	}
 
@@ -58,7 +64,12 @@
 		const input = event.target as HTMLInputElement;
 		if (input.value.length > MAX_LABEL_LENGTH) {
 			input.value = input.value.slice(0, MAX_LABEL_LENGTH);
-			notifications.warning(`Label cannot exceed ${MAX_LABEL_LENGTH} characters`);
+			notifications.warning(
+				m.characterCount({
+					current: input.value.length.toString(),
+					limit: MAX_LABEL_LENGTH.toString()
+				})
+			);
 		}
 		newLabel = input.value;
 	}
@@ -76,9 +87,9 @@
 
 			if (!response.ok) throw new Error('Failed to update labels');
 
-			notifications.success('Label removed successfully');
+			notifications.success(m.labelRemoved());
 		} catch {
-			notifications.error('Failed to remove label');
+			notifications.error(m.labelRemoveFailed());
 		}
 	}
 </script>
@@ -99,7 +110,7 @@
 				on:input={handleInput}
 				size="sm"
 				class="h-8"
-				placeholder="New label"
+				placeholder={m.addLabel()}
 				on:keydown={(e) => {
 					if (e.key === 'Enter') {
 						e.preventDefault();
@@ -125,5 +136,5 @@
 	>
 		<Plus class="h-4 w-4" />
 	</Button>
-	<Tooltip placement="right">Add label</Tooltip>
+	<Tooltip placement="right">{m.addLabel()}</Tooltip>
 </div>
