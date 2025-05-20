@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { RequestHandler } from './$types';
 
 const requestDataFormat = z.object({
-	labels: z.array(z.string())
+	labels: z.array(z.string()).max(10)
 });
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
@@ -28,7 +28,8 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		}
 
 		const { labels } = await getRequestData(request);
-		await templateRef.update({ labels });
+		labels.sort();
+		await templateRef.update({ labels: [...new Set(labels)] });
 
 		return json({ success: true }, { status: 200 });
 	} catch (err) {

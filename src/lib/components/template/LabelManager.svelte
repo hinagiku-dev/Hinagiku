@@ -12,7 +12,7 @@
 	let showInput = $state(false);
 	let newLabel = $state('');
 	let inputRef = $state<HTMLDivElement | null>(null);
-	const MAX_LABEL_LENGTH = 10;
+	const MAX_LABEL_LENGTH = 20;
 
 	onMount(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -46,7 +46,6 @@
 
 			if (!response.ok) throw new Error('Failed to update labels');
 
-			labels = updatedLabels;
 			newLabel = '';
 			showInput = false;
 			notifications.success('Label added successfully');
@@ -77,7 +76,6 @@
 
 			if (!response.ok) throw new Error('Failed to update labels');
 
-			labels = updatedLabels;
 			notifications.success('Label removed successfully');
 		} catch {
 			notifications.error('Failed to remove label');
@@ -102,7 +100,12 @@
 				size="sm"
 				class="h-8"
 				placeholder="New label"
-				on:keydown={(e) => e.key === 'Enter' && addLabel()}
+				on:keydown={(e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						addLabel();
+					}
+				}}
 			/>
 		</div>
 	{/if}
