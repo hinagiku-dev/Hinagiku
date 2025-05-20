@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import type { Template } from '$lib/schema/template';
 	import ResourceList from './ResourceList.svelte';
+	import TemplateLabelManager from '$lib/components/template/LabelManager.svelte';
 	import { onDestroy } from 'svelte';
 	import { doc } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
@@ -17,6 +18,7 @@
 	let title = '';
 	let task = '';
 	let isPublic = false;
+	let labels: string[] = [];
 	let subtasks: string[] = [];
 	let showDeleteModal = false;
 	let isUploading = false;
@@ -34,6 +36,7 @@
 			task = t.task;
 			isPublic = t.public;
 			subtasks = [...t.subtasks];
+			labels = t.labels ? [...t.labels] : [];
 			backgroundPreview = t.backgroundImage || null;
 		}
 	});
@@ -135,6 +138,7 @@
 					task: task.trim(),
 					public: isPublic,
 					subtasks: subtasks.filter((subtask) => subtask.trim()),
+					labels,
 					backgroundImage: backgroundPreview
 				})
 			});
@@ -278,6 +282,11 @@
 					<Plus class="mr-2 h-4 w-4" />
 					{m.addSubtask()}
 				</Button>
+			</div>
+
+			<div>
+				<p class="mb-4 font-medium">Tags</p>
+				<TemplateLabelManager templateId={$page.params.id} {labels} />
 			</div>
 
 			<div class="flex items-center gap-2">

@@ -14,7 +14,8 @@
 		subtaskSize,
 		resourceSize,
 		owner,
-		isPublic
+		isPublic,
+		labels
 	}: {
 		id: string;
 		title: string;
@@ -23,6 +24,7 @@
 		resourceSize: number;
 		owner: string;
 		isPublic?: boolean;
+		labels?: string[];
 	} = $props();
 
 	let forking = $state(false);
@@ -71,6 +73,15 @@
 				</span>
 			{/if}
 		</div>
+		{#if labels?.length}
+			<div class="mb-2 flex flex-wrap gap-1">
+				{#each labels as label}
+					<span class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
+						{label}
+					</span>
+				{/each}
+			</div>
+		{/if}
 		<p class="mb-4 line-clamp-2 text-gray-600">{task}</p>
 		<div class="mt-auto w-full">
 			<div class="mb-4 flex items-center gap-4">

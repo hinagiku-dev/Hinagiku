@@ -89,6 +89,15 @@
 								{template.public ? m.Tpublic() : m.Tprivate()}
 							</span>
 						</div>
+						{#if template.labels?.length}
+							<div class="mb-2 flex flex-wrap gap-1">
+								{#each template.labels as label}
+									<span class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
+										{label}
+									</span>
+								{/each}
+							</div>
+						{/if}
 						<p class="mb-4 line-clamp-2 text-gray-600">{template.task}</p>
 						<div class="mb-4 flex items-center gap-4">
 							<span class="text-sm text-gray-500">
