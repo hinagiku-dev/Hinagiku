@@ -304,5 +304,7 @@
 	"recentHostActivity": "最近主持的活動",
 	"createYourFirstTemplate": "創建您的第一個模板以開始",
 	"stopRecordingReminderWithoutVAD": "講完話之後，記得按下停止鍵喔！",
-	"stopRecordingReminderWithVAD": "請自由自在的發言，直到討論結束：D"
+	"stopRecordingReminderWithVAD": "請自由自在的發言，直到討論結束：D",
+	"manageClasses": "管理班級",
+	"manageClassesDesc": "進行班級名單匯入與分組設定"
 }

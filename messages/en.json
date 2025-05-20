@@ -303,5 +303,7 @@
 	"createYourFirstTemplate": "Create your first template to get started",
 	"endAfterGroupStage": "End After Group Stage",
 	"stopRecordingReminderWithoutVAD": "Remember to press the stop button after speaking!",
-	"stopRecordingReminderWithVAD": "Feel free to speak until the discussion ends :D"
+	"stopRecordingReminderWithVAD": "Feel free to speak until the discussion ends :D",
+	"manageClasses": "Manage Classes",
+	"manageClassesDesc": "Import class lists and configure grouping settings"
 }
