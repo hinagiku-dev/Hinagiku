@@ -2,13 +2,26 @@
 
 Hinagiku (雛菊), or Daisy in English, is an intelligent system designed to support discussions in educational environments. One of Hinagiku's key features is its real-time voice transcription and analysis, which helps hosts provide timely and insightful feedback, setting it apart from other educational tools. We chose the name Hinagiku because it reflects our core values: resilience, simplicity, and growth—much like the daisy flower itself, which flourishes in diverse conditions. Our mission is to help participants and hosts connect meaningfully by providing tools that facilitate better communication and collaboration in classrooms.
 
+### Key Technologies
+
+- **SvelteKit** for the front-end framework
+- **Firebase** (Firestore and Auth) on Google Cloud Platform
+- **Object storage** via Google Cloud Storage or Cloudflare R2
+- **OpenAI** models via Genkit for language understanding and generation, with support for Google Gemini and others
+
+For deployment-specific settings such as custom colors or titles, see [`DEPLOYMENT-CONFIG.md`](DEPLOYMENT-CONFIG.md).
+
+### Multi-provider Support
+
+Hinagiku can run against different storage and AI providers. Set the `HINAGIKU_STORAGE_BACKEND` environment variable to `firebase` or `r2` to choose between Google Cloud Storage and Cloudflare R2. Language model providers are configured in [`src/lib/ai/index.ts`](src/lib/ai/index.ts), allowing you to swap OpenAI for Google Gemini or other Genkit-compatible models.
+
 ## Development Instructions
 
 To set up the development environment for Hinagiku, please follow these steps:
 
 ### Install dependencies
 
-Ensure you have `pnpm` installed. If not, you can install it using the script:
+Ensure you have **Node.js 18+** and `pnpm` installed. If not, you can install pnpm using the script:
 
 ```sh
 curl -fsSL https://get.pnpm.io/install.sh | sh -
@@ -53,19 +66,27 @@ pnpm lint
 pnpm format
 ```
 
+### Run tests
+
+Execute the vitest suite to verify that everything works as expected:
+
+```sh
+pnpm test
+```
+
 ## Data Flow
 
-We have four main components in the system: the browser, the server, Firestore, and R2 (S3-compatible storage).
+We have four main components in the system: the browser, the server, Firestore, and object storage (Cloud Storage or Cloudflare R2).
 
-- **Firestore and R2** are read-only for the browser. The difference is that Firestore is used on a push (subscribe) basis, while R2 is used on a pull (download) basis.
-- The **server** is the only component that can write to Firestore and R2. The browser must communicate through the server to perform any write operations.
+- **Firestore and storage** are read-only for the browser. The difference is that Firestore is used on a push (subscribe) basis, while the storage backend is used on a pull (download) basis.
+- The **server** is the only component that can write to Firestore and storage. The browser must communicate through the server to perform any write operations.
 
 ```mermaid
 graph TD
     browser -->|api| server
     server -->|reference| browser
-    server -->|upload| R2
-    R2 -->|download| browser
+    server -->|upload| Storage
+    Storage -->|download| browser
     Firestore -->|subscribe| browser
     Firestore -->|read| server
     server -->|write| Firestore
@@ -76,3 +97,13 @@ This data flow allows us to control data updates centrally while still leveragin
 ## Data Model
 
 The front-end data model between the browser and Firestore is straightforward. We aim to map application routes directly to Firestore document paths. This approach allows us to easily subscribe to the appropriate documents and collections in Firestore, optimizing the number of read operations since the front-end views only one document or collection at a time.
+
+## Contributing
+
+We welcome contributions! If you are new here:
+
+- Fork the repository and create your feature branch from `main`.
+- Use `pnpm lint` and `pnpm test` to ensure your changes pass formatting and tests.
+- Open a pull request describing your changes.
+
+This project is released under the [MIT License](LICENSE).
