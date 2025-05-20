@@ -303,5 +303,13 @@
 	"createYourFirstTemplate": "Create your first template to get started",
 	"endAfterGroupStage": "End After Group Stage",
 	"stopRecordingReminderWithoutVAD": "Remember to press the stop button after speaking!",
-	"stopRecordingReminderWithVAD": "Feel free to speak until the discussion ends :D"
+	"stopRecordingReminderWithVAD": "Feel free to speak until the discussion ends :D",
+	"backgroundImageTitle": "Background Image",
+	"backgroundImageDesc": "Upload a background image for this template. It will be used as the background for all sessions created from this template.",
+	"selectImage": "Select image",
+	"changeImage": "Change image",
+	"uploadImage": "Upload Image",
+	"removeBackgroundConfirm": "Are you sure you want to remove the background image?",
+	"backgroundImageUploaded": "Background image uploaded successfully",
+	"failedUploadBackground": "Failed to upload background image"
 }

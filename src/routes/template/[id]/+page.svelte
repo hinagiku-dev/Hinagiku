@@ -91,14 +91,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to upload background image');
+				notifications.error(data.error || m.failedUploadBackground());
 				return;
 			}
 
 			const data = await res.json();
 			// Update with permanent URL from Cloud Storage
 			backgroundPreview = data.imageUrl;
-			notifications.success('Background image uploaded successfully');
+			notifications.success(m.backgroundImageUploaded());
 
 			// Clean up local preview
 			if (localPreviewUrl) {
@@ -108,7 +108,7 @@
 			backgroundImage = null;
 		} catch (e) {
 			console.error('Error uploading background image:', e);
-			notifications.error('Failed to upload background image');
+			notifications.error(m.failedUploadBackground());
 		} finally {
 			uploadingBackground = false;
 		}
@@ -286,11 +286,10 @@
 			</div>
 
 			<div class="border-t pt-6">
-				<h2 class="mb-4 text-xl font-semibold">Background Image</h2>
+				<h2 class="mb-4 text-xl font-semibold">{m.backgroundImageTitle()}</h2>
 				<div class="mb-4">
 					<p class="mb-2 text-sm text-gray-600">
-						Upload a background image for this template. It will be used as the background for all
-						sessions created from this template.
+						{m.backgroundImageDesc()}
 					</p>
 
 					{#if backgroundPreview}
@@ -308,7 +307,7 @@
 									size="xs"
 									class="absolute right-2 top-2"
 									on:click={() => {
-										if (confirm('Are you sure you want to remove the background image?')) {
+										if (confirm(m.removeBackgroundConfirm())) {
 											backgroundPreview = null;
 											saveTemplate();
 										}
@@ -354,7 +353,7 @@
 								class="flex cursor-pointer items-center justify-center rounded-lg bg-gray-100 p-3 hover:bg-gray-200"
 							>
 								<Upload class="mr-2 h-4 w-4" />
-								{backgroundImage ? 'Change image' : 'Select image'}
+								{backgroundImage ? m.changeImage() : m.selectImage()}
 							</label>
 
 							{#if backgroundImage}
@@ -365,10 +364,10 @@
 								>
 									{#if uploadingBackground}
 										<Spinner class="mr-2" size="4" color="white" />
-										Uploading...
+										{m.uploading()}
 									{:else}
 										<Save class="mr-2 h-4 w-4" />
-										Upload Image
+										{m.uploadImage()}
 									{/if}
 								</Button>
 							{/if}

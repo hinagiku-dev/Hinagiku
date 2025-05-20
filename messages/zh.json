@@ -239,9 +239,9 @@
 	"edit": "編輯",
 	"regenerateSummary": "重新生成總結",
 	"generating": "生成中...",
-	"mostActiveGroups": "最活躍群組",
-	"mostActiveParticipants": "最活躍參與者",
-	"words": "字數",
+	"mostActiveGroups": "小組參與度",
+	"mostActiveParticipants": "個人參與度",
+	"words": "字詞數",
 	"noData": "暫無數據",
 	"statusGreen": "綠色",
 	"statusYellow": "黃色",
@@ -304,5 +304,13 @@
 	"recentHostActivity": "最近主持的活動",
 	"createYourFirstTemplate": "創建您的第一個模板以開始",
 	"stopRecordingReminderWithoutVAD": "講完話之後，記得按下停止鍵喔！",
-	"stopRecordingReminderWithVAD": "請自由自在的發言，直到討論結束：D"
+	"stopRecordingReminderWithVAD": "請自由自在的發言，直到討論結束：D",
+	"backgroundImageTitle": "背景圖片",
+	"backgroundImageDesc": "為此模板上傳背景圖片，所有由此模板建立的討論都會以此作為背景。",
+	"selectImage": "選擇圖片",
+	"changeImage": "更換圖片",
+	"uploadImage": "上傳圖片",
+	"removeBackgroundConfirm": "確定要移除背景圖片嗎？",
+	"backgroundImageUploaded": "背景圖片上傳成功",
+	"failedUploadBackground": "背景圖片上傳失敗"
 }
