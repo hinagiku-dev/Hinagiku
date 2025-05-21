@@ -320,5 +320,10 @@
 	"labelRemoved": "Label removed successfully",
 	"labelRemoveFailed": "Failed to remove label",
 	"tag": "Tag",
-	"tags": "Tags"
+	"tags": "Tags",
+	"saveTemplateSuccess": "Template saved successfully",
+	"failedSaveTemplate": "Failed to save template",
+	"subtaskRemoved": "Subtask removed",
+	"failedCreateSession": "Failed to create session",
+	"failedDeleteTemplate": "Failed to delete template"
 }

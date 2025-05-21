@@ -321,5 +321,10 @@
 	"labelRemoved": "標籤移除成功",
 	"labelRemoveFailed": "移除標籤失敗",
 	"tag": "標籤",
-	"tags": "標籤"
+	"tags": "標籤",
+	"saveTemplateSuccess": "模板保存成功",
+	"failedSaveTemplate": "保存模板失敗",
+	"subtaskRemoved": "子任務已移除",
+	"failedCreateSession": "建立討論失敗",
+	"failedDeleteTemplate": "刪除模板失敗"
 }
