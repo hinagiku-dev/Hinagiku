@@ -311,5 +311,14 @@
 	"uploadImage": "Upload Image",
 	"removeBackgroundConfirm": "Are you sure you want to remove the background image?",
 	"backgroundImageUploaded": "Background image uploaded successfully",
-	"failedUploadBackground": "Failed to upload background image"
+	"failedUploadBackground": "Failed to upload background image",
+	"label": "Label",
+	"labels": "Labels",
+	"addLabel": "Add label",
+	"labelAdded": "Label added successfully",
+	"labelAddFailed": "Failed to add label",
+	"labelRemoved": "Label removed successfully",
+	"labelRemoveFailed": "Failed to remove label",
+	"tag": "Tag",
+	"tags": "Tags"
 }

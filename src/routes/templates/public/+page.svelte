@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { Card, Button } from 'flowbite-svelte';
+	import { writable, derived } from 'svelte/store';
 	import { collection, query, where, orderBy } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { subscribeAll } from '$lib/firebase/store';
@@ -19,6 +20,27 @@
 	let [templates, { unsubscribe }] = subscribeAll<Template>(
 		query(collection(db, 'templates'), where('public', '==', true), orderBy('createdAt', 'desc'))
 	);
+
+	let selectedLabels = writable<string[]>([]);
+	let availableLabels = derived(templates, ($templates) => {
+		if (!$templates) return [];
+		const labels = new Set<string>();
+		$templates.forEach(([, t]) => t.labels?.forEach((l) => labels.add(l)));
+		return Array.from(labels).sort();
+	});
+	let filteredTemplates = derived([templates, selectedLabels], ([$templates, $selectedLabels]) => {
+		if (!$templates || $selectedLabels.length === 0) return $templates;
+		return $templates.filter(([, t]) => $selectedLabels.every((l) => t.labels?.includes(l)));
+	});
+
+	function handleLabelSelect(label: string) {
+		selectedLabels.update((ls) => {
+			if (ls.includes(label)) {
+				return ls.filter((l) => l !== label);
+			}
+			return [...ls, label].sort();
+		});
+	}
 
 	onDestroy(() => {
 		unsubscribe();
@@ -53,9 +75,21 @@
 		{/if}
 	</div>
 
+	<div class="mb-4 flex flex-wrap gap-2">
+		{#each $availableLabels as label}
+			<Button
+				size="xs"
+				color={$selectedLabels.includes(label) ? 'primary' : 'alternative'}
+				on:click={() => handleLabelSelect(label)}
+			>
+				{label}
+			</Button>
+		{/each}
+	</div>
+
 	<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-		{#if $templates?.length}
-			{#each $templates as [doc, template]}
+		{#if $filteredTemplates?.length}
+			{#each $filteredTemplates as [doc, template]}
 				<TemplateCard
 					id={doc.id}
 					title={template.title}
@@ -63,6 +97,7 @@
 					subtaskSize={template.subtasks.length}
 					resourceSize={template.resources.length}
 					owner={template.owner}
+					labels={template.labels}
 				/>
 			{/each}
 		{:else}

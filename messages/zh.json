@@ -312,5 +312,14 @@
 	"uploadImage": "上傳圖片",
 	"removeBackgroundConfirm": "確定要移除背景圖片嗎？",
 	"backgroundImageUploaded": "背景圖片上傳成功",
-	"failedUploadBackground": "背景圖片上傳失敗"
+	"failedUploadBackground": "背景圖片上傳失敗",
+	"label": "標籤",
+	"labels": "標籤",
+	"addLabel": "新增標籤",
+	"labelAdded": "標籤新增成功",
+	"labelAddFailed": "新增標籤失敗",
+	"labelRemoved": "標籤移除成功",
+	"labelRemoveFailed": "移除標籤失敗",
+	"tag": "標籤",
+	"tags": "標籤"
 }
