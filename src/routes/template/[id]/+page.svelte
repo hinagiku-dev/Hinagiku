@@ -210,7 +210,7 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					templateId: $page.params.id,
-					classCode: selectedClassId
+					classId: selectedClassId
 				})
 			});
 
