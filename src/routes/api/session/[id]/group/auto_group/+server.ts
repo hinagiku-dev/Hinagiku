@@ -142,7 +142,7 @@ export async function POST({ params, locals, request }) {
 
 		// Add remaining members to group
 		if (members.length > 1) {
-			joinGroup(params.id, members.slice(1), group_number);
+			await joinGroup(params.id, members.slice(1), group_number);
 		}
 
 		return json({ success: true });
