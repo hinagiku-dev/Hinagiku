@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import type { Template } from '$lib/schema/template';
 	import ResourceList from './ResourceList.svelte';
+	import TemplateLabelManager from '$lib/components/template/LabelManager.svelte';
 	import { onDestroy } from 'svelte';
 	import { doc } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
@@ -17,6 +18,7 @@
 	let title = '';
 	let task = '';
 	let isPublic = false;
+	let labels: string[] = [];
 	let subtasks: string[] = [];
 	let showDeleteModal = false;
 	let isUploading = false;
@@ -34,6 +36,7 @@
 			task = t.task;
 			isPublic = t.public;
 			subtasks = [...t.subtasks];
+			labels = t.labels ? [...t.labels] : [];
 			backgroundPreview = t.backgroundImage || null;
 		}
 	});
@@ -91,14 +94,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to upload background image');
+				notifications.error(data.error || m.failedUploadBackground());
 				return;
 			}
 
 			const data = await res.json();
 			// Update with permanent URL from Cloud Storage
 			backgroundPreview = data.imageUrl;
-			notifications.success('Background image uploaded successfully');
+			notifications.success(m.backgroundImageUploaded());
 
 			// Clean up local preview
 			if (localPreviewUrl) {
@@ -108,7 +111,7 @@
 			backgroundImage = null;
 		} catch (e) {
 			console.error('Error uploading background image:', e);
-			notifications.error('Failed to upload background image');
+			notifications.error(m.failedUploadBackground());
 		} finally {
 			uploadingBackground = false;
 		}
@@ -135,20 +138,21 @@
 					task: task.trim(),
 					public: isPublic,
 					subtasks: subtasks.filter((subtask) => subtask.trim()),
+					labels,
 					backgroundImage: backgroundPreview
 				})
 			});
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to save template');
+				notifications.error(data.error || m.failedSaveTemplate());
 				return;
 			}
 
-			notifications.success('Template saved successfully');
+			notifications.success(m.saveTemplateSuccess());
 		} catch (e) {
 			console.error('Error saving template:', e);
-			notifications.error('Failed to save template');
+			notifications.error(m.failedSaveTemplate());
 		}
 	}
 
@@ -160,7 +164,7 @@
 
 	function removeSubtask(index: number) {
 		subtasks = subtasks.filter((_, i) => i !== index);
-		notifications.info('Subtask removed');
+		notifications.success(m.subtaskRemoved());
 	}
 
 	async function startSession() {
@@ -175,7 +179,7 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to create session');
+				notifications.error(data.error || m.failedCreateSession());
 				return;
 			}
 
@@ -183,7 +187,7 @@
 			await goto(i18n.resolveRoute(`/session/${data.sessionId}`));
 		} catch (e) {
 			console.error('Error creating session:', e);
-			notifications.error('Failed to create session');
+			notifications.error(m.failedCreateSession());
 		}
 	}
 
@@ -195,14 +199,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to delete template');
+				notifications.error(data.error || m.failedDeleteTemplate());
 				return;
 			}
 
 			await goto(i18n.resolveRoute('/dashboard'));
 		} catch (e) {
 			console.error('Error deleting template:', e);
-			notifications.error('Failed to delete template');
+			notifications.error(m.failedDeleteTemplate());
 		}
 	}
 </script>
@@ -280,17 +284,21 @@
 				</Button>
 			</div>
 
+			<div>
+				<p class="mb-4 font-medium">{m.tags()}</p>
+				<TemplateLabelManager templateId={$page.params.id} {labels} />
+			</div>
+
 			<div class="flex items-center gap-2">
 				<Toggle bind:checked={isPublic} />
 				<label for="public">{m.makePublic()}</label>
 			</div>
 
 			<div class="border-t pt-6">
-				<h2 class="mb-4 text-xl font-semibold">Background Image</h2>
+				<h2 class="mb-4 text-xl font-semibold">{m.backgroundImageTitle()}</h2>
 				<div class="mb-4">
 					<p class="mb-2 text-sm text-gray-600">
-						Upload a background image for this template. It will be used as the background for all
-						sessions created from this template.
+						{m.backgroundImageDesc()}
 					</p>
 
 					{#if backgroundPreview}
@@ -308,7 +316,7 @@
 									size="xs"
 									class="absolute right-2 top-2"
 									on:click={() => {
-										if (confirm('Are you sure you want to remove the background image?')) {
+										if (confirm(m.removeBackgroundConfirm())) {
 											backgroundPreview = null;
 											saveTemplate();
 										}
@@ -354,7 +362,7 @@
 								class="flex cursor-pointer items-center justify-center rounded-lg bg-gray-100 p-3 hover:bg-gray-200"
 							>
 								<Upload class="mr-2 h-4 w-4" />
-								{backgroundImage ? 'Change image' : 'Select image'}
+								{backgroundImage ? m.changeImage() : m.selectImage()}
 							</label>
 
 							{#if backgroundImage}
@@ -365,10 +373,10 @@
 								>
 									{#if uploadingBackground}
 										<Spinner class="mr-2" size="4" color="white" />
-										Uploading...
+										{m.uploading()}
 									{:else}
 										<Save class="mr-2 h-4 w-4" />
-										Upload Image
+										{m.uploadImage()}
 									{/if}
 								</Button>
 							{/if}

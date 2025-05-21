@@ -225,6 +225,7 @@
 						subtaskSize={template.subtasks.length}
 						resourceSize={template.resources.length}
 						owner={template.owner}
+						labels={template.labels}
 					/>
 				{/each}
 			{:else}
@@ -263,6 +264,7 @@
 						resourceSize={template.resources.length}
 						owner={template.owner}
 						isPublic={template.public}
+						labels={template.labels}
 					/>
 				{/each}
 			{:else}

@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import type { Group } from '$lib/schema/group';
 	import { countWords } from '$lib/utils/countWords';
+	import * as m from '$lib/paraglide/messages.js';
 
 	type PartialGroup = Pick<Group, 'number' | 'discussions'>;
 	let { groups = [] }: { groups?: PartialGroup[] } = $props();
@@ -50,19 +51,24 @@
 
 		chart.setOption({
 			title: {
-				text: 'Most Active Groups',
+				text: m.mostActiveGroups(),
 				left: 'center'
 			},
 			tooltip: {
 				trigger: 'axis',
-				formatter: '{b}: {c} words'
+				formatter: (
+					params: { name: string; value: number } | { name: string; value: number }[]
+				) => {
+					const p = Array.isArray(params) ? params[0] : params;
+					return `${p.name}: ${p.value} ${m.words()}`;
+				}
 			},
 			grid: {
 				left: '15%'
 			},
 			xAxis: {
 				type: 'value',
-				name: 'Words'
+				name: m.words()
 			},
 			yAxis: {
 				type: 'category',
