@@ -1,5 +1,4 @@
-import { randomUUID } from 'crypto';
-import type { Class } from '../../src/lib/schema/class';
+import { ClassSchema, type Class } from '../../src/lib/schema/class';
 import { adminDb } from '../../src/lib/server/firebase';
 
 // Generate mock class data
@@ -24,11 +23,11 @@ export const generateMockClass = async (): Promise<Class> => {
 	const groups = [
 		{
 			number: 1,
-			students: [studentUids[6], studentUids[7]]
+			students: [studentUids[0], studentUids[1]]
 		},
 		{
 			number: 2,
-			students: studentUids.slice(8, 10)
+			students: studentUids.slice(2, 5)
 		}
 	];
 
@@ -40,12 +39,11 @@ export const generateMockClass = async (): Promise<Class> => {
 
 	// Create the mock class
 	const mockClass: Class = {
-		id: randomUUID(),
 		code: Math.random().toString(36).substring(2, 8).toUpperCase(),
 		teacherId: 'SEAiEhG9HKQRyJHsddh7jRz1NQa2', // As specified by the user
 		schoolName: 'Demo School',
 		academicYear: '113',
-		className: '102',
+		className: '101',
 		students: studentUids,
 		groups: groups,
 		updatedAt: timestamp,
@@ -59,8 +57,18 @@ export const generateMockClass = async (): Promise<Class> => {
 export const saveClassToFirebase = async (classData: Class): Promise<void> => {
 	try {
 		// Save to classes collection with the generated ID
-		await adminDb.collection('classes').doc(classData.id).set(classData);
-		console.log(`Mock class saved to Firebase with ID: ${classData.id}`);
+		//await adminDb.collection('classes').doc(classData.code).set(classData);
+		//console.log(`Mock class saved to Firebase with ID: ${classData.code}`);
+
+		const result = ClassSchema.safeParse(classData);
+		if (!result.success) {
+			throw new Error(result.error.message);
+		}
+
+		const classRef = adminDb.collection('classes').doc();
+		await classRef.set(result.data);
+
+		console.log(`Mock class saved to Firebase with ID: ${classRef.id}`);
 	} catch (error) {
 		console.error('Error saving mock class to Firebase:', error);
 		throw error;
