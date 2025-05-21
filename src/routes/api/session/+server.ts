@@ -11,7 +11,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	try {
-		const { templateId } = await request.json();
+		const { templateId, classCode } = await request.json();
 
 		// Get template
 		const templateRef = adminDb.collection('templates').doc(templateId);
@@ -27,6 +27,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const sessionData: Session = {
 			title: templateData.title,
 			host: locals.user.uid,
+			classCode: classCode || null,
 			resources: templateData.resources,
 			task: templateData.task,
 			subtasks: templateData.subtasks,
