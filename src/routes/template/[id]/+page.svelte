@@ -145,14 +145,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to save template');
+				notifications.error(data.error || m.failedSaveTemplate());
 				return;
 			}
 
-			notifications.success('Template saved successfully');
+			notifications.success(m.saveTemplateSuccess());
 		} catch (e) {
 			console.error('Error saving template:', e);
-			notifications.error('Failed to save template');
+			notifications.error(m.failedSaveTemplate());
 		}
 	}
 
@@ -164,7 +164,7 @@
 
 	function removeSubtask(index: number) {
 		subtasks = subtasks.filter((_, i) => i !== index);
-		notifications.info('Subtask removed');
+		notifications.info(m.subtaskRemoved());
 	}
 
 	async function startSession() {
@@ -179,7 +179,7 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to create session');
+				notifications.error(data.error || m.failedCreateSession());
 				return;
 			}
 
@@ -187,7 +187,7 @@
 			await goto(i18n.resolveRoute(`/session/${data.sessionId}`));
 		} catch (e) {
 			console.error('Error creating session:', e);
-			notifications.error('Failed to create session');
+			notifications.error(m.failedCreateSession());
 		}
 	}
 
@@ -199,14 +199,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to delete template');
+				notifications.error(data.error || m.failedDeleteTemplate());
 				return;
 			}
 
 			await goto(i18n.resolveRoute('/dashboard'));
 		} catch (e) {
 			console.error('Error deleting template:', e);
-			notifications.error('Failed to delete template');
+			notifications.error(m.failedDeleteTemplate());
 		}
 	}
 </script>
