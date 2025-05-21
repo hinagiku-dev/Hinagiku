@@ -105,6 +105,7 @@
 					e.preventDefault();
 					removeLabel(label);
 				}}
+			>
 				<X size={14} />
 			</button>
 		</div>
