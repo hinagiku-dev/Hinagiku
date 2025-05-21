@@ -303,5 +303,14 @@
 	"createYourFirstTemplate": "Create your first template to get started",
 	"endAfterGroupStage": "End After Group Stage",
 	"stopRecordingReminderWithoutVAD": "Remember to press the stop button after speaking!",
-	"stopRecordingReminderWithVAD": "Feel free to speak until the discussion ends :D"
+	"stopRecordingReminderWithVAD": "Feel free to speak until the discussion ends :D",
+	"label": "Label",
+	"labels": "Labels",
+	"addLabel": "Add label",
+	"labelAdded": "Label added successfully",
+	"labelAddFailed": "Failed to add label",
+	"labelRemoved": "Label removed successfully",
+	"labelRemoveFailed": "Failed to remove label",
+	"tag": "Tag",
+	"tags": "Tags"
 }

@@ -8,6 +8,7 @@ export const TemplateSchema = z.object({
 	title: z.string().min(1).max(200),
 	owner: z.string(),
 	public: z.boolean(),
+	labels: z.array(z.string()).optional().default([]),
 	resources: z.array(ResourceSchema).max(10),
 	task: z.string().min(1).max(200),
 	subtasks: z.array(z.string().min(1).max(200)).max(10),

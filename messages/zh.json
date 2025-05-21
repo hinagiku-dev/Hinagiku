@@ -304,5 +304,14 @@
 	"recentHostActivity": "最近主持的活動",
 	"createYourFirstTemplate": "創建您的第一個模板以開始",
 	"stopRecordingReminderWithoutVAD": "講完話之後，記得按下停止鍵喔！",
-	"stopRecordingReminderWithVAD": "請自由自在的發言，直到討論結束：D"
+	"stopRecordingReminderWithVAD": "請自由自在的發言，直到討論結束：D",
+	"label": "標籤",
+	"labels": "標籤",
+	"addLabel": "新增標籤",
+	"labelAdded": "標籤新增成功",
+	"labelAddFailed": "新增標籤失敗",
+	"labelRemoved": "標籤移除成功",
+	"labelRemoveFailed": "移除標籤失敗",
+	"tag": "標籤",
+	"tags": "標籤"
 }
