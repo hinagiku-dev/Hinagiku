@@ -29,7 +29,7 @@
 	<!-- Header Section -->
 	<header class="mb-8 border-b border-gray-200 pb-6">
 		<div class="mb-4 flex items-start justify-between">
-			<h1 class="text-4xl font-bold text-gray-900">{template.title}</h1>
+			<h1 class="flex-1 text-4xl font-bold text-gray-900">{template.title}</h1>
 			<Badge color={template.public ? 'green' : 'none'} class="mt-2">
 				{template.public ? m.Tpublic() : m.Tprivate()}
 			</Badge>
