@@ -99,12 +99,12 @@
 		<div class="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1">
 			<span class="text-sm">{label}</span>
 			<button
+				type="button"
 				class="text-gray-500 hover:text-gray-700"
 				onclick={(e) => {
 					e.preventDefault();
 					removeLabel(label);
 				}}
-			>
 				<X size={14} />
 			</button>
 		</div>
