@@ -329,10 +329,9 @@
 							resourceSize={template.resources.length}
 							owner={template.owner}
 							isPublic={template.public}
-              						labels={template.labels}
+							labels={template.labels}
 						/>
 					</div>
-
 				{/each}
 			{:else}
 				<Card class="md:col-span-2 lg:col-span-3">
