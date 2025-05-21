@@ -190,7 +190,7 @@
 					});
 					if (!response.ok) {
 						const data = await response.json();
-						notifications.error(data.error || 'Auto group failed');
+						notifications.error(data.error || '自動分組失敗');
 						return;
 					}
 				}
@@ -220,7 +220,10 @@
 						headers: {
 							'Content-Type': 'application/json'
 						},
-						body: JSON.stringify(groupStudents)
+						body: JSON.stringify({
+							participants: groupStudents,
+							group_number: classGroup.number
+						})
 					});
 
 					if (!response.ok) {
@@ -230,11 +233,11 @@
 					}
 				}
 
-				notifications.success('Class groups applied successfully');
+				notifications.success('成功分組');
 			}
 		} catch (error) {
 			console.error('Error applying groups:', error);
-			notifications.error('Failed to apply groups');
+			notifications.error('分組失敗');
 		} finally {
 			isApplyingGroups = false;
 			isLoadingClass = false;
@@ -255,7 +258,7 @@
 			if (!response.ok) {
 				throw new Error('Failed to update settings');
 			} else {
-				notifications.success('Settings updated', 3000);
+				notifications.success('設定更新成功', 3000);
 			}
 		} catch (error) {
 			console.error('Error updating settings:', error);
