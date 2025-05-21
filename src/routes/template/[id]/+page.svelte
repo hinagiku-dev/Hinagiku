@@ -164,7 +164,7 @@
 
 	function removeSubtask(index: number) {
 		subtasks = subtasks.filter((_, i) => i !== index);
-		notifications.info(m.subtaskRemoved());
+		notifications.success(m.subtaskRemoved());
 	}
 
 	async function startSession() {
