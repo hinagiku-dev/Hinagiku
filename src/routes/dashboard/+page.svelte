@@ -329,7 +329,7 @@
 							resourceSize={template.resources.length}
 							owner={template.owner}
 							isPublic={template.public}
-              labels={template.labels}
+              						labels={template.labels}
 						/>
 					</div>
 
