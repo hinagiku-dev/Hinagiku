@@ -3,11 +3,12 @@
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
 	import QRCode from '$lib/components/QRCode.svelte';
-	import { Button, Tooltip } from 'flowbite-svelte';
+	import { Button, Tooltip, Select } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { page } from '$app/stores';
 	import { Alert } from 'flowbite-svelte';
 	import type { Group } from '$lib/schema/group';
+	import type { Class } from '$lib/schema/class';
 	import { onMount } from 'svelte';
 	import {
 		collection,
@@ -17,7 +18,8 @@
 		query,
 		where,
 		limit,
-		doc
+		doc,
+		getDoc
 	} from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { writable } from 'svelte/store';
@@ -35,7 +37,7 @@
 	import LabelManager from './LabelManager.svelte';
 	import ResolveUsername from '../ResolveUsername.svelte';
 	import * as m from '$lib/paraglide/messages.js';
-	import { Toggle, Input } from 'flowbite-svelte';
+	import { Input } from 'flowbite-svelte';
 	import { deploymentConfig } from '$lib/config/deployment';
 	import { announcement } from '$lib/stores/announcement';
 	import { UI_CLASSES } from '$lib/config/ui';
@@ -87,11 +89,21 @@
 	let groupNumber = $state(1);
 
 	let isApplyingGroups = $state(false);
-	let settings = { autoGroup: true };
+	let settings = { groupingMode: 'auto' };
 	session.subscribe((value) => {
-		settings = value.settings;
+		settings = value.settings || { groupingMode: 'auto' };
 	});
-	let autoGroup = $state(settings.autoGroup);
+
+	// Define grouping modes
+	type GroupingMode = 'auto' | 'manual' | 'class';
+	let groupingMode = $state<GroupingMode>('auto');
+	let classData = $state<Class | null>(null);
+	let isLoadingClass = $state(false);
+
+	// Initialize grouping mode based on settings
+	$effect(() => {
+		groupingMode = settings.groupingMode as GroupingMode;
+	});
 
 	let current_waitlist: string[] = $state([]);
 	session.subscribe((value) => {
@@ -112,60 +124,126 @@
 	let announcementMessage = $state('');
 	let isBroadcasting = $state(false);
 
+	// Load class data if session has a class ID
+	async function loadClassData() {
+		try {
+			isLoadingClass = true;
+			if (!$session.classId) {
+				return;
+			}
+
+			const classRef = doc(db, 'classes', $session.classId);
+			const classSnapshot = await getDoc(classRef);
+
+			if (classSnapshot.exists()) {
+				classData = classSnapshot.data() as Class;
+			} else {
+				notifications.warning('Class data not found');
+			}
+		} catch (error) {
+			console.error('Error loading class data:', error);
+			notifications.error('Failed to load class data');
+		} finally {
+			isLoadingClass = false;
+		}
+	}
+
+	$effect(() => {
+		if ($session?.classId) {
+			loadClassData();
+		}
+	});
+
 	async function handleApplyGroups() {
-		if (!current_waitlist || !autoGroup || groupNumber < 1 || isApplyingGroups) return;
+		if (!current_waitlist || isApplyingGroups) return;
 
 		try {
-			isApplyingGroups = true;
-			console.log('Now: ', current_waitlist);
-			let filtered_waitlist = current_waitlist.filter(
-				(item) => !allGroupParticipants.includes(item)
-			);
+			isLoadingClass = true;
 
-			// Get all users currently in groups
-			// $groups.forEach(group => {
-			// 	group.participants.forEach(participant => {
-			// 		filtered_waitlist = filtered_waitlist.filter((item) => item !== participant);
-			// 		console.log(participant);
-			// 	});
-			// });
+			// Different logic based on grouping mode
+			if (groupingMode === 'auto') {
+				if (groupNumber < 1) return;
 
-			// Filter waitlist to only include users not in any group
-			console.log('filter: ', filtered_waitlist);
+				isApplyingGroups = true;
+				console.log('Now: ', current_waitlist);
+				let filtered_waitlist = current_waitlist.filter(
+					(item) => !allGroupParticipants.includes(item)
+				);
 
-			const groupSizeBig = Math.ceil(filtered_waitlist.length / groupNumber);
-			const groupSizeSmall = Math.floor(filtered_waitlist.length / groupNumber);
-			const Bignum = filtered_waitlist.length % groupNumber;
-			let nums = 0;
-			for (let i = 0; i < groupNumber; i++) {
-				const groupSize = i < Bignum ? groupSizeBig : groupSizeSmall;
-				const group = filtered_waitlist.slice(nums, nums + groupSize);
-				nums += groupSize;
-				if (group.length <= 0) break;
-				const response = await fetch(`/api/session/${$page.params.id}/group/auto_group`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify(group)
-				});
-				if (!response.ok) {
-					const data = await response.json();
-					notifications.error(data.error || 'Auto group failed');
+				console.log('filter: ', filtered_waitlist);
+
+				const groupSizeBig = Math.ceil(filtered_waitlist.length / groupNumber);
+				const groupSizeSmall = Math.floor(filtered_waitlist.length / groupNumber);
+				const Bignum = filtered_waitlist.length % groupNumber;
+				let nums = 0;
+				for (let i = 0; i < groupNumber; i++) {
+					const groupSize = i < Bignum ? groupSizeBig : groupSizeSmall;
+					const group = filtered_waitlist.slice(nums, nums + groupSize);
+					nums += groupSize;
+					if (group.length <= 0) break;
+					const response = await fetch(`/api/session/${$page.params.id}/group/auto_group`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify(group)
+					});
+					if (!response.ok) {
+						const data = await response.json();
+						notifications.error(data.error || 'Auto group failed');
+						return;
+					}
+				}
+			} else if (groupingMode === 'class' && classData) {
+				// Apply class groups if available
+				if (!classData.groups || classData.groups.length === 0) {
+					notifications.warning('No class groups defined');
 					return;
 				}
+
+				isApplyingGroups = true;
+				const filtered_waitlist = current_waitlist.filter(
+					(item) => !allGroupParticipants.includes(item)
+				);
+
+				// Create groups based on class groups
+				for (const classGroup of classData.groups) {
+					// Filter to only include students who are in the waitlist
+					const groupStudents = classGroup.students.filter((student) =>
+						filtered_waitlist.includes(student)
+					);
+
+					if (groupStudents.length === 0) continue;
+
+					const response = await fetch(`/api/session/${$page.params.id}/group/auto_group`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify(groupStudents)
+					});
+
+					if (!response.ok) {
+						const data = await response.json();
+						notifications.error(data.error || 'Class group assignment failed');
+						return;
+					}
+				}
+
+				notifications.success('Class groups applied successfully');
 			}
 		} catch (error) {
 			console.error('Error applying groups:', error);
 			notifications.error('Failed to apply groups');
 		} finally {
 			isApplyingGroups = false;
+			isLoadingClass = false;
 		}
 	}
 
 	async function updateSettings() {
 		try {
-			settings.autoGroup = autoGroup;
+			settings.groupingMode = groupingMode;
 			const response = await fetch(`/api/session/${$page.params.id}/settings`, {
 				method: 'POST',
 				headers: {
@@ -185,16 +263,14 @@
 		}
 	}
 
-	async function handleAutoGroupToggle(event: Event) {
-		const newValue = (event.target as HTMLInputElement).checked;
+	async function handleGroupingModeChange(event: Event) {
+		const newValue = (event.target as HTMLSelectElement).value as GroupingMode;
 		try {
+			groupingMode = newValue;
 			await updateSettings();
-			autoGroup = newValue;
 		} catch (error) {
-			console.error('Error updating auto group setting:', error);
-			notifications.error('Failed to update auto group setting');
-			// Revert the toggle if update fails
-			autoGroup = !newValue;
+			console.error('Error updating grouping mode setting:', error);
+			notifications.error('Failed to update grouping mode setting');
 		}
 	}
 
@@ -857,25 +933,39 @@
 					{#if $session?.status === 'preparing'}
 						<div class="flex items-center gap-4">
 							<div class="flex items-center gap-2">
-								<Toggle bind:checked={autoGroup} on:change={handleAutoGroupToggle}>
-									{autoGroup ? m.autoGrouping() : m.manualGrouping()}
-								</Toggle>
+								<Select
+									bind:value={groupingMode}
+									on:change={handleGroupingModeChange}
+									class="w-auto"
+								>
+									<option value="auto">{m.autoGrouping()}</option>
+									<option value="manual">{m.manualGrouping()}</option>
+									{#if $session?.classId}
+										<option value="class">{m.classGrouping()}</option>
+									{/if}
+								</Select>
 								<Tooltip placement="right">
-									{autoGroup ? m.autoGroupingDesc() : m.manualGroupingDesc()}
+									{#if groupingMode === 'auto'}
+										{m.autoGroupingDesc()}
+									{:else if groupingMode === 'manual'}
+										{m.manualGroupingDesc()}
+									{:else if groupingMode === 'class'}
+										{m.classGroupingDesc()}
+									{/if}
 								</Tooltip>
 							</div>
-							{#if autoGroup}
+							{#if groupingMode === 'auto'}
 								<div class="flex items-center gap-2">
 									<Input type="number" min="1" max="50" class="w-20" bind:value={groupNumber} />
 									<span class="text-sm text-gray-500">{m.autoGroupingUnit()}</span>
 								</div>
 							{/if}
-							{#if autoGroup}
+							{#if groupingMode !== 'manual'}
 								<Button
 									color="primary"
 									size="sm"
 									on:click={handleApplyGroups}
-									disabled={isApplyingGroups}
+									disabled={isApplyingGroups || isLoadingClass}
 								>
 									{isApplyingGroups ? m.applyingAutoGroup() : m.groupModeApplied()}
 								</Button>

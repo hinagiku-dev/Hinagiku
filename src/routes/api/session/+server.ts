@@ -47,7 +47,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				}
 			},
 			settings: {
-				autoGroup: true
+				groupingMode: 'auto'
 			}
 		};
 

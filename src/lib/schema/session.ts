@@ -27,10 +27,10 @@ export const SessionSchema = z.object({
 	}),
 	settings: z
 		.object({
-			autoGroup: z.boolean()
+			groupingMode: z.enum(['auto', 'manual', 'class'])
 		})
 		.optional()
-		.default({ autoGroup: true }),
+		.default({ groupingMode: 'auto' }),
 	waitlist: z.array(z.string()).default([]),
 	announcement: z
 		.object({
