@@ -4,8 +4,7 @@ import { Timestamp } from './utils';
 export const route = (classId: string) => `/classes/${classId}`;
 
 export const ClassSchema = z.object({
-	id: z.string().describe('Unique class identifier'),
-	code: z.string().describe('Random class code for students to join'),
+	code: z.string().min(1).max(6).describe('Unique class code'),
 	teacherId: z.string().describe('User ID of the teacher'),
 	schoolName: z.string().min(1).max(100),
 	academicYear: z.string().min(1).max(20),
