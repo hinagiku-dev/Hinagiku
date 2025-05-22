@@ -2,7 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { writable, derived } from 'svelte/store';
 	import { Card, Button, Modal } from 'flowbite-svelte';
-	import { MessageSquarePlus, UserPlus, UserCog } from 'lucide-svelte';
+	import { MessageSquarePlus, UserPlus, UserCog, Users } from 'lucide-svelte';
 	import {
 		collection,
 		orderBy,
@@ -208,7 +208,7 @@
 	</div>
 
 	<!-- Main Actions -->
-	<div class="mb-16 grid gap-6 md:grid-cols-3">
+	<div class="mb-16 grid gap-6 md:grid-cols-3 lg:grid-cols-4">
 		<Card padding="xl" class="text-center transition-all hover:border-primary-500">
 			<button onclick={handleCreateTemplate} class="flex w-full flex-col items-center">
 				<div class="mb-4 rounded-full bg-primary-100 p-4">
@@ -242,6 +242,18 @@
 					{m.editProfile()}
 				</h2>
 				<p class="text-gray-600">{m.editProfileDesc()}</p>
+			</a>
+		</Card>
+
+		<Card padding="xl" class="text-center transition-all hover:border-primary-500">
+			<a href="/classes" class="flex flex-col items-center">
+				<div class="mb-4 rounded-full bg-primary-100 p-4">
+					<Users size={32} class="text-primary-600" />
+				</div>
+				<h2 class="mb-2 text-xl font-semibold text-gray-900">
+					{m.manageClasses()}
+				</h2>
+				<p class="text-gray-600">{m.manageClassesDesc()}</p>
 			</a>
 		</Card>
 	</div>
