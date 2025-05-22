@@ -328,5 +328,11 @@
 	"failedSaveTemplate": "保存模板失敗",
 	"subtaskRemoved": "子任務已移除",
 	"failedCreateSession": "建立討論失敗",
-	"failedDeleteTemplate": "刪除模板失敗"
+	"failedDeleteTemplate": "刪除模板失敗",
+	"orAnotherLoginMethod": "或",
+	"classLogin": "班級代號登入",
+	"classLoginInputCode": "請輸入班級代號",
+	"classLoginInputAccount": "請輸入帳號",
+	"classLoginInputPassword": "請輸入密碼",
+	"classLoginButton": "登入"
 }
