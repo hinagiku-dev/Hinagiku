@@ -1,6 +1,7 @@
 import type { Group } from '$lib/schema/group';
 import { adminDb, getGroupRef, getSessionData, getSessionRef } from '$lib/server/firebase';
-import { getHeyHelpMessage, isHarmfulContent } from '$lib/server/gemini';
+import { getHeyHelpMessage } from '$lib/server/gemini_chat';
+import { isHarmfulContent } from '$lib/server/gemini_moderation';
 import type { Discussion } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
