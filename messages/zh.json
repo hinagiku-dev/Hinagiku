@@ -328,5 +328,12 @@
 	"failedSaveTemplate": "保存模板失敗",
 	"subtaskRemoved": "子任務已移除",
 	"failedCreateSession": "建立討論失敗",
-	"failedDeleteTemplate": "刪除模板失敗"
+	"failedDeleteTemplate": "刪除模板失敗",
+	"selectClass": "選擇班級",
+	"startWithoutClass": "不選擇班級直接開始",
+	"noClassesFound": "找不到班級。請先建立班級。",
+	"failedLoadClasses": "載入班級失敗。請再試一次。",
+	"classGrouping": "班級預設分組",
+	"classGroupingDesc": "使用關聯班級中預設的分組",
+	"groupingMode": "分組模式"
 }

@@ -60,10 +60,15 @@
 		$session?.status === 'individual' ? $setting?.enableVADIndividual : $setting?.enableVADGroup
 	);
 	$effect(() => {
-		if ($session?.settings?.autoGroup) {
-			isGroupManagementEnabled = false;
-		} else {
-			isGroupManagementEnabled = waitlistjoined;
+		// Get groupingMode with fallback
+		const groupingMode = $session?.settings?.groupingMode || 'auto';
+
+		// Only enable group management in manual mode
+		isGroupManagementEnabled = groupingMode === 'manual' && waitlistjoined;
+
+		// Reset creating to false when class grouping is detected
+		if (groupingMode === 'class') {
+			creating = false;
 		}
 	});
 
