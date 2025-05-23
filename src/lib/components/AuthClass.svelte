@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import * as m from '$lib/paraglide/messages.js';
+	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 
 	let classCode = '';
 	let account = '';
@@ -8,9 +10,18 @@
 	let error = '';
 	let loading = false;
 
+	// Read URL parameters when component mounts
+	onMount(() => {
+		// Get classCode from URL if present
+		const urlClassCode = $page.url.searchParams.get('classCode');
+		if (urlClassCode) {
+			classCode = urlClassCode;
+		}
+	});
+
 	async function handleClassLogin() {
 		if (!classCode || !account || !password) {
-			error = 'All fields are required';
+			error = m.classLoginErrorEmpty();
 			return;
 		}
 
@@ -34,11 +45,11 @@
 				goto('/dashboard');
 			} else {
 				// Display error message
-				error = data.message || 'Login failed';
+				error = data.message || m.classLoginFailed();
 			}
 		} catch (err) {
 			console.error('Login error:', err);
-			error = 'An unexpected error occurred';
+			error = m.classLoginError();
 		} finally {
 			loading = false;
 		}
