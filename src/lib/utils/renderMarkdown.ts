@@ -18,5 +18,22 @@ export async function renderMarkdown(markdown: string): Promise<string> {
 	renderer.image = () => '';
 
 	const dirty = await marked(markdown, { renderer });
-	return DOMPurify.sanitize(dirty);
+	return DOMPurify.sanitize(dirty, {
+		ALLOWED_TAGS: [
+			'b',
+			'i',
+			'em',
+			'strong',
+			'code',
+			'pre',
+			'p',
+			'blockquote',
+			'ul',
+			'ol',
+			'li',
+			'br',
+			'a'
+		],
+		ALLOWED_ATTR: ['href', 'title']
+	});
 }
