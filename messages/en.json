@@ -332,5 +332,11 @@
 	"selectClass": "Select a Class",
 	"startWithoutClass": "Start without selecting a class",
 	"noClassesFound": "No classes found. Please create a class first.",
-	"failedLoadClasses": "Failed to load classes. Please try again."
+	"failedLoadClasses": "Failed to load classes. Please try again.",
+	"defaultTemplateTitle": "Social, Emotional, and Ethical Learning - Compassion",
+	"defaultTemplateTask": "Discuss the meaning and importance of compassion.",
+	"defaultTemplateSubtask1": "Understand the concept of compassion.",
+	"defaultTemplateSubtask2": "Clarify the relationship between kindness and happiness.",
+	"defaultTemplateSubtask3": "Explore your feeling when you feel kindness and compassion from others.",
+	"defaultTemplateSubtask4": "Explore how you feel when people are mean."
 }
