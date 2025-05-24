@@ -5,20 +5,37 @@
 	let raw = $state('');
 	let rendering = $state(false);
 	let rendered = $state('');
+	let debounceTimeout: ReturnType<typeof setTimeout> | undefined;
+
+	const DEBOUNCE_DELAY_MS = 300;
 
 	$effect(() => {
-		rendering = true;
-		renderMarkdown(raw)
-			.then((result) => {
-				rendered = result;
-			})
-			.catch((error) => {
-				console.error('Error rendering markdown:', error);
-				rendered = 'Error rendering markdown';
-			})
-			.finally(() => {
-				rendering = false;
-			});
+		// Clear existing timeout
+		if (debounceTimeout) {
+			clearTimeout(debounceTimeout);
+		}
+
+		// Don't render if input is empty
+		if (!raw.trim()) {
+			rendered = '';
+			rendering = false;
+			return;
+		}
+
+		debounceTimeout = setTimeout(() => {
+			rendering = true;
+			renderMarkdown(raw)
+				.then((result) => {
+					rendered = result;
+				})
+				.catch((error) => {
+					console.error('Error rendering markdown:', error);
+					rendered = 'Error rendering markdown';
+				})
+				.finally(() => {
+					rendering = false;
+				});
+		}, DEBOUNCE_DELAY_MS);
 	});
 </script>
 
