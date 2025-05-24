@@ -6,7 +6,7 @@
 	import ResourceList from './ResourceList.svelte';
 	import TemplateLabelManager from '$lib/components/template/LabelManager.svelte';
 	import { onDestroy } from 'svelte';
-	import { doc } from 'firebase/firestore';
+	import { doc, collection, query, where, getDocs } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { subscribe } from '$lib/firebase/store';
 	import { goto } from '$app/navigation';
@@ -14,6 +14,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import { i18n } from '$lib/i18n';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import { user } from '$lib/stores/auth';
 
 	let title = '';
 	let task = '';
@@ -26,6 +27,10 @@
 	let uploadingBackground = false;
 	let backgroundPreview: string | null = null; // Permanent URL from Cloud Storage
 	let localPreviewUrl: string | null = null; // Temporary blob URL for local preview
+	let showClassSelectionModal = false;
+	let classes: { id: string; className: string }[] = [];
+	let loadingClasses = false;
+	let selectedClassId: string | null = null;
 
 	const templateRef = doc(db, 'templates', $page.params.id);
 	const [template, { unsubscribe }] = subscribe<Template>(templateRef);
@@ -167,13 +172,45 @@
 		notifications.success(m.subtaskRemoved());
 	}
 
+	async function openClassSelectionModal() {
+		if (unsavedChanges) {
+			return;
+		}
+
+		loadingClasses = true;
+		classes = [];
+		selectedClassId = null;
+		showClassSelectionModal = true;
+
+		try {
+			if ($user) {
+				const classesQuery = query(collection(db, 'classes'), where('teacherId', '==', $user.uid));
+
+				const snapshot = await getDocs(classesQuery);
+
+				if (!snapshot.empty) {
+					classes = snapshot.docs.map((doc) => ({
+						id: doc.id,
+						className: doc.data().className
+					}));
+				}
+			}
+		} catch (e) {
+			console.error('Error fetching classes:', e);
+			notifications.error(m.failedLoadClasses());
+		} finally {
+			loadingClasses = false;
+		}
+	}
+
 	async function startSession() {
 		try {
 			const res = await fetch('/api/session', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					templateId: $page.params.id
+					templateId: $page.params.id,
+					classId: selectedClassId
 				})
 			});
 
@@ -184,6 +221,7 @@
 			}
 
 			const data = await res.json();
+			showClassSelectionModal = false;
 			await goto(i18n.resolveRoute(`/session/${data.sessionId}`));
 		} catch (e) {
 			console.error('Error creating session:', e);
@@ -219,7 +257,11 @@
 	<div class="container mx-auto max-w-4xl px-4 py-8">
 		<div class="mb-8 flex items-center justify-between">
 			<h1 class="text-3xl font-bold">{m.editTemplate()}</h1>
-			<Button color="primary" on:click={startSession} disabled={isUploading || unsavedChanges}>
+			<Button
+				color="primary"
+				on:click={openClassSelectionModal}
+				disabled={isUploading || unsavedChanges}
+			>
 				<Play class="mr-2 h-4 w-4" />
 				{m.startSession()}
 			</Button>
@@ -428,6 +470,39 @@
 		<div class="flex justify-center gap-4">
 			<Button color="red" on:click={deleteTemplate}>{m.yesDelete()}</Button>
 			<Button color="alternative" on:click={() => (showDeleteModal = false)}>{m.noCancel()}</Button>
+		</div>
+	</div>
+</Modal>
+
+<Modal bind:open={showClassSelectionModal} size="sm" autoclose>
+	<div class="text-center">
+		<h3 class="mb-5 text-lg font-semibold">{m.selectClass()}</h3>
+
+		{#if loadingClasses}
+			<div class="flex justify-center py-4">
+				<Spinner size="6" />
+			</div>
+		{:else}
+			<div class="mb-5">
+				<select
+					class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+					bind:value={selectedClassId}
+				>
+					<option value="">{m.startWithoutClass()}</option>
+					{#each classes as cls}
+						<option value={cls.id}>{cls.className}</option>
+					{/each}
+				</select>
+			</div>
+		{/if}
+
+		<div class="flex justify-center gap-4">
+			<Button color="primary" on:click={startSession}>
+				{m.startSession()}
+			</Button>
+			<Button color="alternative" on:click={() => (showClassSelectionModal = false)}>
+				{m.cancel()}
+			</Button>
 		</div>
 	</div>
 </Modal>
