@@ -5,6 +5,7 @@
 	import Title from '$lib/components/Title.svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import ResolveUsername from '$lib/components/ResolveUsername.svelte';
+	import QRCode from '$lib/components/QRCode.svelte';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -520,12 +521,12 @@
 							<h3 class="text-lg font-semibold text-gray-900">{m.classInformation()}</h3>
 						</div>
 					</div>
-					<div class="space-y-3">
-						<p><span class="font-medium">{m.classCode()}:</span> {selectedClass.code}</p>
-						<p><span class="font-medium">{m.school()}:</span> {selectedClass.schoolName}</p>
-						<p><span class="font-medium">{m.academicYear()}:</span> {selectedClass.academicYear}</p>
-						<p><span class="font-medium">{m.students()}:</span> {selectedClass.students.length}</p>
-						<p><span class="font-medium">{m.groups()}:</span> {selectedClass.groups.length}</p>
+
+					<!-- QR Code and Class Code Section -->
+					<div class="flex flex-col items-center space-y-4">
+						<h4 class="text-lg font-semibold text-gray-900">{m.qrcodeClassAccess()}</h4>
+						<QRCode value={`/login?classCode=${selectedClass.code}`} />
+						<p class="text-lg font-bold">{m.classCodeTitle()}: {selectedClass.code}</p>
 					</div>
 
 					<hr class="my-4" />
