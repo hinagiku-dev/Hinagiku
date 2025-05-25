@@ -23,12 +23,28 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 		const classData = classDoc.data() as Class;
 
+		// Convert Firestore Timestamp fields to ISO strings
+		const convertTimestamps = (data: any): any => {
+			if (data && typeof data === 'object') {
+				for (const key in data) {
+					if (data[key]?.toDate) {
+						data[key] = data[key].toDate().toISOString();
+					} else if (typeof data[key] === 'object') {
+						convertTimestamps(data[key]);
+					}
+				}
+			}
+			return data;
+		};
+
+		const sanitizedClassData = convertTimestamps(classData);
+
 		// 檢查用戶是否為該班級的教師
-		if (classData.teacherId !== locals.user.uid) {
+		if (sanitizedClassData.teacherId !== locals.user.uid) {
 			throw error(403, '您沒有權限查看此班級資料');
 		}
 
-		return json(classData, { status: 200 });
+		return json(sanitizedClassData, { status: 200 });
 	} catch (err: unknown) {
 		console.error(`獲取班級 '${classId}' 時發生錯誤:`, err);
 
