@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
-	import { Card, Button, Select, Alert, Spinner, Input, Label } from 'flowbite-svelte';
-	import { Users, Calendar, Settings, UserPlus, Info, X, Check } from 'lucide-svelte';
+	import { Card, Button, Select, Alert, Spinner, Input, Label, Modal } from 'flowbite-svelte';
+	import { Users, Calendar, UserPlus, Info, X, Check, Trash2, Edit } from 'lucide-svelte';
 	import Title from '$lib/components/Title.svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import ResolveUsername from '$lib/components/ResolveUsername.svelte';
@@ -45,6 +45,17 @@
 		academicYear: '',
 		className: ''
 	});
+
+	// Edit class form states
+	let showEditModal = $state(false);
+	let isEditingClass = $state(false);
+	let isDeletingClass = $state(false);
+	let editClassData = $state({
+		schoolName: '',
+		academicYear: '',
+		className: ''
+	});
+	let showDeleteConfirm = $state(false);
 
 	// Label filtering
 	let selectedLabels = writable<string[]>([]);
@@ -263,6 +274,138 @@
 	function cancelCreateForm() {
 		newClassData = { schoolName: '', academicYear: '', className: '' };
 		showCreateForm = false;
+	}
+
+	// Open edit modal
+	function openEditModal() {
+		if (!selectedClass) return;
+		editClassData = {
+			schoolName: selectedClass.schoolName,
+			academicYear: selectedClass.academicYear,
+			className: selectedClass.className
+		};
+		showEditModal = true;
+		showDeleteConfirm = false;
+	}
+
+	// Cancel edit modal
+	function cancelEditModal() {
+		editClassData = { schoolName: '', academicYear: '', className: '' };
+		showEditModal = false;
+		showDeleteConfirm = false;
+	}
+
+	// Update class
+	async function updateClass() {
+		if (!selectedClassId || !selectedClass || !$user || !browser) return;
+
+		// Validate form data
+		if (
+			!editClassData.schoolName.trim() ||
+			!editClassData.academicYear.trim() ||
+			!editClassData.className.trim()
+		) {
+			notifications.error(m.createClassRequiredFields());
+			return;
+		}
+
+		try {
+			isEditingClass = true;
+
+			const response = await fetch(`/api/class/${selectedClassId}/action/update`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					schoolName: editClassData.schoolName.trim(),
+					academicYear: editClassData.academicYear.trim(),
+					className: editClassData.className.trim()
+				})
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || m.updateClassFailed());
+			}
+
+			// Update local classes array
+			classes = classes.map((classItem) => {
+				if (classItem.id === selectedClassId) {
+					return {
+						...classItem,
+						data: {
+							...classItem.data,
+							schoolName: editClassData.schoolName.trim(),
+							academicYear: editClassData.academicYear.trim(),
+							className: editClassData.className.trim()
+						}
+					};
+				}
+				return classItem;
+			});
+
+			// Update selected class
+			if (selectedClass) {
+				selectedClass = {
+					...selectedClass,
+					schoolName: editClassData.schoolName.trim(),
+					academicYear: editClassData.academicYear.trim(),
+					className: editClassData.className.trim()
+				};
+			}
+
+			// Sort classes again
+			classes = classes.sort((a, b) => {
+				if (a.data.academicYear !== b.data.academicYear) {
+					return b.data.academicYear.localeCompare(a.data.academicYear);
+				}
+				return a.data.className.localeCompare(b.data.className);
+			});
+
+			cancelEditModal();
+			notifications.success(m.updateClassSuccess());
+		} catch (error) {
+			console.error('Error updating class:', error);
+			notifications.error(error instanceof Error ? error.message : m.updateClassFailed());
+		} finally {
+			isEditingClass = false;
+		}
+	}
+
+	// Delete class
+	async function deleteClass() {
+		if (!selectedClassId || !$user || !browser) return;
+
+		try {
+			isDeletingClass = true;
+
+			const response = await fetch(`/api/class/${selectedClassId}/action/delete`, {
+				method: 'POST'
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || m.deleteClassFailed());
+			}
+
+			// Remove from local classes array
+			classes = classes.filter((classItem) => classItem.id !== selectedClassId);
+
+			// Reset selection
+			selectedClassId = null;
+			selectedClass = null;
+
+			cancelEditModal();
+			notifications.success(m.deleteClassSuccess());
+		} catch (error) {
+			console.error('Error deleting class:', error);
+			notifications.error(error instanceof Error ? error.message : m.deleteClassFailed());
+		} finally {
+			isDeletingClass = false;
+		}
 	}
 </script>
 
@@ -534,8 +677,8 @@
 					<!-- Class Actions -->
 					<h4 class="mb-3 font-semibold text-gray-900">{m.actions()}</h4>
 					<div class="flex flex-col gap-2">
-						<Button color="primary" size="sm" href="/classes/{selectedClassId}">
-							<Settings class="mr-2 h-4 w-4" />
+						<Button color="primary" size="sm" on:click={openEditModal}>
+							<Edit class="mr-2 h-4 w-4" />
 							{m.editClass()}
 						</Button>
 						<Button color="alternative" size="sm" href="/manage/{selectedClassId}/credential">
@@ -690,6 +833,117 @@
 		</div>
 	</div>
 </main>
+
+<!-- Edit Class Modal -->
+<Modal bind:open={showEditModal} size="md" autoclose={false} class="w-full">
+	<div class="flex items-center justify-between rounded-t border-b p-4">
+		<h3 class="text-xl font-semibold text-gray-900">
+			{#if showDeleteConfirm}
+				{m.confirmDeleteClass()}
+			{:else}
+				{m.editClassInformation()}
+			{/if}
+		</h3>
+	</div>
+
+	<div class="space-y-6 p-6">
+		{#if showDeleteConfirm}
+			<!-- Delete Confirmation -->
+			<div class="text-center">
+				<div class="mb-4 inline-flex rounded-full bg-red-100 p-4">
+					<Trash2 size={32} class="text-red-600" />
+				</div>
+				<h4 class="mb-2 text-lg font-semibold text-gray-900">{m.confirmDeleteClassTitle()}</h4>
+				<p class="mb-4 text-gray-600">
+					{m.confirmDeleteClassMessage()} 「{selectedClass?.className} - {selectedClass?.schoolName}」{m.confirmDeleteClassWarning()}
+				</p>
+				<div class="flex justify-center gap-4">
+					<Button color="red" on:click={deleteClass} disabled={isDeletingClass}>
+						{#if isDeletingClass}
+							<Spinner size="4" class="mr-2" />
+						{:else}
+							<Trash2 class="mr-2 h-4 w-4" />
+						{/if}
+						{m.confirmDelete()}
+					</Button>
+					<Button
+						color="alternative"
+						on:click={() => (showDeleteConfirm = false)}
+						disabled={isDeletingClass}
+					>
+						{m.cancel()}
+					</Button>
+				</div>
+			</div>
+		{:else}
+			<!-- Edit Form -->
+			<div class="space-y-4">
+				<div>
+					<Label for="editSchoolName" class="mb-2 text-sm font-medium text-gray-700">
+						{m.school()} *
+					</Label>
+					<Input
+						id="editSchoolName"
+						bind:value={editClassData.schoolName}
+						placeholder={m.schoolNamePlaceholder()}
+						disabled={isEditingClass}
+					/>
+				</div>
+
+				<div>
+					<Label for="editAcademicYear" class="mb-2 text-sm font-medium text-gray-700">
+						{m.academicYear()} *
+					</Label>
+					<Input
+						id="editAcademicYear"
+						bind:value={editClassData.academicYear}
+						placeholder={m.academicYearPlaceholder()}
+						disabled={isEditingClass}
+					/>
+				</div>
+
+				<div>
+					<Label for="editClassName" class="mb-2 text-sm font-medium text-gray-700">
+						{m.className()} *
+					</Label>
+					<Input
+						id="editClassName"
+						bind:value={editClassData.className}
+						placeholder={m.classNamePlaceholder()}
+						disabled={isEditingClass}
+					/>
+				</div>
+			</div>
+
+			<!-- Action Buttons -->
+			<div class="flex justify-between">
+				<Button
+					color="red"
+					outline
+					on:click={() => (showDeleteConfirm = true)}
+					disabled={isEditingClass}
+				>
+					<Trash2 class="mr-2 h-4 w-4" />
+					{m.deleteClass()}
+				</Button>
+
+				<div class="flex gap-2">
+					<Button color="alternative" on:click={cancelEditModal} disabled={isEditingClass}>
+						{m.cancel()}
+					</Button>
+					<Button color="primary" on:click={updateClass} disabled={isEditingClass}>
+						{#if isEditingClass}
+							<Spinner size="4" class="mr-2" />
+						{:else}
+							<Check class="mr-2 h-4 w-4" />
+						{/if}
+						{m.saveChangesButton()}
+					</Button>
+				</div>
+			</div>
+		{/if}
+	</div>
+</Modal>
 
 <style>
 	/* Force override any max-width restrictions */
