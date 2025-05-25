@@ -195,7 +195,7 @@
 		</Card>
 
 		<Card padding="xl" class="text-center transition-all hover:border-primary-500">
-			<a href="/classes" class="flex flex-col items-center">
+			<a href="/manage" class="flex flex-col items-center">
 				<div class="mb-4 rounded-full bg-primary-100 p-4">
 					<Users size={32} class="text-primary-600" />
 				</div>
