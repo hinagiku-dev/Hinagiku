@@ -67,14 +67,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// 讀取伺服器生成的時間戳
 		const savedClassDoc = await classRef.get();
-		const serverTimestamps = savedClassDoc.exists ? savedClassDoc.data() : {};
+		const serverTimestamps =
+			savedClassDoc.exists && savedClassDoc.data() ? savedClassDoc.data() : {};
 
 		// 回傳創建的班級資料（包含 ID）
 		const createdClass = {
 			id: classRef.id,
 			...classData,
-			createdAt: serverTimestamps.createdAt,
-			updatedAt: serverTimestamps.updatedAt
+			createdAt: serverTimestamps?.createdAt ?? null,
+			updatedAt: serverTimestamps?.updatedAt ?? null
 		};
 
 		return json(createdClass, { status: 201 });
