@@ -16,7 +16,8 @@
 		query,
 		where,
 		limit,
-		doc
+		doc,
+		getDoc
 	} from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { writable } from 'svelte/store';
@@ -92,6 +93,38 @@
 		allGroupParticipants = value.flatMap((group) => group.participants);
 	});
 	let unGroupedParticipantsNum = $derived(current_waitlist.length - allGroupParticipants.length);
+
+	let className = $state<string | null>(null);
+
+	$effect(() => {
+		let cancelled = false;
+
+		async function fetchClassName() {
+			if ($session?.classId && !cancelled) {
+				try {
+					const classDoc = await getDoc(doc(db, 'classes', $session?.classId));
+					if (classDoc.exists() && !cancelled) {
+						className = classDoc.data().className;
+					} else {
+						className = null;
+					}
+				} catch (error) {
+					if (!cancelled) {
+						console.error('Error fetching class name:', error);
+						className = null;
+					}
+				}
+			} else {
+				className = null;
+			}
+		}
+
+		fetchClassName();
+
+		return () => {
+			cancelled = true;
+		};
+	});
 
 	$effect(() => {
 		$inspect(current_waitlist, 'current_waitlist');
@@ -612,9 +645,14 @@
 		>
 			<!-- Current Participants Section -->
 			<div class="mb-6 border-b pb-4">
-				<h3 class="mb-3 text-lg font-semibold">
-					{m.currentParticipants()} ({current_waitlist?.length || 0})
-				</h3>
+				<div class="flex items-center justify-between">
+					<h3 class="mb-3 text-lg font-semibold">
+						{m.currentParticipants()} ({current_waitlist?.length || 0})
+					</h3>
+					{#if className}
+						<span class="text-sm text-gray-500">{m.Class()} : {className}</span>
+					{/if}
+				</div>
 				<div class="flex flex-wrap gap-2">
 					{#if current_waitlist && current_waitlist.length > 0}
 						{#each current_waitlist as participantId}

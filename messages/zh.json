@@ -372,6 +372,7 @@
 	"failedLoadClasses": "載入班級失敗。請再試一次。",
 	"classGrouping": "班級預設分組",
 	"classGroupingDesc": "使用關聯班級中預設的分組",
+	"Class": "班級",
 	"groupingMode": "分組模式",
 	"defaultTemplateTitle": "社會情緒與道德學習：慈悲",
 	"defaultTemplateTask": "討論慈悲的內涵與重要性。",

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Button, Card } from 'flowbite-svelte';
 	import ResolveUsername from './ResolveUsername.svelte';
+	import { doc, getDoc } from 'firebase/firestore';
+	import { db } from '$lib/firebase';
 	import * as m from '$lib/paraglide/messages.js';
 
 	let {
@@ -10,7 +12,8 @@
 		labels,
 		task,
 		host,
-		createdAt
+		createdAt,
+		classId
 	}: {
 		id: string;
 		title: string;
@@ -19,7 +22,40 @@
 		task: string;
 		host?: string;
 		createdAt: Date;
+		classId?: string | null | undefined;
 	} = $props();
+
+	let className = $state<string | null>(null);
+
+	$effect(() => {
+		let cancelled = false;
+
+		async function fetchClassName() {
+			if (classId && !cancelled) {
+				try {
+					const classDoc = await getDoc(doc(db, 'classes', classId));
+					if (classDoc.exists() && !cancelled) {
+						className = classDoc.data().className;
+					} else {
+						className = null;
+					}
+				} catch (error) {
+					if (!cancelled) {
+						console.error('Error fetching class name:', error);
+						className = null;
+					}
+				}
+			} else {
+				className = null;
+			}
+		}
+
+		fetchClassName();
+
+		return () => {
+			cancelled = true;
+		};
+	});
 </script>
 
 <Card padding="lg" class="transition-all hover:border-primary-500">
@@ -65,11 +101,17 @@
 					<span class="text-sm text-gray-500">{m.hostedBy()} <ResolveUsername id={host} /></span>
 				</div>
 			{/if}
-			<div class="mb-4 flex items-center gap-4">
+			<div class="mb-4 flex items-center justify-between">
 				<span class="text-sm text-gray-500">
 					{createdAt.toLocaleString()}
 				</span>
+				{#if className}
+					<span class="text-sm text-gray-500">
+						{m.Class()} : {className}
+					</span>
+				{/if}
 			</div>
+
 			<Button href="/session/{id}" class="w-full">{m.viewSession()}</Button>
 		</div>
 	</div>
