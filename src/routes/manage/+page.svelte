@@ -161,8 +161,17 @@
 
 <main class="px-4 py-16">
 	<div class="mx-auto mb-8 max-w-6xl">
-		<h1 class="text-center text-3xl font-bold text-gray-900">{m.managementDashboard()}</h1>
-		<p class="mt-2 text-center text-gray-600">{m.manageClassesDesc()}</p>
+		<div class="flex items-center justify-between">
+			<div class="flex-1 text-center">
+				<h1 class="text-3xl font-bold text-gray-900">{m.managementDashboard()}</h1>
+				<p class="mt-2 text-gray-600">{m.manageClassesDesc()}</p>
+			</div>
+			<div class="flex-shrink-0">
+				<Button href="/dashboard" color="alternative">
+					{m.backToDashboard()}
+				</Button>
+			</div>
+		</div>
 	</div>
 
 	<!-- Main Layout: Left 1/4, Right 3/4 -->

@@ -134,8 +134,9 @@
 				</p>
 			{/if}
 		</div>
-		<div class="text-right">
-			<Button href="/manage">{m.backToManagement()}</Button>
+		<div class="flex gap-2">
+			<Button href="/manage" color="alternative">{m.backToManagement()}</Button>
+			<Button href="/dashboard" color="alternative">{m.backToDashboard()}</Button>
 		</div>
 	</div>
 
