@@ -2,7 +2,7 @@
 	import { notifications } from '$lib/stores/notifications';
 	import QRCode from '$lib/components/QRCode.svelte';
 	import { Card, Button } from 'flowbite-svelte';
-	import { RefreshCw } from 'lucide-svelte';
+	import { RefreshCw, Eye, EyeOff } from 'lucide-svelte';
 	import Title from '$lib/components/Title.svelte';
 	import * as m from '$lib/paraglide/messages.js';
 
@@ -12,7 +12,7 @@
 		name: `Student ${i + 1}`,
 		seatNumber: `A${i + 1}`,
 		groupNumber: `${(i % 4) + 1}`,
-		studentId: `S123${45 + i}`
+		studentId: `S123${117 + i}`
 	}));
 
 	// Mock class code
@@ -31,6 +31,39 @@
 		if (currentPage < totalPages) currentPage += 1;
 	}
 
+	// Reset Password editing state
+	let editingId: number | null = null;
+	let passwordInput = '';
+	let showPassword = false;
+
+	function startEdit(id: number) {
+		editingId = id;
+		passwordInput = '';
+		showPassword = false;
+	}
+	function cancelEdit() {
+		editingId = null;
+		passwordInput = '';
+		showPassword = false;
+	}
+
+	// Reset password (fallback)
+	async function resetPassword(id: string) {
+		try {
+			const res = await fetch('/api/reset-password-class', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ studentId: id })
+			});
+			notifications[res.ok ? 'success' : 'error'](
+				`${m.resetPasswordClass()} ${id} ${m.resetPasswordClassofPassword()} ${res.ok ? m.resetPasswordClassSuccess() : m.resetPasswordClassFailed()}`
+			);
+		} catch (e) {
+			console.error(e);
+			notifications.error(m.resetPasswordClassError());
+		}
+	}
+
 	// CSV/Excel file import
 	let fileInput: HTMLInputElement;
 	const acceptTypes = ['.csv', '.xls', '.xlsx'];
@@ -38,7 +71,7 @@
 	function triggerFileImport() {
 		fileInput.click();
 	}
-	// Function to handle file input change
+
 	async function handleFileChange(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
@@ -70,23 +103,6 @@
 			input.value = '';
 		}
 	}
-
-	// Function to reset password
-	async function resetPassword(id: string) {
-		try {
-			const res = await fetch('/api/reset-password-class', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ studentId: id })
-			});
-			notifications[res.ok ? 'success' : 'error'](
-				`${m.resetPasswordClass()} ${id} ${m.resetPasswordClassofPassword()} ${res.ok ? m.resetPasswordClassSuccess() : m.resetPasswordClassFailed()}`
-			);
-		} catch (e) {
-			console.error(e);
-			notifications.error(m.resetPasswordClassError());
-		}
-	}
 </script>
 
 <Title page="Credential Management" />
@@ -100,9 +116,9 @@
 				<p class="text-gray-600">{m.credentialManagementDesc()}</p>
 			</div>
 			<div class="flex flex-col space-y-4">
-				<Button color="primary" class="w-2/4" on:click={triggerFileImport}
-					>{m.importStudentListButton()}</Button
-				>
+				<Button color="primary" class="w-2/4" on:click={triggerFileImport}>
+					{m.importStudentListButton()}
+				</Button>
 				<input
 					type="file"
 					accept={acceptTypes.join(',')}
@@ -142,14 +158,38 @@
 								<td class="px-6 py-4">{s.studentId}</td>
 								<td class="px-6 py-4">{s.groupNumber}</td>
 								<td class="px-6 py-4">
-									<Button
-										size="xs"
-										outline
-										class="w-auto"
-										on:click={() => resetPassword(s.studentId)}
-									>
-										<RefreshCw class="mr-1 h-4 w-4" />{m.studentListResetPassword()}
-									</Button>
+									{#if editingId === s.id}
+										<div class="flex items-center space-x-2">
+											<input
+												type={showPassword ? 'text' : 'password'}
+												bind:value={passwordInput}
+												class="w-32 rounded border px-2 py-1"
+												placeholder={m.newPasswordClass()}
+											/>
+											<button
+												type="button"
+												on:click={() => (showPassword = !showPassword)}
+												class="text-gray-500 hover:text-gray-700"
+											>
+												{#if showPassword}
+													<EyeOff class="h-5 w-5" />
+												{:else}
+													<Eye class="h-5 w-5" />
+												{/if}
+											</button>
+											<Button size="xs" on:click={() => resetPassword(s.studentId)}>
+												{m.applyPasswordClass()}
+											</Button>
+											<Button size="xs" outline on:click={cancelEdit}>
+												{m.backPasswordClass()}
+											</Button>
+										</div>
+									{:else}
+										<Button size="xs" outline class="w-auto" on:click={() => startEdit(s.id)}>
+											<RefreshCw class="mr-1 h-4 w-4" />
+											{m.studentListResetPassword()}
+										</Button>
+									{/if}
 								</td>
 							</tr>
 						{/each}
