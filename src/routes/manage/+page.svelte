@@ -6,6 +6,8 @@
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import ResolveUsername from '$lib/components/ResolveUsername.svelte';
 	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { user } from '$lib/stores/auth';
 	import { UI_CLASSES } from '$lib/config/ui';
 	import { writable, derived } from 'svelte/store';
@@ -78,6 +80,33 @@
 	$effect(() => {
 		if ($user && browser && !hasInitialized && !isLoadingClasses) {
 			loadClasses();
+		}
+	});
+
+	// Effect to handle URL parameter for pre-selecting class
+	$effect(() => {
+		if (browser && classes.length > 0 && !selectedClassId) {
+			const urlClassId = $page.url.searchParams.get('classId');
+			if (urlClassId && classes.some((c) => c.id === urlClassId)) {
+				selectedClassId = urlClassId;
+			}
+		}
+	});
+
+	// Effect to update URL when class selection changes
+	$effect(() => {
+		if (browser && selectedClassId && hasInitialized) {
+			const currentUrl = new URL($page.url);
+			if (currentUrl.searchParams.get('classId') !== selectedClassId) {
+				currentUrl.searchParams.set('classId', selectedClassId);
+				goto(currentUrl.toString(), { replaceState: true });
+			}
+		} else if (browser && selectedClassId === null && hasInitialized) {
+			const currentUrl = new URL($page.url);
+			if (currentUrl.searchParams.has('classId')) {
+				currentUrl.searchParams.delete('classId');
+				goto(currentUrl.toString(), { replaceState: true });
+			}
 		}
 	});
 
@@ -258,7 +287,7 @@
 							<Settings class="mr-2 h-4 w-4" />
 							{m.editClass()}
 						</Button>
-						<Button color="alternative" size="sm" href="/classes/{selectedClassId}/students">
+						<Button color="alternative" size="sm" href="/manage/{selectedClassId}/credential">
 							<UserPlus class="mr-2 h-4 w-4" />
 							{m.manageStudents()}
 						</Button>
@@ -338,7 +367,7 @@
 									<Spinner size="4" />
 								{/if}
 								{#if selectedClassId}
-									<Button color="alternative" href="/manage/recent?classId={selectedClassId}">
+									<Button color="alternative" href="/manage/{selectedClassId}/recent">
 										{m.viewAll()}
 									</Button>
 								{/if}

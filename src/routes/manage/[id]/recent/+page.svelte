@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { Card, Button, Spinner } from 'flowbite-svelte';
 	import { Calendar } from 'lucide-svelte';
 	import {
@@ -22,8 +21,11 @@
 	import { browser } from '$app/environment';
 	import * as m from '$lib/paraglide/messages.js';
 
+	// Get data from server
+	let { data } = $props();
+	const selectedClassId = data.classId;
+
 	// State variables
-	let selectedClassId = $state<string | null>(null);
 	let selectedClass = $state<Class | null>(null);
 	let classSessions = writable<Array<[string, Session]>>([]);
 	let isLoadingClassSessions = $state(false);
@@ -109,15 +111,6 @@
 			loadSelectedClass(selectedClassId);
 		}
 	});
-
-	onMount(() => {
-		// Check for classId in URL params
-		const urlParams = new URLSearchParams(window.location.search);
-		const classIdParam = urlParams.get('classId');
-		if (classIdParam) {
-			selectedClassId = classIdParam;
-		}
-	});
 </script>
 
 <svelte:head>
@@ -135,7 +128,9 @@
 			{/if}
 		</div>
 		<div class="text-right">
-			<Button href="/manage" color="alternative">{m.backToManagement()}</Button>
+			<Button href="/manage?classId={selectedClassId}" color="alternative"
+				>{m.backToManagement()}</Button
+			>
 		</div>
 	</div>
 
