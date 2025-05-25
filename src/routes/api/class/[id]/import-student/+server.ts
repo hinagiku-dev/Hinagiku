@@ -59,7 +59,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 		// 並行處理所有學生帳號創建
 		const studentPromises = students.map(async (student) => {
-			const email = `${student.studentId}@${classCode}.hinagiku.dev`;
+			const email = `${student.studentId}@${classCode}.student-account.hinagiku.dev`;
 
 			try {
 				// 1. 在 Firebase Auth 中創建用戶

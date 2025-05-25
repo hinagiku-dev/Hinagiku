@@ -109,7 +109,7 @@ async function handleTeacherResetStudentPassword(
 	}
 
 	// 3. 構建學生的電子郵件地址
-	const studentEmail = `${studentId}@${classCode}.hinagiku.dev`;
+	const studentEmail = `${studentId}@${classCode}.student-account.hinagiku.dev`;
 
 	try {
 		// 4. 通過電子郵件查找用戶
