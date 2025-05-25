@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
-	import { Card, Button, Select, Alert, Spinner } from 'flowbite-svelte';
-	import { Users, Calendar, Settings, UserPlus, Info } from 'lucide-svelte';
+	import { Card, Button, Select, Alert, Spinner, Input, Label } from 'flowbite-svelte';
+	import { Users, Calendar, Settings, UserPlus, Info, X, Check } from 'lucide-svelte';
 	import Title from '$lib/components/Title.svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import ResolveUsername from '$lib/components/ResolveUsername.svelte';
@@ -35,6 +35,15 @@
 	let isLoadingClasses = $state(false);
 	let isLoadingClassSessions = $state(false);
 	let hasInitialized = $state(false);
+
+	// Create new class form states
+	let showCreateForm = $state(false);
+	let isCreatingClass = $state(false);
+	let newClassData = $state({
+		schoolName: '',
+		academicYear: '',
+		className: ''
+	});
 
 	// Label filtering
 	let selectedLabels = writable<string[]>([]);
@@ -184,6 +193,76 @@
 			isLoadingClassSessions = false;
 		}
 	}
+
+	// Create new class
+	async function createNewClass() {
+		if (!$user || !browser) return;
+
+		// Validate form data
+		if (
+			!newClassData.schoolName.trim() ||
+			!newClassData.academicYear.trim() ||
+			!newClassData.className.trim()
+		) {
+			notifications.error(m.createClassRequiredFields());
+			return;
+		}
+
+		try {
+			isCreatingClass = true;
+
+			const response = await fetch('/api/class/create', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					schoolName: newClassData.schoolName.trim(),
+					academicYear: newClassData.academicYear.trim(),
+					className: newClassData.className.trim()
+				})
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || m.createClassFailed());
+			}
+
+			// Add to local classes array
+			const newClass = {
+				id: result.classId,
+				data: result.classData as Class
+			};
+
+			classes = [newClass, ...classes].sort((a, b) => {
+				if (a.data.academicYear !== b.data.academicYear) {
+					return b.data.academicYear.localeCompare(a.data.academicYear);
+				}
+				return a.data.className.localeCompare(b.data.className);
+			});
+
+			// Select the new class
+			selectedClassId = result.classId;
+
+			// Reset form and hide it
+			newClassData = { schoolName: '', academicYear: '', className: '' };
+			showCreateForm = false;
+
+			notifications.success(m.createClassSuccess());
+		} catch (error) {
+			console.error('Error creating class:', error);
+			notifications.error(error instanceof Error ? error.message : m.createClassFailed());
+		} finally {
+			isCreatingClass = false;
+		}
+	}
+
+	// Cancel create form
+	function cancelCreateForm() {
+		newClassData = { schoolName: '', academicYear: '', className: '' };
+		showCreateForm = false;
+	}
 </script>
 
 <Title page={m.managementDashboard()} />
@@ -240,22 +319,193 @@
 						{/each}
 					</Select>
 
-					<div class="mt-4">
-						<Button color="primary" size="sm" href="/classes/create" class="w-full">
-							<UserPlus class="mr-2 h-4 w-4" />
-							{m.createNewClass()}
-						</Button>
-					</div>
+					{#if !showCreateForm}
+						<div class="mt-4">
+							<Button
+								color="primary"
+								size="sm"
+								class="w-full"
+								on:click={() => (showCreateForm = true)}
+							>
+								<UserPlus class="mr-2 h-4 w-4" />
+								{m.createNewClass()}
+							</Button>
+						</div>
+					{:else}
+						<!-- Create New Class Form -->
+						<div class="mt-4 space-y-4 rounded-lg border border-primary-200 bg-primary-50 p-4">
+							<div class="flex items-center justify-between">
+								<h4 class="font-semibold text-primary-900">{m.createNewClass()}</h4>
+								<Button
+									color="alternative"
+									size="xs"
+									on:click={cancelCreateForm}
+									disabled={isCreatingClass}
+								>
+									<X class="h-3 w-3" />
+								</Button>
+							</div>
+
+							<div class="space-y-3">
+								<div>
+									<Label for="schoolName" class="mb-1 text-sm font-medium text-gray-700">
+										{m.school()} *
+									</Label>
+									<Input
+										id="schoolName"
+										bind:value={newClassData.schoolName}
+										placeholder={m.schoolNamePlaceholder()}
+										disabled={isCreatingClass}
+										class="text-sm"
+									/>
+								</div>
+
+								<div>
+									<Label for="academicYear" class="mb-1 text-sm font-medium text-gray-700">
+										{m.academicYear()} *
+									</Label>
+									<Input
+										id="academicYear"
+										bind:value={newClassData.academicYear}
+										placeholder={m.academicYearPlaceholder()}
+										disabled={isCreatingClass}
+										class="text-sm"
+									/>
+								</div>
+
+								<div>
+									<Label for="className" class="mb-1 text-sm font-medium text-gray-700">
+										{m.className()} *
+									</Label>
+									<Input
+										id="className"
+										bind:value={newClassData.className}
+										placeholder={m.classNamePlaceholder()}
+										disabled={isCreatingClass}
+										class="text-sm"
+									/>
+								</div>
+							</div>
+
+							<div class="flex gap-2">
+								<Button
+									color="primary"
+									size="sm"
+									class="flex-1"
+									on:click={createNewClass}
+									disabled={isCreatingClass}
+								>
+									{#if isCreatingClass}
+										<Spinner size="4" class="mr-2" />
+									{:else}
+										<Check class="mr-2 h-4 w-4" />
+									{/if}
+									{m.createClassButton()}
+								</Button>
+								<Button
+									color="alternative"
+									size="sm"
+									on:click={cancelCreateForm}
+									disabled={isCreatingClass}
+								>
+									{m.cancel()}
+								</Button>
+							</div>
+						</div>
+					{/if}
 				{:else}
 					<Alert class="mb-4">
 						<span class="font-medium">{m.noClassesFound()}</span>
 						{m.needCreateClassFirst()}
 					</Alert>
 
-					<Button color="primary" href="/classes/create" class="w-full">
-						<UserPlus class="mr-2 h-4 w-4" />
-						{m.createYourFirstClass()}
-					</Button>
+					{#if !showCreateForm}
+						<Button color="primary" class="w-full" on:click={() => (showCreateForm = true)}>
+							<UserPlus class="mr-2 h-4 w-4" />
+							{m.createYourFirstClass()}
+						</Button>
+					{:else}
+						<!-- Create First Class Form -->
+						<div class="space-y-4 rounded-lg border border-primary-200 bg-primary-50 p-4">
+							<div class="flex items-center justify-between">
+								<h4 class="font-semibold text-primary-900">{m.createYourFirstClass()}</h4>
+								<Button
+									color="alternative"
+									size="xs"
+									on:click={cancelCreateForm}
+									disabled={isCreatingClass}
+								>
+									<X class="h-3 w-3" />
+								</Button>
+							</div>
+
+							<div class="space-y-3">
+								<div>
+									<Label for="schoolName" class="mb-1 text-sm font-medium text-gray-700">
+										{m.school()} *
+									</Label>
+									<Input
+										id="schoolName"
+										bind:value={newClassData.schoolName}
+										placeholder={m.schoolNamePlaceholder()}
+										disabled={isCreatingClass}
+										class="text-sm"
+									/>
+								</div>
+
+								<div>
+									<Label for="academicYear" class="mb-1 text-sm font-medium text-gray-700">
+										{m.academicYear()} *
+									</Label>
+									<Input
+										id="academicYear"
+										bind:value={newClassData.academicYear}
+										placeholder={m.academicYearPlaceholder()}
+										disabled={isCreatingClass}
+										class="text-sm"
+									/>
+								</div>
+
+								<div>
+									<Label for="className" class="mb-1 text-sm font-medium text-gray-700">
+										{m.className()} *
+									</Label>
+									<Input
+										id="className"
+										bind:value={newClassData.className}
+										placeholder={m.classNamePlaceholder()}
+										disabled={isCreatingClass}
+										class="text-sm"
+									/>
+								</div>
+							</div>
+
+							<div class="flex gap-2">
+								<Button
+									color="primary"
+									size="sm"
+									class="flex-1"
+									on:click={createNewClass}
+									disabled={isCreatingClass}
+								>
+									{#if isCreatingClass}
+										<Spinner size="4" class="mr-2" />
+									{:else}
+										<Check class="mr-2 h-4 w-4" />
+									{/if}
+									{m.createClassButton()}
+								</Button>
+								<Button
+									color="alternative"
+									size="sm"
+									on:click={cancelCreateForm}
+									disabled={isCreatingClass}
+								>
+									{m.cancel()}
+								</Button>
+							</div>
+						</div>
+					{/if}
 				{/if}
 			</Card>
 

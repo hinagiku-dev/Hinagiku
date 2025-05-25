@@ -397,5 +397,16 @@
 	"failedToLoadClassSessions": "載入班級討論失敗",
 	"newPasswordClass": "新密碼",
 	"applyPasswordClass": "確認",
-	"backPasswordClass": "取消"
+	"backPasswordClass": "取消",
+	"createClassRequiredFields": "請填寫所有必填欄位",
+	"createClassSuccess": "班級建立成功",
+	"createClassFailed": "建立班級失敗",
+	"createClassCodeGenerationFailed": "無法生成唯一的班級代碼，請稍後再試",
+	"createClassInternalError": "內部伺服器錯誤",
+	"unauthorized": "未授權",
+	"className": "班級名稱",
+	"schoolNamePlaceholder": "請輸入學校名稱",
+	"academicYearPlaceholder": "例如：113",
+	"classNamePlaceholder": "例如：101",
+	"createClassButton": "建立班級"
 }
