@@ -128,7 +128,7 @@
 				/>
 				<Card padding="xl" class="flex flex-col items-center">
 					<h2 class="mb-4 text-xl font-semibold">{m.qrcodeClassAccess()}</h2>
-					<QRCode value={`/login?classCode=${classCode}`} />
+					<QRCode value={`${window.location.origin}/login?classCode=${classCode}`} />
 					<p class="mt-4 text-lg font-bold">{m.classCodeTitle()}: {classCode}</p>
 				</Card>
 			</div>
