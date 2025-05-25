@@ -4,8 +4,8 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	if (!locals.user) {
-		// TODO: classCode
-		throw redirect(303, '/login?then=' + encodeURIComponent(url.pathname) + '&classCode=test');
+		const classCode = url.searchParams.get('classCode') || 'defaultClassCode';
+		throw redirect(303, '/login?then=' + encodeURIComponent(url.pathname) + '&classCode=' + encodeURIComponent(classCode));
 	}
 
 	const sessionRef = adminDb.collection('sessions').doc(params.id);
