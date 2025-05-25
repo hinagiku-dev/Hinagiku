@@ -394,5 +394,8 @@
 	"classNoPredefinedGroups": "這個班級沒有任何預設分組。",
 	"failedToLoadClasses": "載入班級失敗",
 	"failedToLoadClassData": "載入班級資料失敗",
-	"failedToLoadClassSessions": "載入班級討論失敗"
+	"failedToLoadClassSessions": "載入班級討論失敗",
+	"newPasswordClass": "新密碼",
+	"applyPasswordClass": "確認",
+	"backPasswordClass": "取消"
 }
