@@ -328,6 +328,7 @@
 	"failedDeleteTemplate": "Failed to delete template",
 	"classGrouping": "Class Default Grouping",
 	"classGroupingDesc": "Use predefined groups from the associated class",
+	"Class": "Class",
 	"groupingMode": "Grouping Mode",
 	"selectClass": "Select a Class",
 	"startWithoutClass": "Start without selecting a class",

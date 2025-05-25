@@ -350,6 +350,7 @@
 						task={session.task}
 						host={session.host}
 						createdAt={(session.createdAt as Timestamp).toDate()}
+						classId={session.classId}
 					/>
 				{/each}
 			</div>
