@@ -192,8 +192,8 @@
 	"successLeaveWaitlist": "Left waiting list successfully",
 	"isInWaitlist": "You are already in the waiting list",
 	"noParticipantsInWaitlist": "No participants in waitlist",
-	"autoGrouping": "Auto",
-	"manualGrouping": "Manual",
+	"autoGrouping": "Auto Grouping",
+	"manualGrouping": "Manual Grouping",
 	"autoGroupingDesc": "System will automatically assign participants to groups",
 	"manualGroupingDesc": "Participants can freely choose which group to join",
 	"groupModeApplied": "Apply",
@@ -359,5 +359,12 @@
 	"studentListPreviousPage": "Previous",
 	"studentListNextPage": "Next",
 	"qrcodeClassAccess": "QR Code for Class Access",
-	"classCodeTitle": "Class Code"
+	"classCodeTitle": "Class Code",
+	"classGrouping": "Class Default Grouping",
+	"classGroupingDesc": "Use predefined groups from the associated class",
+	"groupingMode": "Grouping Mode",
+	"selectClass": "Select a Class",
+	"startWithoutClass": "Start without selecting a class",
+	"noClassesFound": "No classes found. Please create a class first.",
+	"failedLoadClasses": "Failed to load classes. Please try again."
 }

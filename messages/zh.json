@@ -362,5 +362,12 @@
 	"studentListPreviousPage": "上一頁",
 	"studentListNextPage": "下一頁",
 	"qrcodeClassAccess": "班級 QR Code 登入",
-	"classCodeTitle": "班級代號"
+	"classCodeTitle": "班級代號",
+	"selectClass": "選擇班級",
+	"startWithoutClass": "不選擇班級直接開始",
+	"noClassesFound": "找不到班級。請先建立班級。",
+	"failedLoadClasses": "載入班級失敗。請再試一次。",
+	"classGrouping": "班級預設分組",
+	"classGroupingDesc": "使用關聯班級中預設的分組",
+	"groupingMode": "分組模式"
 }
