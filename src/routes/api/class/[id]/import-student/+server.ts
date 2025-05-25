@@ -54,24 +54,15 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		}
 
 		// 批量創建學生帳號
-		const createdStudents: Array<{
-			uid: string;
-			email: string;
-			studentId: string;
-			displayName: string;
-			success: boolean;
-			error?: string;
-		}> = [];
-
 		const batch = adminDb.batch();
 		const now = FieldValue.serverTimestamp();
 
-		for (const student of students) {
-			try {
-				// 1. 生成電子郵件地址：<學號>@<班級代碼>.hinagiku.dev
-				const email = `${student.studentId}@${classCode}.hinagiku.dev`;
+		// 並行處理所有學生帳號創建
+		const studentPromises = students.map(async (student) => {
+			const email = `${student.studentId}@${classCode}.hinagiku.dev`;
 
-				// 2. 在 Firebase Auth 中創建用戶
+			try {
+				// 1. 在 Firebase Auth 中創建用戶
 				const userRecord = await adminAuth.createUser({
 					email: email,
 					password: student.studentId,
@@ -79,7 +70,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 					emailVerified: true // 預設為已驗證
 				});
 
-				// 3. 準備 Profile 資料
+				// 2. 準備 Profile 資料
 				const profileData: Omit<Profile, 'createdAt' | 'updatedAt'> = {
 					uid: userRecord.uid,
 					displayName: student.displayName,
@@ -90,7 +81,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 				// 驗證 Profile 資料格式
 				ProfileSchema.omit({ createdAt: true, updatedAt: true }).parse(profileData);
 
-				// 4. 使用 batch 操作創建 Profile
+				// 3. 添加到 batch 操作
 				const profileRef = adminDb.collection('profiles').doc(userRecord.uid);
 				batch.set(profileRef, {
 					...profileData,
@@ -98,16 +89,14 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 					updatedAt: now
 				});
 
-				createdStudents.push({
+				return {
 					uid: userRecord.uid,
 					email: email,
 					studentId: student.studentId,
 					displayName: student.displayName,
 					success: true
-				});
+				};
 			} catch (err) {
-				// 生成電子郵件地址用於錯誤報告
-				const email = `${student.studentId}@${classCode}.hinagiku.dev`;
 				console.error(`創建學生帳號失敗 (${email}):`, err);
 
 				let errorMessage = '創建帳號時發生未知錯誤';
@@ -127,21 +116,28 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 					}
 				}
 
-				createdStudents.push({
+				return {
 					uid: '',
 					email: email,
 					studentId: student.studentId,
 					displayName: student.displayName,
 					success: false,
 					error: errorMessage
-				});
+				};
 			}
-		}
+		});
+
+		// 等待所有學生帳號創建完成
+		const createdStudents = await Promise.all(studentPromises);
 
 		// 執行批量寫入操作
 		try {
-			await batch.commit();
-			console.log('批量寫入 Profile 資料完成');
+			// 只有當有成功創建的學生時才執行 batch
+			const hasSuccessfulStudents = createdStudents.some((student) => student.success);
+			if (hasSuccessfulStudents) {
+				await batch.commit();
+				console.log('批量寫入 Profile 資料完成');
+			}
 		} catch (err) {
 			console.error('批量寫入 Profile 資料失敗:', err);
 			throw error(500, '儲存學生資料失敗');
