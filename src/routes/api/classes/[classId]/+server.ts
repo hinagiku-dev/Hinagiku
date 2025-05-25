@@ -24,19 +24,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		const classData = classDoc.data() as Class;
 
 		// Convert Firestore Timestamp fields to ISO strings
-		const convertTimestamps = (data: Record<string, unknown>): Record<string, unknown> => {
+		const convertTimestamps = (data: any): any => {
 			if (data && typeof data === 'object') {
 				for (const key in data) {
-					const value = data[key];
-					if (
-						value &&
-						typeof value === 'object' &&
-						'toDate' in value &&
-						typeof (value as { toDate: () => Date }).toDate === 'function'
-					) {
-						data[key] = (value as { toDate: () => Date }).toDate().toISOString();
-					} else if (typeof value === 'object' && value !== null) {
-						data[key] = convertTimestamps(value as Record<string, unknown>);
+					if (data[key]?.toDate) {
+						data[key] = data[key].toDate().toISOString();
+					} else if (typeof data[key] === 'object') {
+						convertTimestamps(data[key]);
 					}
 				}
 			}
