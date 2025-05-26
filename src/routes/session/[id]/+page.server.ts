@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			throw error(404, 'Class not found');
 		}
 		classCode = classDoc.data()?.code || '';
-		if (!classCode || classCode === '') {
+		if (!classCode) {
 			throw redirect(303, '/login?then=' + encodeURIComponent(url.pathname));
 		}
 		throw redirect(
