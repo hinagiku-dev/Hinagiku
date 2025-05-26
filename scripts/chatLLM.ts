@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { HARMFUL_CONTENT_DETECTION_PROMPT } from '../src/lib/server/prompt';
 import type { LLMChatMessage } from '../src/lib/server/types';
 
-export const llmModel = genkit({
+export const chatModel = genkit({
 	plugins: [openAI({ apiKey: process.env.OPENAI_API_KEY })],
 	model: gpt41Mini
 });
@@ -17,7 +17,7 @@ export async function requestLLM(
 	schema: z.ZodSchema,
 	system_prompt?: string
 ) {
-	const { output } = await llmModel.generate({
+	const { output } = await chatModel.generate({
 		prompt: [
 			...(system_prompt ? [{ text: system_prompt }] : []),
 			...history.map((msg) => ({
