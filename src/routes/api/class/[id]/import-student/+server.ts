@@ -1,30 +1,25 @@
+import { StudentSchema } from '$lib/schema/class';
 import { ProfileSchema, type Profile } from '$lib/schema/profile';
 import { adminAuth, adminDb } from '$lib/server/firebase';
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
 
-// 學生資料格式
-const StudentSchema = z.object({
-	displayName: z.string(),
-	studentId: z.string().describe('學號'),
-	group: z.string().max(50).nullable(),
-	seatNumber: z.string().nullable()
-});
-
 const CreateStudentsRequestSchema = z.object({
 	students: z.array(StudentSchema).min(1).max(1000)
 });
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
-	const { classId } = params;
+	const classId = params.id;
 
 	if (!classId) {
+		console.error('班級 ID 不存在:', classId);
 		throw error(400, '需要提供班級 ID');
 	}
 
 	// 檢查用戶是否已登入
 	if (!locals.user) {
+		console.error('用戶未登入，無法創建學生帳號');
 		throw error(401, '需要登入才能創建學生帳號');
 	}
 
@@ -33,23 +28,27 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		const body = await request.json();
 		const validatedData = CreateStudentsRequestSchema.parse(body);
 		const { students } = validatedData;
+		console.log(students);
 
 		// 檢查班級是否存在且用戶有權限
 		const classRef = adminDb.collection('classes').doc(classId);
 		const classDoc = await classRef.get();
 
 		if (!classDoc.exists) {
+			console.error(`找不到 ID 為 '${classId}' 的班級`);
 			throw error(404, `找不到 ID 為 '${classId}' 的班級`);
 		}
 
 		const classData = classDoc.data();
 		if (classData?.teacherId !== locals.user.uid) {
+			console.error(`用戶 ${locals.user.uid} 沒有權限為班級 ${classId} 創建學生帳號`);
 			throw error(403, '您沒有權限為此班級創建學生帳號');
 		}
 
 		// 獲取班級代碼用於生成電子郵件
 		const classCode = classData.code;
 		if (!classCode) {
+			console.error(`班級 ${classId} 的代碼不存在，無法創建學生帳號`);
 			throw error(500, '班級代碼不存在，無法創建學生帳號');
 		}
 
@@ -266,10 +265,11 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		// 處理 Firebase 錯誤
 		if (err && typeof err === 'object' && 'code' in err) {
 			if (err.code === 'PERMISSION_DENIED') {
+				console.error('用戶沒有創建學生帳號的權限:', locals.user.uid);
 				throw error(403, '沒有創建學生帳號的權限');
 			}
 		}
-
+		console.error('批量創建學生帳號失敗:', err);
 		throw error(500, '批量創建學生帳號失敗，請檢查伺服器日誌');
 	}
 };

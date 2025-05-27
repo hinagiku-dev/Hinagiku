@@ -9,7 +9,12 @@
 	import { db } from '$lib/firebase';
 	import { getDoc, doc } from 'firebase/firestore';
 	import type { Class } from '$lib/schema/class';
+	import { StudentSchema } from '$lib/schema/class';
 	import { page } from '$app/stores';
+	import type { z } from 'zod';
+
+	// Use the schema type directly
+	type Student = z.infer<typeof StudentSchema>;
 
 	// Get data from server
 	let { data } = $props();
@@ -47,14 +52,6 @@
 	// Load class data on component initialization
 	loadClassData();
 
-	interface Student {
-		id: number;
-		name: string;
-		seatNumber: string;
-		studentId: string;
-		groupNumber: string;
-	}
-
 	let student_list = $state<Student[]>([]);
 
 	// Page size and pagination
@@ -77,18 +74,19 @@
 		if (currentPage < totalPages) currentPage += 1;
 	}
 
-	// Reset Password editing state
-	let editingId = $state<number | null>(null);
+	// Reset Password editing state - using studentId as identifier instead of custom id
+	let editingStudentId = $state<string | null>(null);
 	let passwordInput = $state('');
 	let showPassword = $state(false);
 
-	function startEdit(id: number) {
-		editingId = id;
+	function startEdit(studentId: string) {
+		editingStudentId = studentId;
 		passwordInput = '';
 		showPassword = false;
 	}
+
 	function cancelEdit() {
-		editingId = null;
+		editingStudentId = null;
 		passwordInput = '';
 		showPassword = false;
 	}
@@ -132,7 +130,11 @@
 		// Improved field structure validation
 		try {
 			const requiredFields = [
-				{ keys: ['name', 'student name', '姓名'], found: false, index: -1 },
+				{
+					keys: ['name', 'student name', '姓名', 'displayname', 'display name'],
+					found: false,
+					index: -1
+				},
 				{ keys: ['seat', 'seatnumber', 'seat number', '座號'], found: false, index: -1 },
 				{ keys: ['id', 'studentid', 'student id', '學號'], found: false, index: -1 },
 				{ keys: ['group', 'groupnumber', 'group number', '組別'], found: false, index: -1 }
@@ -231,18 +233,34 @@
 				throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
 			}
 
-			// Extract student data directly from parsed rows
-			const newStudentList: Student[] = rows.map((row, idx) => ({
-				id: idx + 1,
-				name: String(row[requiredFields[0].index] || ''),
-				seatNumber: String(row[requiredFields[1].index] || ''),
-				studentId: String(row[requiredFields[2].index] || ''),
-				groupNumber: String(row[requiredFields[3].index] || '')
-			}));
+			// Extract student data directly from parsed rows and validate with StudentSchema
+			const newStudentList: Student[] = [];
+
+			for (let idx = 0; idx < rows.length; idx++) {
+				const row = rows[idx];
+				try {
+					// Create a student object according to schema
+					const studentData = {
+						displayName: String(row[requiredFields[0].index] || ''),
+						studentId: String(row[requiredFields[2].index] || ''),
+						seatNumber: String(row[requiredFields[1].index] || '') || null,
+						group: String(row[requiredFields[3].index] || '') || null
+					};
+
+					// Validate with Zod schema
+					const validatedStudent = StudentSchema.parse(studentData);
+
+					// Add directly to the list without custom id
+					newStudentList.push(validatedStudent);
+				} catch (validationError) {
+					console.error(`Row ${idx + 2} validation failed:`, validationError);
+					// Continue with next row
+				}
+			}
 
 			// Update student list immediately without waiting for server
 			if (newStudentList.length > 0) {
-				student_list = newStudentList.filter((s) => s.name && s.studentId); // Filter out empty rows
+				student_list = newStudentList;
 				totalPages = Math.ceil(student_list.length / pageSize);
 				paginated = student_list.slice(0, pageSize);
 				currentPage = 1;
@@ -253,25 +271,27 @@
 				throw new Error('No valid student data found in file');
 			}
 
-			// Still attempt to send to server as a backup
-			const form = new FormData();
-			form.append('file', file);
+			// Send to server in the format expected by the API
 			try {
+				// Pass the validated student list directly - no need to extract fields
 				const res = await fetch(`/api/class/${classId}/import-student`, {
 					method: 'POST',
-					body: form
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ students: student_list })
 				});
 				if (res.ok) {
 					const data = await res.json();
-					if (Array.isArray(data.student_list)) {
-						// If server response is good, update with server data
-						student_list = data.student_list;
-						totalPages = Math.ceil(student_list.length / pageSize);
-						paginated = student_list.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+					if (data.success) {
+						notifications.success(`${data.message}`);
+					} else {
+						notifications.error(`${data.error || '匯入失敗'}`);
 					}
+				} else {
+					notifications.error('伺服器錯誤，匯入失敗');
 				}
-			} catch {
-				notifications.error('Server error during import, but local data is displayed');
+			} catch (error) {
+				console.error('API error:', error);
+				notifications.error('伺服器連接錯誤，但本地資料已顯示');
 			}
 		} catch (error) {
 			console.error('File validation error:', error);
@@ -350,12 +370,12 @@
 						<tbody>
 							{#each paginated as s, i}
 								<tr class={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-									<td class="px-6 py-4">{s.name}</td>
+									<td class="px-6 py-4">{s.displayName}</td>
 									<td class="px-6 py-4">{s.seatNumber}</td>
 									<td class="px-6 py-4">{s.studentId}</td>
-									<td class="px-6 py-4">{s.groupNumber}</td>
+									<td class="px-6 py-4">{s.group}</td>
 									<td class="px-6 py-4">
-										{#if editingId === s.id}
+										{#if editingStudentId === s.studentId}
 											<div class="flex items-center space-x-2">
 												<input
 													type={showPassword ? 'text' : 'password'}
@@ -382,7 +402,12 @@
 												</Button>
 											</div>
 										{:else}
-											<Button size="xs" outline class="w-auto" on:click={() => startEdit(s.id)}>
+											<Button
+												size="xs"
+												outline
+												class="w-auto"
+												on:click={() => startEdit(s.studentId)}
+											>
 												<RefreshCw class="mr-1 h-4 w-4" />
 												{m.studentListResetPassword()}
 											</Button>
