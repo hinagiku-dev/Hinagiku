@@ -6,14 +6,14 @@ import { z } from 'zod';
 
 // 學生資料格式
 const StudentSchema = z.object({
-	displayName: z.string().min(1).max(100),
-	studentId: z.string().min(1).max(20).describe('學號'),
-	title: z.string().max(100).nullable().optional(),
-	bio: z.string().max(1000).nullable().optional()
+	displayName: z.string(),
+	studentId: z.string().describe('學號'),
+	group: z.string().max(50).nullable(),
+	seatNumber: z.string().nullable()
 });
 
 const CreateStudentsRequestSchema = z.object({
-	students: z.array(StudentSchema).min(1).max(50)
+	students: z.array(StudentSchema).min(1).max(1000)
 });
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
@@ -74,8 +74,10 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 				const profileData: Omit<Profile, 'createdAt' | 'updatedAt'> = {
 					uid: userRecord.uid,
 					displayName: student.displayName,
-					title: student.title || null,
-					bio: student.bio || null
+					seatNumber: student.seatNumber,
+					studentId: student.studentId,
+					title: null,
+					bio: null
 				};
 
 				// 驗證 Profile 資料格式
@@ -150,11 +152,62 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 		if (successfulStudentUids.length > 0) {
 			try {
+				// 先獲取當前班級資料
+				const currentClassDoc = await classRef.get();
+				const currentClassData = currentClassDoc.data();
+				const currentGroups = currentClassData?.groups || [];
+
+				// 處理組別分配
+				const updatedGroups = [...currentGroups];
+				const studentGroupMap = new Map<string, number>();
+
+				// 建立學生到組別的對應關係
+				createdStudents
+					.filter((student) => student.success)
+					.forEach((student) => {
+						const originalStudent = students.find((s) => s.studentId === student.studentId);
+						if (originalStudent?.group) {
+							const groupNumber = parseInt(originalStudent.group);
+							if (!isNaN(groupNumber) && groupNumber > 0) {
+								studentGroupMap.set(student.uid, groupNumber);
+							}
+						}
+					});
+
+				// 更新組別資料
+				studentGroupMap.forEach((groupNumber, studentUid) => {
+					// 尋找現有的組別
+					const existingGroupIndex = updatedGroups.findIndex((g) => g.number === groupNumber);
+
+					if (existingGroupIndex >= 0) {
+						// 組別已存在，添加學生到該組別
+						if (!updatedGroups[existingGroupIndex].students.includes(studentUid)) {
+							updatedGroups[existingGroupIndex].students.push(studentUid);
+						}
+					} else {
+						// 組別不存在，創建新組別
+						updatedGroups.push({
+							number: groupNumber,
+							students: [studentUid]
+						});
+					}
+				});
+
+				// 依組別編號排序
+				updatedGroups.sort((a, b) => a.number - b.number);
+
 				await classRef.update({
 					students: FieldValue.arrayUnion(...successfulStudentUids),
+					groups: updatedGroups,
 					updatedAt: now
 				});
 				console.log(`已將 ${successfulStudentUids.length} 位學生添加到班級`);
+
+				// 統計組別分配情況
+				const groupAssignmentCount = studentGroupMap.size;
+				if (groupAssignmentCount > 0) {
+					console.log(`已分配 ${groupAssignmentCount} 位學生到組別`);
+				}
 			} catch (err) {
 				console.error('添加學生到班級失敗:', err);
 				// 這個錯誤不會中斷流程，因為學生帳號已經創建成功
@@ -165,15 +218,27 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		const successCount = createdStudents.filter((s) => s.success).length;
 		const failureCount = createdStudents.filter((s) => !s.success).length;
 
+		// 統計組別分配
+		const groupAssignmentCount = createdStudents
+			.filter((student) => student.success)
+			.map((student) => students.find((s) => s.studentId === student.studentId))
+			.filter(
+				(originalStudent) =>
+					originalStudent?.group &&
+					!isNaN(parseInt(originalStudent.group)) &&
+					parseInt(originalStudent.group) > 0
+			).length;
+
 		return json(
 			{
 				success: true,
-				message: `成功創建 ${successCount} 個學生帳號${failureCount > 0 ? `，${failureCount} 個失敗` : ''}`,
+				message: `成功創建 ${successCount} 個學生帳號${failureCount > 0 ? `，${failureCount} 個失敗` : ''}${groupAssignmentCount > 0 ? `，已分配 ${groupAssignmentCount} 位學生到組別` : ''}`,
 				results: createdStudents,
 				summary: {
 					total: students.length,
 					successful: successCount,
-					failed: failureCount
+					failed: failureCount,
+					groupAssigned: groupAssignmentCount
 				}
 			},
 			{ status: 201 }
