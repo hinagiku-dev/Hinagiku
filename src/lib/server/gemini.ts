@@ -1,4 +1,4 @@
-import { llmModel, z } from '$lib/ai';
+import { chatModel, z } from '$lib/ai';
 import type { Resource } from '$lib/schema/resource';
 import type { Discussion, LLMChatMessage } from '$lib/server/types';
 import {
@@ -27,7 +27,7 @@ export async function requestLLM(
 	topP: number = 0.5
 ) {
 	try {
-		const { output } = await llmModel.generate({
+		const { output } = await chatModel.generate({
 			system: system_prompt,
 			prompt: HISTORY_PROMPT.replace(
 				'{chatHistory}',

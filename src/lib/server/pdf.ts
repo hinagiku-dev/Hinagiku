@@ -1,5 +1,5 @@
 // import pdf from 'pdf-parse';
-import { llmModel, z } from '$lib/ai';
+import { pdfModel, z } from '$lib/ai';
 import { PDF_PARSE_PROMPT } from './prompt';
 
 // export async function pdf2Text(fileBuffer: ArrayBuffer, apiKey: string): Promise<string | null> {
@@ -15,7 +15,7 @@ import { PDF_PARSE_PROMPT } from './prompt';
 
 export async function pdf2Text(fileBuffer: ArrayBuffer): Promise<string | null> {
 	try {
-		const { output } = await llmModel.generate({
+		const { output } = await pdfModel.generate({
 			system: PDF_PARSE_PROMPT,
 			prompt: [
 				{

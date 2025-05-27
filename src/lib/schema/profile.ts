@@ -8,6 +8,8 @@ export const ProfileSchema = z.object({
 	displayName: z.string().min(1).max(100),
 	title: z.string().max(100).nullable(),
 	bio: z.string().max(1000).nullable(),
+	seatNumber: z.string().nullable().optional(),
+	studentId: z.string().nullable().optional(),
 	updatedAt: Timestamp,
 	createdAt: Timestamp
 });
