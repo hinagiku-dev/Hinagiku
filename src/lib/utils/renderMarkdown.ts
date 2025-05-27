@@ -4,9 +4,13 @@ import { marked } from 'marked';
 /**
  * Renders the given markdown string to HTML and sanitizes it.
  * @param markdown - The markdown string to be rendered.
+ * @param allowedAttrs - An array of allowed HTML attributes in the rendered HTML. Defaults to no allowed attributes.
  * @returns A promise that resolves to the sanitized HTML string.
  */
-export async function renderMarkdown(markdown: string): Promise<string> {
+export async function renderMarkdown(
+	markdown: string,
+	allowedAttrs: string[] = []
+): Promise<string> {
 	const renderer = new marked.Renderer();
 
 	// prevent rendering of hidden links
@@ -34,6 +38,6 @@ export async function renderMarkdown(markdown: string): Promise<string> {
 			'br',
 			'a'
 		],
-		ALLOWED_ATTR: ['href', 'title']
+		ALLOWED_ATTR: allowedAttrs
 	});
 }
