@@ -10,6 +10,9 @@ importers:
       '@inlang/paraglide-sveltekit':
         specifier: 0.15.5
         version: 0.15.5(@sveltejs/kit@2.18.0(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.22.5)(vite@5.4.14(@types/node@22.13.9)))(svelte@5.22.5)(vite@5.4.14(@types/node@22.13.9)))(debug@4.4.0)
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@aws-sdk/client-s3':
         specifier: ^3.758.0
@@ -3586,6 +3589,13 @@ packages:
     engines: { node: '>=0.4.0' }
     hasBin: true
 
+  adler-32@1.3.1:
+    resolution:
+      {
+        integrity: sha512-ynZ4w/nUUv5rrsR8UUGoe1VC9hZj6V5hU9Qw1HlMDJGEJw5S7TfTErWTjMys6M7vr0YWcPqs3qAr4ss0nDfP+A==
+      }
+    engines: { node: '>=0.8' }
+
   agent-base@6.0.2:
     resolution:
       {
@@ -3945,6 +3955,13 @@ packages:
         integrity: sha512-b+uH5BakXZ9Do9iK+CkDmctUSEqZl+SP056vc5usa0PL+ev5OHw003rZXcnjNDv3L8P5j6rwT6C0BPKSikW08w==
       }
 
+  cfb@1.2.2:
+    resolution:
+      {
+        integrity: sha512-KfdUZsSOw19/ObEWasvBP/Ac4reZvAGauZhs6S/gqNhXhI7cKwvlH7ulj+dOEYnca4bm4SGo8C1bTAQvnTjgQA==
+      }
+    engines: { node: '>=0.8' }
+
   chai@5.2.0:
     resolution:
       {
@@ -4046,6 +4063,13 @@ packages:
         integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==
       }
     engines: { node: '>=6' }
+
+  codepage@1.15.0:
+    resolution:
+      {
+        integrity: sha512-3g6NUTPd/YtuuGrhMnOMRjFc+LJw/bnMp3+0r/Wcz3IXUuCosKRJvMphm5+Q+bvTVGcJJuRvVLuYba+WojaFaA==
+      }
+    engines: { node: '>=0.8' }
 
   color-convert@2.0.1:
     resolution:
@@ -4970,6 +4994,13 @@ packages:
         integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==
       }
     engines: { node: '>= 0.6' }
+
+  frac@1.1.2:
+    resolution:
+      {
+        integrity: sha512-w/XBfkibaTl3YDqASwfDUqkna4Z2p9cFSr1aHDt0WoMTECnRfBOv2WArlZILlqgWlmdIlALXGpM2AOhEk5W3IA==
+      }
+    engines: { node: '>=0.8' }
 
   fraction.js@4.3.7:
     resolution:
@@ -7029,6 +7060,13 @@ packages:
         integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==
       }
 
+  ssf@0.11.2:
+    resolution:
+      {
+        integrity: sha512-+idbmIXoYET47hH+d7dfm2epdOMUDjqcB4648sTZ+t2JwoyBFL/insLfB/racrDmsKB3diwsDA696pZMieAC5g==
+      }
+    engines: { node: '>=0.8' }
+
   stackback@0.0.2:
     resolution:
       {
@@ -7722,12 +7760,26 @@ packages:
     engines: { node: '>=8' }
     hasBin: true
 
+  wmf@1.0.2:
+    resolution:
+      {
+        integrity: sha512-/p9K7bEh0Dj6WbXg4JG0xvLQmIadrner1bi45VMJTfnbVHsc7yIajZyoSoK60/dtVBs12Fm6WkUI5/3WAVsNMw==
+      }
+    engines: { node: '>=0.8' }
+
   word-wrap@1.2.5:
     resolution:
       {
         integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==
       }
     engines: { node: '>=0.10.0' }
+
+  word@0.3.0:
+    resolution:
+      {
+        integrity: sha512-OELeY0Q61OXpdUfTp+oweA/vtLVg5VDOXh+3he3PNzLGG/y0oylSOC1xRVj0+l4vQ3tj/bB1HVHv1ocXkQceFA==
+      }
+    engines: { node: '>=0.8' }
 
   wordwrap@1.0.0:
     resolution:
@@ -7768,6 +7820,14 @@ packages:
       {
         integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
       }
+
+  xlsx@0.18.5:
+    resolution:
+      {
+        integrity: sha512-dmg3LCjBPHZnQp5/F/+nnTa+miPJxUXB6vtk42YjBBKayDNagxGEeIdWApkYPOf3Z3pm3k62Knjzp7lMeTEtFQ==
+      }
+    engines: { node: '>=0.8' }
+    hasBin: true
 
   y18n@4.0.3:
     resolution:
@@ -10562,6 +10622,8 @@ snapshots:
 
   acorn@8.14.0: {}
 
+  adler-32@1.3.1: {}
+
   agent-base@6.0.2:
     dependencies:
       debug: 4.4.0
@@ -10761,6 +10823,11 @@ snapshots:
 
   caniuse-lite@1.0.30001699: {}
 
+  cfb@1.2.2:
+    dependencies:
+      adler-32: 1.3.1
+      crc-32: 1.2.2
+
   chai@5.2.0:
     dependencies:
       assertion-error: 2.0.1
@@ -10824,6 +10891,8 @@ snapshots:
       wrap-ansi: 7.0.0
 
   clsx@2.1.1: {}
+
+  codepage@1.15.0: {}
 
   color-convert@2.0.1:
     dependencies:
@@ -11473,6 +11542,8 @@ snapshots:
       fetch-blob: 3.2.0
 
   forwarded@0.2.0: {}
+
+  frac@1.1.2: {}
 
   fraction.js@4.3.7: {}
 
@@ -12624,6 +12695,10 @@ snapshots:
 
   sprintf-js@1.0.3: {}
 
+  ssf@0.11.2:
+    dependencies:
+      frac: 1.1.2
+
   stackback@0.0.2: {}
 
   statuses@2.0.1: {}
@@ -13048,7 +13123,11 @@ snapshots:
       siginfo: 2.0.0
       stackback: 0.0.2
 
+  wmf@1.0.2: {}
+
   word-wrap@1.2.5: {}
+
+  word@0.3.0: {}
 
   wordwrap@1.0.0: {}
 
@@ -13077,6 +13156,16 @@ snapshots:
       strip-ansi: 7.1.0
 
   wrappy@1.0.2: {}
+
+  xlsx@0.18.5:
+    dependencies:
+      adler-32: 1.3.1
+      cfb: 1.2.2
+      codepage: 1.15.0
+      crc-32: 1.2.2
+      ssf: 0.11.2
+      wmf: 1.0.2
+      word: 0.3.0
 
   y18n@4.0.3: {}
 
