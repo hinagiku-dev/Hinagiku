@@ -5,7 +5,9 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const sessionRef = adminDb.collection('sessions').doc(params.id);
 	const sessionDoc = await sessionRef.get();
-
+	if (!sessionDoc.exists) {
+		throw error(404, 'Session not found');
+	}
 	if (!locals.user) {
 		const classId = sessionDoc.data()?.classId;
 		if (!classId) {
