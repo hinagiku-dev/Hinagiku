@@ -417,5 +417,18 @@
 	"confirmDeleteClassMessage": "You are about to delete the class",
 	"confirmDeleteClassWarning": ". This action cannot be undone and all related sessions and student data will be permanently deleted.",
 	"confirmDelete": "Confirm Delete",
-	"deleteClass": "Delete Class"
+	"deleteClass": "Delete Class",
+	"classStudentResetPasswordSuccess": "student password reset successfully",
+	"classStudentResetPasswordFailed": "student password reset failed",
+	"classImportStudentsIDLength": "Student ID must be 6 characters long",
+	"classImportDataformatErrorbyRow": "row: data format error",
+	"classImportDataformatError": "Data format error:",
+	"classImportFailed": "Failed to import student list",
+	"classImportServerError": "Server error during import",
+	"classImportServerErrorDataShown": "Server error during import but Data is shown below.",
+	"classStudentFormatErrorInclude": "File format error: the file must include the following columns: Name, Seat No., Student ID, Group No.",
+	"backToManagementDashboard": "Back to Management Dashboard",
+	"classAsktoResetPassword": "Reset Password?",
+	"classResetPasswordConfirm": "Yes",
+	"classResetPasswordCancel": "No"
 }

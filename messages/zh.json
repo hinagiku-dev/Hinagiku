@@ -419,5 +419,18 @@
 	"schoolNamePlaceholder": "請輸入學校名稱",
 	"academicYearPlaceholder": "例如：113",
 	"classNamePlaceholder": "例如：101",
-	"createClassButton": "建立班級"
+	"createClassButton": "建立班級",
+	"classStudentResetPasswordSuccess": "學生密碼重設成功",
+	"classStudentResetPasswordFailed": "學生密碼重設失敗",
+	"classImportStudentsIDLength": "學號長度不足 6 個字元",
+	"classImportDataformatErrorbyRow": "行：資料格式錯誤",
+	"classImportDataformatError": "以下行資料格式錯誤：",
+	"classImportFailed": "匯入學生名單失敗",
+	"classImportServerError": "伺服器錯誤，請稍後再試",
+	"classImportServerErrorDataShown": "伺服器連接錯誤，但本地資料已顯示",
+	"classStudentFormatErrorInclude": "檔案欄位格式不正確，請確認標題包含「姓名、座號、學號、組別」或相應英文字段",
+	"backToManagementDashboard": "返回管理頁面",
+	"classAsktoResetPassword": "重設密碼？",
+	"classResetPasswordConfirm": "確定",
+	"classResetPasswordCancel": "取消"
 }
