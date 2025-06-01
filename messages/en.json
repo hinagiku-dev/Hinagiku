@@ -423,6 +423,7 @@
 	"classImportStudentsIDLength": "Student ID must be 6 characters long",
 	"classImportDataformatErrorbyRow": "row: data format error",
 	"classImportDataformatError": "Data format error:",
+	"classImportSuccess": "Success to import student list",
 	"classImportFailed": "Failed to import student list",
 	"classImportServerError": "Server error during import",
 	"classImportServerErrorDataShown": "Server error during import but Data is shown below.",

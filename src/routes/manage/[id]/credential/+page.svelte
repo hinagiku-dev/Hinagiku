@@ -140,14 +140,12 @@
 
 			if (res.ok) {
 				const data = await res.json();
-				notifications.success(
-					data.message || `${studentId} ${m.classStudentResetPasswordSuccess()}`
-				);
+				console.log('Reset password response:', data);
+				notifications.success(`${studentId} ${m.classStudentResetPasswordSuccess()}`);
 			} else {
 				const errorData = await res.json();
-				notifications.error(
-					errorData.error || `${studentId} ${m.classStudentResetPasswordFailed()}`
-				);
+				console.error('Reset password error:', errorData);
+				notifications.error(`${studentId} ${m.classStudentResetPasswordFailed()}`);
 			}
 		} catch (e) {
 			console.error(e);
@@ -348,9 +346,9 @@
 				if (res.ok) {
 					const data = await res.json();
 					if (data.success) {
-						notifications.success(`${data.message}`);
+						notifications.success(m.classImportSuccess());
 					} else {
-						notifications.error(`${data.error || m.classImportFailed()}`);
+						notifications.error(m.classImportFailed());
 					}
 				} else {
 					notifications.error(m.classImportServerError());

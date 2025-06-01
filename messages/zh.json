@@ -425,6 +425,7 @@
 	"classImportStudentsIDLength": "學號長度不足 6 個字元",
 	"classImportDataformatErrorbyRow": "行：資料格式錯誤",
 	"classImportDataformatError": "以下行資料格式錯誤：",
+	"classImportSuccess": "學生名單匯入成功",
 	"classImportFailed": "匯入學生名單失敗",
 	"classImportServerError": "伺服器錯誤，請稍後再試",
 	"classImportServerErrorDataShown": "伺服器連接錯誤，但本地資料已顯示",
