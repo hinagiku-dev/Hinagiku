@@ -23,4 +23,11 @@ export const ClassSchema = z.object({
 	createdAt: Timestamp
 });
 
+export const StudentSchema = z.object({
+	displayName: z.string(),
+	studentId: z.string().describe('學號'),
+	group: z.string().max(50).nullable(),
+	seatNumber: z.string().nullable()
+});
+
 export type Class = z.infer<typeof ClassSchema>;
