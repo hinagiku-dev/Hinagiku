@@ -115,9 +115,6 @@
 		class="w-full rounded-md bg-primary-600 px-4 py-2 font-medium text-white transition duration-300 hover:bg-primary-700"
 		disabled={loading}
 	>
-		{#if loading}
-			<span class="mr-2 inline-block animate-spin">↻</span>
-		{/if}
 		{m.classLoginButton()}
 	</button>
 </div>
