@@ -3,6 +3,9 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { signInWithEmailAndPassword } from 'firebase/auth';
+	import { auth } from '$lib/firebase';
+	import { notifications } from '$lib/stores/notifications';
 
 	let classCode = '';
 	let account = '';
@@ -19,6 +22,20 @@
 		}
 	});
 
+	async function loginWithEmail(email: string, password: string): Promise<string> {
+		try {
+			const userCredential = await signInWithEmailAndPassword(auth, email, password);
+			const user = userCredential.user;
+			const idToken = await user.getIdToken(/* forceRefresh */ false);
+			return idToken;
+		} catch (error) {
+			console.error('Login error:', error);
+			notifications.error(m.classLoginFailed());
+			loading = false;
+			throw error;
+		}
+	}
+
 	async function handleClassLogin() {
 		if (!classCode || !account || !password) {
 			error = m.classLoginErrorEmpty();
@@ -28,14 +45,18 @@
 		loading = true;
 		error = '';
 
+		// Construct email from studentId and classCode and convert to lowercase
+		const email = `${account}@${classCode}.student-account.hinagiku.dev`.toLowerCase();
+		const idToken = await loginWithEmail(email, password);
+
 		try {
 			// Call the API endpoint
-			const response = await fetch('/api/auth/class-login', {
+			const response = await fetch('/api/auth/signin', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ classCode, account, password })
+				body: JSON.stringify({ idToken })
 			});
 
 			const data = await response.json();
@@ -49,7 +70,7 @@
 			}
 		} catch (err) {
 			console.error('Login error:', err);
-			error = m.classLoginError();
+			notifications.error(m.classLoginError());
 		} finally {
 			loading = false;
 		}
