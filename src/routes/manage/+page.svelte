@@ -668,7 +668,7 @@
 					<!-- QR Code and Class Code Section -->
 					<div class="flex flex-col items-center space-y-4">
 						<h4 class="text-lg font-semibold text-gray-900">{m.qrcodeClassAccess()}</h4>
-						<QRCode value={`/login?classCode=${selectedClass.code}`} />
+						<QRCode value={`${origin}/login?classCode=${selectedClass.code}`} />
 						<p class="text-lg font-bold">{m.classCodeTitle()}: {selectedClass.code}</p>
 					</div>
 
