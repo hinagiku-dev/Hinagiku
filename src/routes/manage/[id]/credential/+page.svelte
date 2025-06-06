@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { notifications } from '$lib/stores/notifications';
 	import QRCode from '$lib/components/QRCode.svelte';
-	import { Card, Button, Spinner } from 'flowbite-svelte';
-	import { RefreshCw, ArrowLeft } from 'lucide-svelte';
+	import { Card, Button, Spinner, Input } from 'flowbite-svelte';
+	import { RefreshCw, ArrowLeft, Eye, EyeOff } from 'lucide-svelte';
 	import Title from '$lib/components/Title.svelte';
 	import * as m from '$lib/paraglide/messages.js';
 	import * as XLSX from 'xlsx';
@@ -118,24 +118,43 @@
 		if (currentPage < totalPages) currentPage += 1;
 	}
 
-	// Reset Password editing state - simplified to just track confirmation
+	// Reset Password editing state - track confirmation and password input
 	let confirmingResetId = $state<string | null>(null);
+	let resetPasswordValue = $state<string>('');
+	let showPassword = $state<boolean>(false);
 
 	function confirmReset(studentId: string) {
 		confirmingResetId = studentId;
+		resetPasswordValue = studentId; // Default to student ID
+		showPassword = false; // Reset visibility
 	}
 
 	function cancelReset() {
 		confirmingResetId = null;
+		resetPasswordValue = '';
+		showPassword = false;
 	}
 
-	// Reset password - call API directly with classId and studentId
+	function togglePasswordVisibility() {
+		showPassword = !showPassword;
+	}
+
+	// Reset password - call API with custom password
 	async function resetPassword(studentId: string) {
+		if (!resetPasswordValue.trim()) {
+			notifications.error('Password cannot be empty');
+			return;
+		}
+
 		try {
-			const res = await fetch('/api/auth/reset-password', {
+			const res = await fetch('/api/auth/update-password', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ classId: classId, studentId: studentId })
+				body: JSON.stringify({
+					classId: classId,
+					studentId: studentId,
+					newPassword: resetPasswordValue.trim()
+				})
 			});
 
 			if (res.ok) {
@@ -152,6 +171,8 @@
 			notifications.error(m.resetPasswordClassError());
 		} finally {
 			confirmingResetId = null;
+			resetPasswordValue = '';
+			showPassword = false;
 		}
 	}
 
@@ -439,16 +460,35 @@
 									<td class="px-6 py-4">{s.group}</td>
 									<td class="px-6 py-4">
 										{#if confirmingResetId === s.studentId}
-											<div class="flex items-center space-x-2">
-												<span class="text-sm text-gray-600"
-													>{s.displayName} {m.classAsktoResetPassword()}</span
-												>
-												<Button size="xs" color="red" on:click={() => resetPassword(s.studentId)}>
-													{m.classResetPasswordConfirm()}
-												</Button>
-												<Button size="xs" outline on:click={cancelReset}>
-													{m.classResetPasswordCancel()}
-												</Button>
+											<div class="flex flex-col space-y-2">
+												<div class="flex items-center space-x-2">
+													<div class="relative w-32">
+														<Input
+															type={showPassword ? 'text' : 'password'}
+															bind:value={resetPasswordValue}
+															placeholder="Enter new password"
+															class="pr-10"
+															size="sm"
+														/>
+														<button
+															type="button"
+															class="absolute inset-y-0 right-0 flex items-center pr-3"
+															onclick={togglePasswordVisibility}
+														>
+															{#if showPassword}
+																<EyeOff class="h-4 w-4 text-gray-400" />
+															{:else}
+																<Eye class="h-4 w-4 text-gray-400" />
+															{/if}
+														</button>
+													</div>
+													<Button size="xs" color="red" on:click={() => resetPassword(s.studentId)}>
+														{m.classResetPasswordConfirm()}
+													</Button>
+													<Button size="xs" outline on:click={cancelReset}>
+														{m.classResetPasswordCancel()}
+													</Button>
+												</div>
 											</div>
 										{:else}
 											<Button

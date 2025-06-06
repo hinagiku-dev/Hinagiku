@@ -432,7 +432,6 @@
 	"classImportServerErrorDataShown": "伺服器連接錯誤，但本地資料已顯示",
 	"classStudentFormatErrorInclude": "檔案欄位格式不正確，請確認標題包含「姓名、座號、學號、組別」或相應英文字段",
 	"backToManagementDashboard": "返回管理頁面",
-	"classAsktoResetPassword": "重設密碼？",
 	"classResetPasswordConfirm": "確定",
 	"classResetPasswordCancel": "取消"
 }
