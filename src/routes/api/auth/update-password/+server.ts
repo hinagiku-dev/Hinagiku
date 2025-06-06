@@ -5,13 +5,10 @@ import { z } from 'zod';
 
 // 密碼重設請求格式
 const ResetPasswordRequestSchema = z.object({
-	// 老師重設學生密碼
 	classId: z.string().optional(),
-	studentId: z.string().optional(), // 學號
-
-	// 學生自己重設密碼
-	currentPassword: z.string().optional(),
-	newPasswordSelf: z.string().min(6).optional()
+	studentId: z.string().optional(),
+	newPassword: z.string().min(6),
+	currentPassword: z.string().optional()
 });
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -24,18 +21,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		// 驗證請求資料
 		const body = await request.json();
 		const validatedData = ResetPasswordRequestSchema.parse(body);
-		const { classId, studentId, currentPassword, newPasswordSelf } = validatedData;
+		const { classId, studentId, currentPassword, newPassword } = validatedData;
 
 		const userUid = locals.user.uid;
 
 		// 情況1: 老師為學生重設密碼
-		if (classId && studentId) {
+		if (classId && studentId && newPassword) {
 			return await handleTeacherResetStudentPassword(userUid, classId, studentId);
 		}
 
 		// 情況2: 學生自己重設密碼
-		if (currentPassword && newPasswordSelf) {
-			return await handleStudentResetOwnPassword(userUid, currentPassword, newPasswordSelf);
+		if (currentPassword && newPassword) {
+			return await handleStudentResetOwnPassword(userUid, currentPassword, newPassword);
 		}
 
 		// 無效的請求參數
@@ -87,7 +84,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 async function handleTeacherResetStudentPassword(
 	teacherUid: string,
 	classId: string,
-	studentId: string
+	studentId: string,
+	newPassword: string = studentId
 ) {
 	// 1. 檢查班級是否存在且用戶是該班級的老師
 	const classRef = adminDb.collection('classes').doc(classId);
@@ -122,7 +120,7 @@ async function handleTeacherResetStudentPassword(
 
 		// 6. 更新學生密碼
 		await adminAuth.updateUser(userRecord.uid, {
-			password: studentId
+			password: newPassword
 		});
 
 		return json({
