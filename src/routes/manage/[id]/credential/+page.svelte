@@ -163,7 +163,7 @@
 	// Update group - call API with new group
 	async function updateGroup(studentId: string) {
 		if (!groupValue.trim() || !isValidGroup(groupValue)) {
-			notifications.error('Group must be a number greater than or equal to 1');
+			notifications.error(m.groupMustBeNumber());
 			return;
 		}
 
@@ -434,8 +434,6 @@
 
 			// If there are any validation errors or duplicates, reject the entire file
 			if (validationErrors.length > 0 || hasDuplicates) {
-				const errorMessage = `File import rejected due to data validation issues:\n${validationErrors.join('\n')}`;
-				notifications.error(errorMessage);
 				throw new Error('File contains duplicate or invalid data');
 			}
 
@@ -568,10 +566,9 @@
 				{#if student_list.length === 0}
 					<div class="flex flex-col items-center justify-center py-16">
 						<div class="text-center">
-							<h3 class="mb-2 text-lg font-medium text-gray-900">No Student List Available</h3>
+							<h3 class="mb-2 text-lg font-medium text-gray-900">{m.noStudentListAvailable()}</h3>
 							<p class="mb-4 text-gray-600">
-								Currently there are no students in this class. Please click the import button to
-								import student list.
+								{m.noStudentListDesc()}
 							</p>
 						</div>
 					</div>
@@ -600,7 +597,7 @@
 														<Input
 															type="text"
 															bind:value={groupValue}
-															placeholder="Enter group (1+)"
+															placeholder={m.enterGroup()}
 															class="w-20"
 															size="sm"
 														/>
@@ -608,7 +605,7 @@
 															<div
 																class="absolute left-0 top-full z-10 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-1 text-xs text-white shadow-lg"
 															>
-																Group must be 1 or higher
+																{m.groupMustBeHigher()}
 															</div>
 														{/if}
 													</div>
@@ -618,22 +615,24 @@
 														disabled={!groupValue.trim() || !isValidGroup(groupValue)}
 														onclick={() => updateGroup(s.studentId)}
 													>
-														Confirm
+														{m.classGroupEditConfirm()}
 													</Button>
-													<Button size="xs" outline onclick={cancelGroupEdit}>Cancel</Button>
+													<Button size="xs" outline onclick={cancelGroupEdit}
+														>{m.classGroupEditCancel()}</Button
+													>
 												</div>
 											{:else}
 												<div class="flex items-center space-x-2">
 													<Input
 														type="text"
 														value={s.group || ''}
-														placeholder="No group"
+														placeholder={m.noGroup()}
 														class="w-20"
 														size="sm"
 														disabled
 													/>
 													<Button size="xs" outline onclick={() => editGroup(s.studentId, s.group)}>
-														Edit
+														{m.editGroup()}
 													</Button>
 												</div>
 											{/if}
@@ -646,7 +645,7 @@
 															<Input
 																type={showPassword ? 'text' : 'password'}
 																bind:value={resetPasswordValue}
-																placeholder="Enter new password"
+																placeholder={m.enterNewPassword()}
 																class="pr-10"
 																size="sm"
 															/>
@@ -665,7 +664,7 @@
 																<div
 																	class="absolute left-0 top-full z-10 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-1 text-xs text-white shadow-lg"
 																>
-																	The password length must be up 6
+																	{m.passwordLengthMinSix()}
 																</div>
 															{/if}
 														</div>
@@ -707,7 +706,7 @@
 							onclick={prevPage}
 							disabled={currentPage === 1}>{m.studentListPreviousPage()}</button
 						>
-						<span>Page {currentPage} of {totalPages}</span>
+						<span>{m.page({ current: currentPage, total: totalPages })}</span>
 						<button
 							class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
 							onclick={nextPage}
