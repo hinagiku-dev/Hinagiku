@@ -86,10 +86,10 @@
 		<div class="mt-auto w-full">
 			<div class="mb-4 flex items-center gap-4">
 				<span class="text-sm text-gray-500">
-					{subtaskSize} subtasks
+					{m.subtasksNumber({ count: subtaskSize })}
 				</span>
 				<span class="text-sm text-gray-500">
-					{resourceSize} resources
+					{m.resourcesNumber({ count: resourceSize })}
 				</span>
 			</div>
 			<div class="flex gap-2">

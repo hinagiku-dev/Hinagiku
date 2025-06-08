@@ -522,17 +522,7 @@
 	<div class="mb-8 space-y-6">
 		<!-- Labels and Title Section -->
 		<div class="rounded-lg border p-6 {UI_CLASSES.PANEL_BG}">
-			{#if $session?.status === 'preparing'}
-				<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
-			{:else if $session?.labels?.length}
-				<div class="flex items-center gap-2">
-					{#each $session.labels as label}
-						<span class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
-							{label}
-						</span>
-					{/each}
-				</div>
-			{/if}
+			<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
 			<div class="mt-4 flex items-center justify-between">
 				<h1 class="text-3xl font-bold">
 					{$session?.title}

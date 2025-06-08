@@ -28,7 +28,7 @@
 	let backgroundPreview: string | null = null; // Permanent URL from Cloud Storage
 	let localPreviewUrl: string | null = null; // Temporary blob URL for local preview
 	let showClassSelectionModal = false;
-	let classes: { id: string; className: string }[] = [];
+	let classes: { id: string; className: string; schoolName: string; academicYear: string }[] = [];
 	let loadingClasses = false;
 	let selectedClassId: string | null = null;
 
@@ -191,7 +191,9 @@
 				if (!snapshot.empty) {
 					classes = snapshot.docs.map((doc) => ({
 						id: doc.id,
-						className: doc.data().className
+						className: doc.data().className,
+						schoolName: doc.data().schoolName,
+						academicYear: doc.data().academicYear
 					}));
 				}
 			}
@@ -490,7 +492,7 @@
 				>
 					<option value="">{m.startWithoutClass()}</option>
 					{#each classes as cls}
-						<option value={cls.id}>{cls.className}</option>
+						<option value={cls.id}>{cls.className} - {cls.schoolName}({cls.academicYear})</option>
 					{/each}
 				</select>
 			</div>
