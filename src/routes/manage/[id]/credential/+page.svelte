@@ -304,46 +304,91 @@
 			// Extract student data directly from parsed rows and validate with StudentSchema
 			const newStudentList: Student[] = [];
 			const validationErrors: string[] = [];
+			const seenStudentIds = new Set<string>();
+			const seenSeatNumbers = new Set<string>();
+			let hasDuplicates = false;
 
+			// First pass: Check for duplicates and required fields
+			for (let idx = 0; idx < rows.length; idx++) {
+				const row = rows[idx];
+
+				// Check if all required fields have data
+				const displayName = String(row[requiredFields[0].index] || '').trim();
+				const studentIdValue = String(row[requiredFields[2].index] || '').trim();
+				const seatNumberValue = String(row[requiredFields[1].index] || '').trim();
+				const groupValue = String(row[requiredFields[3].index] || '').trim();
+
+				// Validate required fields are not empty
+				if (!displayName || !studentIdValue || !seatNumberValue || !groupValue) {
+					validationErrors.push(
+						`Row ${idx + 2}: All fields (name, student ID, seat number, group) are required and cannot be empty`
+					);
+					continue;
+				}
+
+				// Check if student ID length is >= 6
+				if (studentIdValue.length < 6) {
+					validationErrors.push(
+						`Row ${idx + 2}: Student ID "${studentIdValue}" ${m.classImportStudentsIDLength()}`
+					);
+					continue;
+				}
+
+				// Check for duplicate student ID
+				if (seenStudentIds.has(studentIdValue)) {
+					validationErrors.push(`Duplicate student ID "${studentIdValue}" found at row ${idx + 2}`);
+					hasDuplicates = true;
+				} else {
+					seenStudentIds.add(studentIdValue);
+				}
+
+				// Check for duplicate seat number
+				if (seenSeatNumbers.has(seatNumberValue)) {
+					validationErrors.push(
+						`Duplicate seat number "${seatNumberValue}" found at row ${idx + 2}`
+					);
+					hasDuplicates = true;
+				} else {
+					seenSeatNumbers.add(seatNumberValue);
+				}
+			}
+
+			// If there are any validation errors or duplicates, reject the entire file
+			if (validationErrors.length > 0 || hasDuplicates) {
+				const errorMessage = `File import rejected due to data validation issues:\n${validationErrors.join('\n')}`;
+				notifications.error(errorMessage);
+				throw new Error('File contains duplicate or invalid data');
+			}
+
+			// Second pass: Process valid data only if no duplicates found
 			for (let idx = 0; idx < rows.length; idx++) {
 				const row = rows[idx];
 				try {
-					// Get student ID and validate length
+					const displayName = String(row[requiredFields[0].index] || '').trim();
 					const studentIdValue = String(row[requiredFields[2].index] || '').trim();
-
-					// Check if student ID length is >= 6
-					if (studentIdValue.length < 6) {
-						validationErrors.push(`${studentIdValue}" ${m.classImportStudentsIDLength()}`);
-						continue;
-					}
+					const seatNumberValue = String(row[requiredFields[1].index] || '').trim();
+					const groupValue = String(row[requiredFields[3].index] || '').trim();
 
 					// Create a student object according to schema
 					const studentData = {
-						displayName: String(row[requiredFields[0].index] || '').trim(),
+						displayName: displayName,
 						studentId: studentIdValue,
-						seatNumber: String(row[requiredFields[1].index] || '').trim() || null,
-						group: String(row[requiredFields[3].index] || '').trim() || null
+						seatNumber: seatNumberValue,
+						group: groupValue
 					};
 
 					// Validate with Zod schema
 					const validatedStudent = StudentSchema.parse(studentData);
 
-					// Add directly to the list without custom id
+					// Add directly to the list
 					newStudentList.push(validatedStudent);
 				} catch (validationError) {
 					console.error(`Row ${idx + 2} validation failed:`, validationError);
-					validationErrors.push(`${idx + 2} ${m.classImportDataformatErrorbyRow()}`);
-					// Continue with next row
+					// This shouldn't happen if first pass worked correctly
 				}
 			}
 
-			// Show validation errors if any
-			if (validationErrors.length > 0) {
-				const errorMessage = `${m.classImportDataformatError()} \n${validationErrors.join('\n')}`;
-				notifications.error(errorMessage);
-			}
-
-			// Update student list immediately without waiting for server
+			// Update student list only if all validations passed
 			if (newStudentList.length > 0) {
 				student_list = newStudentList;
 				totalPages = Math.ceil(student_list.length / pageSize);

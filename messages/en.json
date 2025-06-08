@@ -362,7 +362,7 @@
 	"studentListID": "Student ID",
 	"studentListGroup": "Group No.",
 	"studentListAction": "Actions",
-	"studentListResetPassword": "Reset Password (6 chars up)",
+	"studentListResetPassword": "Reset Password",
 	"studentListPreviousPage": "Previous",
 	"studentListNextPage": "Next",
 	"qrcodeClassAccess": "QR Code for Class Access",
