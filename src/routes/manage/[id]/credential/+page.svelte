@@ -154,10 +154,16 @@
 		groupValue = '';
 	}
 
+	// Validate group value - must be a number >= 1
+	function isValidGroup(value: string): boolean {
+		const num = parseInt(value.trim());
+		return !isNaN(num) && num >= 1;
+	}
+
 	// Update group - call API with new group
 	async function updateGroup(studentId: string) {
-		if (!groupValue.trim()) {
-			notifications.error('Group cannot be empty');
+		if (!groupValue.trim() || !isValidGroup(groupValue)) {
+			notifications.error('Group must be a number greater than or equal to 1');
 			return;
 		}
 
@@ -178,8 +184,13 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					classId: classId,
-					studentId: studentUid, // Use UID instead of student ID
-					newGroup: groupValue.trim()
+					studentId: studentUid,
+					groupsData: student_list.map((student) => ({
+						displayName: student.displayName,
+						studentId: student.studentId,
+						seatNumber: student.seatNumber,
+						group: student.studentId === studentId ? groupValue.trim() : student.group
+					}))
 				})
 			});
 
@@ -585,17 +596,26 @@
 										<td class="px-6 py-4">
 											{#if editingGroupId === s.studentId}
 												<div class="flex items-center space-x-2">
-													<Input
-														type="text"
-														bind:value={groupValue}
-														placeholder="Enter group"
-														class="w-20"
-														size="sm"
-													/>
+													<div class="relative">
+														<Input
+															type="text"
+															bind:value={groupValue}
+															placeholder="Enter group (1+)"
+															class="w-20"
+															size="sm"
+														/>
+														{#if groupValue.trim() && !isValidGroup(groupValue)}
+															<div
+																class="absolute left-0 top-full z-10 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-1 text-xs text-white shadow-lg"
+															>
+																Group must be 1 or higher
+															</div>
+														{/if}
+													</div>
 													<Button
 														size="xs"
 														color="blue"
-														disabled={!groupValue.trim()}
+														disabled={!groupValue.trim() || !isValidGroup(groupValue)}
 														onclick={() => updateGroup(s.studentId)}
 													>
 														Confirm
@@ -603,12 +623,19 @@
 													<Button size="xs" outline onclick={cancelGroupEdit}>Cancel</Button>
 												</div>
 											{:else}
-												<button
-													class="hover:text-blue-600 hover:underline"
-													onclick={() => editGroup(s.studentId, s.group)}
-												>
-													{s.group || 'N/A'}
-												</button>
+												<div class="flex items-center space-x-2">
+													<Input
+														type="text"
+														value={s.group || ''}
+														placeholder="No group"
+														class="w-20"
+														size="sm"
+														disabled
+													/>
+													<Button size="xs" outline onclick={() => editGroup(s.studentId, s.group)}>
+														Edit
+													</Button>
+												</div>
 											{/if}
 										</td>
 										<td class="px-6 py-4">
