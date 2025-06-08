@@ -538,10 +538,18 @@
 																	<Eye class="h-4 w-4 text-gray-400" />
 																{/if}
 															</button>
+															{#if resetPasswordValue.trim().length > 0 && resetPasswordValue.trim().length < 6}
+																<div
+																	class="absolute left-0 top-full z-10 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-1 text-xs text-white shadow-lg"
+																>
+																	The password length must be up 6
+																</div>
+															{/if}
 														</div>
 														<Button
 															size="xs"
 															color="red"
+															disabled={resetPasswordValue.trim().length < 6}
 															on:click={() => resetPassword(s.studentId)}
 														>
 															{m.classResetPasswordConfirm()}
