@@ -485,88 +485,105 @@
 				<div class="border-b border-gray-200 p-5">
 					<h2 class="text-xl font-semibold">{m.studentList()}</h2>
 				</div>
-				<div class="overflow-x-auto">
-					<table class="w-full text-left text-sm text-gray-500">
-						<thead class="bg-gray-50 text-xs uppercase text-gray-700">
-							<tr>
-								<th class="px-6 py-3">{m.studentListName()}</th>
-								<th class="px-6 py-3">{m.studentListSeat()}</th>
-								<th class="px-6 py-3">{m.studentListID()}</th>
-								<th class="px-6 py-3">{m.studentListGroup()}</th>
-								<th class="px-6 py-3">{m.studentListAction()}</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each paginated as s, i}
-								<tr class={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-									<td class="px-6 py-4">{s.displayName}</td>
-									<td class="px-6 py-4">{s.seatNumber}</td>
-									<td class="px-6 py-4">{s.studentId}</td>
-									<td class="px-6 py-4">{s.group}</td>
-									<td class="px-6 py-4">
-										{#if confirmingResetId === s.studentId}
-											<div class="flex flex-col space-y-2">
-												<div class="flex items-center space-x-2">
-													<div class="relative w-32">
-														<Input
-															type={showPassword ? 'text' : 'password'}
-															bind:value={resetPasswordValue}
-															placeholder="Enter new password"
-															class="pr-10"
-															size="sm"
-														/>
-														<button
-															type="button"
-															class="absolute inset-y-0 right-0 flex items-center pr-3"
-															onclick={togglePasswordVisibility}
-														>
-															{#if showPassword}
-																<EyeOff class="h-4 w-4 text-gray-400" />
-															{:else}
-																<Eye class="h-4 w-4 text-gray-400" />
-															{/if}
-														</button>
-													</div>
-													<Button size="xs" color="red" on:click={() => resetPassword(s.studentId)}>
-														{m.classResetPasswordConfirm()}
-													</Button>
-													<Button size="xs" outline on:click={cancelReset}>
-														{m.classResetPasswordCancel()}
-													</Button>
-												</div>
-											</div>
-										{:else}
-											<Button
-												size="xs"
-												outline
-												class="w-auto"
-												on:click={() => confirmReset(s.studentId)}
-											>
-												<RefreshCw class="mr-1 h-4 w-4" />
-												{m.studentListResetPassword()}
-											</Button>
-										{/if}
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
 
-				<!-- Pagination -->
-				<div class="mt-4 flex items-center justify-center space-x-4">
-					<button
-						class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
-						onclick={prevPage}
-						disabled={currentPage === 1}>{m.studentListPreviousPage()}</button
-					>
-					<span>Page {currentPage} of {totalPages}</span>
-					<button
-						class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
-						onclick={nextPage}
-						disabled={currentPage === totalPages}>{m.studentListNextPage()}</button
-					>
-				</div>
+				{#if student_list.length === 0}
+					<div class="flex flex-col items-center justify-center py-16">
+						<div class="text-center">
+							<h3 class="mb-2 text-lg font-medium text-gray-900">No Student List Available</h3>
+							<p class="mb-4 text-gray-600">
+								Currently there are no students in this class. Please click the import button to
+								import student list.
+							</p>
+						</div>
+					</div>
+				{:else}
+					<div class="overflow-x-auto">
+						<table class="w-full text-left text-sm text-gray-500">
+							<thead class="bg-gray-50 text-xs uppercase text-gray-700">
+								<tr>
+									<th class="px-6 py-3">{m.studentListName()}</th>
+									<th class="px-6 py-3">{m.studentListSeat()}</th>
+									<th class="px-6 py-3">{m.studentListID()}</th>
+									<th class="px-6 py-3">{m.studentListGroup()}</th>
+									<th class="px-6 py-3">{m.studentListAction()}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each paginated as s, i}
+									<tr class={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+										<td class="px-6 py-4">{s.displayName}</td>
+										<td class="px-6 py-4">{s.seatNumber}</td>
+										<td class="px-6 py-4">{s.studentId}</td>
+										<td class="px-6 py-4">{s.group}</td>
+										<td class="px-6 py-4">
+											{#if confirmingResetId === s.studentId}
+												<div class="flex flex-col space-y-2">
+													<div class="flex items-center space-x-2">
+														<div class="relative w-32">
+															<Input
+																type={showPassword ? 'text' : 'password'}
+																bind:value={resetPasswordValue}
+																placeholder="Enter new password"
+																class="pr-10"
+																size="sm"
+															/>
+															<button
+																type="button"
+																class="absolute inset-y-0 right-0 flex items-center pr-3"
+																onclick={togglePasswordVisibility}
+															>
+																{#if showPassword}
+																	<EyeOff class="h-4 w-4 text-gray-400" />
+																{:else}
+																	<Eye class="h-4 w-4 text-gray-400" />
+																{/if}
+															</button>
+														</div>
+														<Button
+															size="xs"
+															color="red"
+															on:click={() => resetPassword(s.studentId)}
+														>
+															{m.classResetPasswordConfirm()}
+														</Button>
+														<Button size="xs" outline on:click={cancelReset}>
+															{m.classResetPasswordCancel()}
+														</Button>
+													</div>
+												</div>
+											{:else}
+												<Button
+													size="xs"
+													outline
+													class="w-auto"
+													on:click={() => confirmReset(s.studentId)}
+												>
+													<RefreshCw class="mr-1 h-4 w-4" />
+													{m.studentListResetPassword()}
+												</Button>
+											{/if}
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+
+					<!-- Pagination -->
+					<div class="mt-4 flex items-center justify-center space-x-4">
+						<button
+							class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
+							onclick={prevPage}
+							disabled={currentPage === 1}>{m.studentListPreviousPage()}</button
+						>
+						<span>Page {currentPage} of {totalPages}</span>
+						<button
+							class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
+							onclick={nextPage}
+							disabled={currentPage === totalPages}>{m.studentListNextPage()}</button
+						>
+					</div>
+				{/if}
 			</section>
 		</div>
 	</div>
