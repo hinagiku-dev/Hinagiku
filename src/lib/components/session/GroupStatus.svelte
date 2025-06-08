@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { Timestamp } from 'firebase/firestore';
+	import * as m from '$lib/paraglide/messages.js';
 
 	let { group, showStatus = false } = $props<{
 		group: {
@@ -17,8 +18,9 @@
 		if (group.status === 'discussion') {
 			if (group.updatedAt) {
 				const diffInSeconds = Math.floor((Date.now() - group.updatedAt.toMillis()) / 1000);
-				if (diffInSeconds > 20) {
-					return `idle ${diffInSeconds} seconds`;
+				if (diffInSeconds > 60) {
+					//update idle status to 60 seconds to fix client's demand
+					return m.statusIdle({ seconds: diffInSeconds });
 				}
 			}
 			return 'discussion';
