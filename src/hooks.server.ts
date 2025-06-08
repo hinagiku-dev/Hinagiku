@@ -13,6 +13,17 @@ const authHandle: Handle = async ({ event, resolve }) => {
 		try {
 			// Verify the session cookie and get the user's ID token
 			const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+			if (decodedClaims.requiresPasswordChange) {
+				if (
+					!event.url.pathname.startsWith('/api') ||
+					!event.url.pathname.startsWith('/profile/change-password') ||
+					!event.url.pathname.startsWith('/en/profile/change-password') ||
+					!event.url.pathname.startsWith('/zh/profile/change-password')
+				) {
+					return Response.redirect('/profile/change-password', 302);
+				}
+			}
+
 			event.locals.user = decodedClaims;
 		} catch (error) {
 			console.log(error);

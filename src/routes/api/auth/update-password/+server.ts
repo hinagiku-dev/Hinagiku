@@ -122,6 +122,10 @@ async function handleTeacherResetStudentPassword(
 		await adminAuth.updateUser(userRecord.uid, {
 			password: newPassword
 		});
+		// 強制學生登入時更改密碼
+		await adminAuth.setCustomUserClaims(userRecord.uid, {
+			requiresPasswordChange: true
+		});
 
 		return json({
 			success: true,
@@ -168,6 +172,10 @@ async function handleStudentResetOwnPassword(
 		// 3. 更新密碼
 		await adminAuth.updateUser(userUid, {
 			password: newPassword
+		});
+
+		await adminAuth.setCustomUserClaims(userUid, {
+			requiresPasswordChange: false
 		});
 
 		return json({
