@@ -362,7 +362,7 @@
 	"studentListID": "Student ID",
 	"studentListGroup": "Group No.",
 	"studentListAction": "Actions",
-	"studentListResetPassword": "Reset Password",
+	"studentListResetPassword": "Reset Password (6 chars up)",
 	"studentListPreviousPage": "Previous",
 	"studentListNextPage": "Next",
 	"qrcodeClassAccess": "QR Code for Class Access",
@@ -430,7 +430,6 @@
 	"classImportServerErrorDataShown": "Server error during import but Data is shown below.",
 	"classStudentFormatErrorInclude": "File format error: the file must include the following columns: Name, Seat No., Student ID, Group No.",
 	"backToManagementDashboard": "Back to Management Dashboard",
-	"classAsktoResetPassword": "Reset Password?",
 	"classResetPasswordConfirm": "Yes",
 	"classResetPasswordCancel": "No"
 }
