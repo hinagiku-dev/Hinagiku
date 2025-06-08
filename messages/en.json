@@ -442,8 +442,10 @@
 	"noGroup": "No group",
 	"editGroup": "Edit",
 	"enterNewPassword": "Enter new password",
-	"passwordLengthMinSix": "The password length must be at least 6 characters",
+	"passwordLengthMinSix": "At least 6 characters",
 	"page": "Page {current} of {total}",
 	"classGroupEditConfirm": "Yes",
-	"classGroupEditCancel": "No"
+	"classGroupEditCancel": "No",
+	"classUpdateGroupSuccess": "group updated successfully",
+	"classUpdateGroupFailed": "failed to update group"
 }

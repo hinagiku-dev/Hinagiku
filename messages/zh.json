@@ -447,5 +447,7 @@
 	"passwordLengthMinSix": "密碼長度必須至少 6 個字元",
 	"page": "第 {current} 頁，共 {total} 頁",
 	"classGroupEditConfirm": "確定",
-	"classGroupEditCancel": "取消"
+	"classGroupEditCancel": "取消",
+	"classUpdateGroupSuccess": "組別更新成功",
+	"classUpdateGroupFailed": "組別更新失敗"
 }

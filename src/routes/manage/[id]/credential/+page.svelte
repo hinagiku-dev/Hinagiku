@@ -203,11 +203,11 @@
 					student.studentId === studentId ? { ...student, group: groupValue.trim() } : student
 				);
 
-				notifications.success(`${studentId} group updated successfully`);
+				notifications.success(`${studentId} ${m.classUpdateGroupSuccess()}`);
 			} else {
 				const errorData = await res.json();
 				console.error('Update group error:', errorData);
-				notifications.error(`Failed to update group for ${studentId}`);
+				notifications.error(`${studentId} ${m.classUpdateGroupFailed()}`);
 			}
 		} catch (e) {
 			console.error(e);
@@ -490,6 +490,8 @@
 					const data = await res.json();
 					if (data.success) {
 						notifications.success(m.classImportSuccess());
+						// Reload class data to update the students array with new UIDs
+						await loadData();
 					} else {
 						notifications.error(m.classImportFailed());
 					}
