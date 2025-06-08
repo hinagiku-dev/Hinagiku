@@ -29,10 +29,6 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		);
 	}
 
-	if (!sessionDoc.exists) {
-		throw error(404, 'Session not found');
-	}
-
 	return {
 		user: locals.user
 	};
