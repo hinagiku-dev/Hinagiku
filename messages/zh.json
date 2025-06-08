@@ -360,7 +360,7 @@
 	"studentListID": "學號",
 	"studentListGroup": "組別",
 	"studentListAction": "操作",
-	"studentListResetPassword": "重設密碼",
+	"studentListResetPassword": "重設密碼(6碼以上)",
 	"studentListPreviousPage": "上一頁",
 	"studentListNextPage": "下一頁",
 	"qrcodeClassAccess": "班級 QR Code 登入",
