@@ -27,7 +27,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// 情況1: 老師為學生重設密碼
 		if (classId && studentId && newPassword) {
-			return await handleTeacherResetStudentPassword(userUid, classId, studentId);
+			return await handleTeacherResetStudentPassword(userUid, classId, studentId, newPassword);
 		}
 
 		// 情況2: 學生自己重設密碼
