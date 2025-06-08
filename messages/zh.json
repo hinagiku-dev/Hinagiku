@@ -433,5 +433,22 @@
 	"classStudentFormatErrorInclude": "檔案欄位格式不正確，請確認標題包含「姓名、座號、學號、組別」或相應英文字段",
 	"backToManagementDashboard": "返回管理頁面",
 	"classResetPasswordConfirm": "確定",
-	"classResetPasswordCancel": "取消"
+	"classResetPasswordCancel": "取消",
+	"changePassword": "更改密碼",
+	"passwordsDoNotMatch": "密碼不相符",
+	"passwordTooShort": "密碼長度至少需6位",
+	"passwordChangedSuccessfully": "密碼更改成功！",
+	"currentPasswordIncorrect": "目前密碼不正確",
+	"tooManyRequestsError": "請求次數過多，請稍後再試。",
+	"changePasswordError": "更改密碼時發生錯誤，請再試一次。",
+	"cannotChangePasswordForProvider": "無法為此登入提供者更改密碼。",
+	"userNotLoggedInError": "使用者未登入。",
+	"currentPassword": "目前密碼",
+	"newPassword": "新密碼",
+	"confirmNewPassword": "確認新密碼",
+	"changePasswordButton": "更改密碼",
+	"cannotChangePasswordForProviderMessage": "您通過外部服務提供商登錄。請直接訪問提供商的平台來管理您的帳戶設置。",
+	"loggedInWithProvider": "登入方式：{provider}",
+	"backToProfile": "返回個人資料頁面",
+	"pleaseLoginToChangePassword": "請登入以更改密碼。"
 }

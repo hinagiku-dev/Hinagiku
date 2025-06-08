@@ -431,5 +431,22 @@
 	"classStudentFormatErrorInclude": "File format error: the file must include the following columns: Name, Seat No., Student ID, Group No.",
 	"backToManagementDashboard": "Back to Management Dashboard",
 	"classResetPasswordConfirm": "Yes",
-	"classResetPasswordCancel": "No"
+	"classResetPasswordCancel": "No",
+	"changePassword": "Change Password",
+	"passwordsDoNotMatch": "Passwords do not match",
+	"passwordTooShort": "Password must be at least 6 characters long",
+	"passwordChangedSuccessfully": "Password changed successfully!",
+	"currentPasswordIncorrect": "Current password incorrect",
+	"tooManyRequestsError": "Too many requests. Please try again later.",
+	"changePasswordError": "Error changing password. Please try again.",
+	"cannotChangePasswordForProvider": "Password cannot be changed for this login provider.",
+	"userNotLoggedInError": "User not logged in.",
+	"currentPassword": "Current Password",
+	"newPassword": "New Password",
+	"confirmNewPassword": "Confirm New Password",
+	"changePasswordButton": "Change Password",
+	"cannotChangePasswordForProviderMessage": "You are logged in through an external service provider. Please visit the provider's platform directly to manage your account settings.",
+	"loggedInWithProvider": "Logged in with: {provider}",
+	"backToProfile": "Back to Profile",
+	"pleaseLoginToChangePassword": "Please log in to change your password."
 }
