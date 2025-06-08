@@ -431,5 +431,7 @@
 	"classStudentFormatErrorInclude": "File format error: the file must include the following columns: Name, Seat No., Student ID, Group No.",
 	"backToManagementDashboard": "Back to Management Dashboard",
 	"classResetPasswordConfirm": "Yes",
-	"classResetPasswordCancel": "No"
+	"classResetPasswordCancel": "No",
+	"resourcesNumber": "{count} resources",
+	"subtasksNumber": "{count} subtasks"
 }
