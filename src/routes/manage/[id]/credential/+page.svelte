@@ -123,6 +123,10 @@
 	let resetPasswordValue = $state<string>('');
 	let showPassword = $state<boolean>(false);
 
+	// Group editing state - track confirmation and group input
+	let editingGroupId = $state<string | null>(null);
+	let groupValue = $state<string>('');
+
 	function confirmReset(studentId: string) {
 		confirmingResetId = studentId;
 		resetPasswordValue = studentId; // Default to student ID
@@ -137,6 +141,70 @@
 
 	function togglePasswordVisibility() {
 		showPassword = !showPassword;
+	}
+
+	// Group editing functions
+	function editGroup(studentId: string, currentGroup: string | null) {
+		editingGroupId = studentId;
+		groupValue = currentGroup || '';
+	}
+
+	function cancelGroupEdit() {
+		editingGroupId = null;
+		groupValue = '';
+	}
+
+	// Update group - call API with new group
+	async function updateGroup(studentId: string) {
+		if (!groupValue.trim()) {
+			notifications.error('Group cannot be empty');
+			return;
+		}
+
+		// Find the student's UID from the students array
+		const studentUid = students.find((uid) => {
+			const student = student_list.find((s) => s.studentId === studentId);
+			return student && students.includes(uid);
+		});
+
+		if (!studentUid) {
+			notifications.error('Student UID not found');
+			return;
+		}
+
+		try {
+			const res = await fetch('/api/auth/update-group', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					classId: classId,
+					studentId: studentUid, // Use UID instead of student ID
+					newGroup: groupValue.trim()
+				})
+			});
+
+			if (res.ok) {
+				const data = await res.json();
+				console.log('Update group response:', data);
+
+				// Update the local student list
+				student_list = student_list.map((student) =>
+					student.studentId === studentId ? { ...student, group: groupValue.trim() } : student
+				);
+
+				notifications.success(`${studentId} group updated successfully`);
+			} else {
+				const errorData = await res.json();
+				console.error('Update group error:', errorData);
+				notifications.error(`Failed to update group for ${studentId}`);
+			}
+		} catch (e) {
+			console.error(e);
+			notifications.error('Error updating group');
+		} finally {
+			editingGroupId = null;
+			groupValue = '';
+		}
 	}
 
 	// Reset password - call API with custom password
@@ -458,7 +526,7 @@
 			<!-- Left side: Credential Management -->
 			<aside class="w-full space-y-6 md:w-1/3">
 				<div class="flex flex-col space-y-4">
-					<Button color="primary" class="w-2/4" on:click={triggerFileImport}>
+					<Button color="primary" class="w-2/4" onclick={triggerFileImport}>
 						{m.importStudentListButton()}
 					</Button>
 					<input
@@ -514,7 +582,35 @@
 										<td class="px-6 py-4">{s.displayName}</td>
 										<td class="px-6 py-4">{s.seatNumber}</td>
 										<td class="px-6 py-4">{s.studentId}</td>
-										<td class="px-6 py-4">{s.group}</td>
+										<td class="px-6 py-4">
+											{#if editingGroupId === s.studentId}
+												<div class="flex items-center space-x-2">
+													<Input
+														type="text"
+														bind:value={groupValue}
+														placeholder="Enter group"
+														class="w-20"
+														size="sm"
+													/>
+													<Button
+														size="xs"
+														color="blue"
+														disabled={!groupValue.trim()}
+														onclick={() => updateGroup(s.studentId)}
+													>
+														Confirm
+													</Button>
+													<Button size="xs" outline onclick={cancelGroupEdit}>Cancel</Button>
+												</div>
+											{:else}
+												<button
+													class="hover:text-blue-600 hover:underline"
+													onclick={() => editGroup(s.studentId, s.group)}
+												>
+													{s.group || 'N/A'}
+												</button>
+											{/if}
+										</td>
 										<td class="px-6 py-4">
 											{#if confirmingResetId === s.studentId}
 												<div class="flex flex-col space-y-2">
@@ -550,11 +646,11 @@
 															size="xs"
 															color="red"
 															disabled={resetPasswordValue.trim().length < 6}
-															on:click={() => resetPassword(s.studentId)}
+															onclick={() => resetPassword(s.studentId)}
 														>
 															{m.classResetPasswordConfirm()}
 														</Button>
-														<Button size="xs" outline on:click={cancelReset}>
+														<Button size="xs" outline onclick={cancelReset}>
 															{m.classResetPasswordCancel()}
 														</Button>
 													</div>
@@ -564,7 +660,7 @@
 													size="xs"
 													outline
 													class="w-auto"
-													on:click={() => confirmReset(s.studentId)}
+													onclick={() => confirmReset(s.studentId)}
 												>
 													<RefreshCw class="mr-1 h-4 w-4" />
 													{m.studentListResetPassword()}
