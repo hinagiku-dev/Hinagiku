@@ -11,7 +11,7 @@ const ResetPasswordRequestSchema = z.object({
 	currentPassword: z.string().optional()
 });
 
-export const POST: RequestHandler = async ({ request, locals }) => {
+export const POST: RequestHandler = async ({ request, locals, cookies }) => {
 	// 檢查用戶是否已登入
 	if (!locals.user) {
 		throw error(401, '需要登入才能重設密碼');
@@ -32,7 +32,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// 情況2: 學生自己重設密碼
 		if (currentPassword && newPassword) {
-			return await handleStudentResetOwnPassword(userUid, currentPassword, newPassword);
+			const res = await handleStudentResetOwnPassword(userUid, currentPassword, newPassword);
+			cookies.delete('session', { path: '/' });
+			return res;
 		}
 
 		// 無效的請求參數

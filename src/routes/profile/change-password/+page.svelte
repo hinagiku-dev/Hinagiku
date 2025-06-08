@@ -5,12 +5,6 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { user } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
-	import {
-		getAuth,
-		EmailAuthProvider,
-		reauthenticateWithCredential,
-		updatePassword
-	} from 'firebase/auth';
 
 	let currentPassword = '';
 	let newPassword = '';
@@ -28,42 +22,46 @@
 		}
 
 		isLoading = true;
-		const auth = getAuth();
-		const currentUser = auth.currentUser;
 
-		if (currentUser && currentUser.email) {
-			const providerData = currentUser.providerData.find(
-				(p) => p.providerId === EmailAuthProvider.PROVIDER_ID
-			);
+		try {
+			const response = await fetch('/api/auth/update-password', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					currentPassword,
+					newPassword
+				})
+			});
 
-			if (providerData) {
-				// User signed in with email/password
-				const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
-				try {
-					await reauthenticateWithCredential(currentUser, credential);
-					await updatePassword(currentUser, newPassword);
-					notifications.success(m.passwordChangedSuccessfully());
-					currentPassword = '';
-					newPassword = '';
-					confirmNewPassword = '';
-					await goto('/');
-				} catch (error) {
-					console.error('Error changing password:', error);
-					const err = error as { code?: string };
-					if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-						notifications.error(m.currentPasswordIncorrect());
-					} else if (err.code === 'auth/too-many-requests') {
-						notifications.error(m.tooManyRequestsError());
-					} else {
-						notifications.error(m.changePasswordError());
-					}
-				}
+			const result = await response.json();
+
+			if (response.ok && result.success) {
+				notifications.success(m.passwordChangedSuccessfully());
+				currentPassword = '';
+				newPassword = '';
+				confirmNewPassword = '';
+				await goto('/');
 			} else {
-				notifications.info(m.cannotChangePasswordForProvider());
+				// Handle specific error messages from the API
+				if (response.status === 400 && result.error) {
+					if (result.error.includes('當前密碼不正確') || result.error.includes('原密碼不正確')) {
+						notifications.error(m.currentPasswordIncorrect());
+					} else if (result.error.includes('密碼強度不足')) {
+						notifications.error(m.passwordTooShort());
+					} else {
+						notifications.error(result.error);
+					}
+				} else {
+					notifications.error(m.changePasswordError());
+				}
 			}
-		} else {
-			notifications.error(m.userNotLoggedInError());
+		} catch (error) {
+			console.error('Error changing password:', error);
+			notifications.error(m.changePasswordError());
 		}
+
 		isLoading = false;
 	}
 </script>
@@ -72,11 +70,9 @@
 
 <div class="container mx-auto max-w-lg p-4">
 	<Card class="p-6">
-		{#if !$user || ($user.providerData && $user.providerData.find((p) => p.providerId === EmailAuthProvider.PROVIDER_ID))}
+		{#if $user}
 			<h1 class="mb-6 text-2xl font-semibold">{m.changePassword()}</h1>
-		{/if}
 
-		{#if $user && $user.providerData.find((p) => p.providerId === EmailAuthProvider.PROVIDER_ID)}
 			<form on:submit|preventDefault={handleChangePassword} class="space-y-6">
 				<div>
 					<Label for="currentPassword" class="mb-2 block">{m.currentPassword()}</Label>
@@ -122,14 +118,6 @@
 					{m.changePasswordButton()}
 				</Button>
 			</form>
-		{:else if $user}
-			<p>{m.cannotChangePasswordForProviderMessage()}</p>
-			<p class="mt-2">
-				{m.loggedInWithProvider({
-					provider: $user.providerData[0]?.providerId.replace('.com', '') || 'Unknown'
-				})}
-			</p>
-			<Button href="/profile" class="mt-6 w-full">{m.backToProfile()}</Button>
 		{:else}
 			<p>{m.pleaseLoginToChangePassword()}</p>
 			<Button href="/login" class="mt-6 w-full">{m.login()}</Button>

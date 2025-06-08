@@ -1,6 +1,6 @@
 import { i18n } from '$lib/i18n';
 import { adminAuth } from '$lib/server/firebase';
-import type { Handle } from '@sveltejs/kit';
+import { type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
 const authHandle: Handle = async ({ event, resolve }) => {
@@ -31,7 +31,15 @@ const authHandle: Handle = async ({ event, resolve }) => {
 			console.log(error);
 			// Session cookie is invalid/expired
 			event.locals.user = null;
+			// see https://github.com/sveltejs/kit/discussions/7869
 			event.cookies.delete('session', { path: '/' });
+			return new Response(null, {
+				status: 300,
+				headers: {
+					location: `${event.url.origin}/login`,
+					'set-cookie': `session=; Path=/; Expires=${new Date(0)}`
+				}
+			});
 		}
 	}
 
