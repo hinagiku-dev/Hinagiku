@@ -20,7 +20,9 @@ const authHandle: Handle = async ({ event, resolve }) => {
 					!event.url.pathname.startsWith('/en/profile/change-password') &&
 					!event.url.pathname.startsWith('/zh/profile/change-password')
 				) {
-					return Response.redirect('/profile/change-password', 302);
+					const url = new URL(event.url);
+					url.pathname = '/profile/change-password';
+					return Response.redirect(url, 302);
 				}
 			}
 
