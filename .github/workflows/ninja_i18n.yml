@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1 # Fetch only the latest commit; adjust as needed
+
       - name: Run Ninja i18n
         # @main ensures that the latest version of the action is used
         uses: opral/ninja-i18n-action@main
