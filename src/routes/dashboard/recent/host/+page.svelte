@@ -158,7 +158,7 @@
 								<input
 									type="checkbox"
 									class="absolute right-3 top-3 z-10"
-									checked={$selectedSession.includes([doc.id, session.active_status])}
+									checked={$selectedSession.some(([id, status]) => id === doc.id && status === session.active_status)}
 									onchange={(e) =>
 										toggleSessionSelection(doc.id, e.currentTarget.checked, session.active_status)}
 								/>
