@@ -322,6 +322,7 @@
 	"labelAddFailed": "新增標籤失敗",
 	"labelRemoved": "標籤移除成功",
 	"labelRemoveFailed": "移除標籤失敗",
+	"labelLengthLimit": "標籤長度不能超過 {limit} 個字元",
 	"tag": "標籤",
 	"tags": "標籤",
 	"saveTemplateSuccess": "模板保存成功",

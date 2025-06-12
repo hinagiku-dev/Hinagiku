@@ -3,6 +3,7 @@
 	import { Plus, X } from 'lucide-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { onMount } from 'svelte';
+	import * as m from '$lib/paraglide/messages.js';
 
 	let { sessionId, labels } = $props<{
 		sessionId: string;
@@ -30,7 +31,7 @@
 		if (!newLabel.trim()) return;
 
 		if (newLabel.length > MAX_LABEL_LENGTH) {
-			notifications.error(`Label must be ${MAX_LABEL_LENGTH} characters or less`);
+			notifications.error(m.labelLengthLimit({ limit: MAX_LABEL_LENGTH }));
 			return;
 		}
 
@@ -49,9 +50,9 @@
 			labels = updatedLabels;
 			newLabel = '';
 			showInput = false;
-			notifications.success('Label added successfully');
+			notifications.success(m.labelAdded());
 		} catch {
-			notifications.error('Failed to add labels');
+			notifications.error(m.labelAddFailed());
 		}
 	}
 
@@ -59,7 +60,7 @@
 		const input = event.target as HTMLInputElement;
 		if (input.value.length > MAX_LABEL_LENGTH) {
 			input.value = input.value.slice(0, MAX_LABEL_LENGTH);
-			notifications.warning(`Label cannot exceed ${MAX_LABEL_LENGTH} characters`);
+			notifications.warning(m.labelLengthLimit({ limit: MAX_LABEL_LENGTH }));
 		}
 		newLabel = input.value;
 	}
@@ -78,9 +79,9 @@
 			if (!response.ok) throw new Error('Failed to update labels');
 
 			labels = updatedLabels;
-			notifications.success('Label removed successfully');
+			notifications.success(m.labelRemoved());
 		} catch {
-			notifications.error('Failed to remove label');
+			notifications.error(m.labelRemoveFailed());
 		}
 	}
 </script>
@@ -122,5 +123,5 @@
 	>
 		<Plus class="h-4 w-4" />
 	</Button>
-	<Tooltip placement="right">Add label</Tooltip>
+	<Tooltip placement="right">{m.addLabel()}</Tooltip>
 </div>
