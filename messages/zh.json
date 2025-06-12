@@ -449,5 +449,16 @@
 	"classGroupEditConfirm": "確定",
 	"classGroupEditCancel": "取消",
 	"classUpdateGroupSuccess": "組別更新成功",
-	"classUpdateGroupFailed": "組別更新失敗"
+	"classUpdateGroupFailed": "組別更新失敗",
+	"editClassInformation": "編輯班級資訊",
+	"updateClassFailed": "更新班級失敗",
+	"updateClassSuccess": "班級更新成功",
+	"deleteClassFailed": "刪除班級失敗",
+	"deleteClassSuccess": "班級刪除成功",
+	"confirmDeleteClass": "確認刪除班級",
+	"confirmDeleteClassTitle": "您確定要刪除這個班級嗎？",
+	"confirmDeleteClassMessage": "您即將刪除班級",
+	"confirmDeleteClassWarning": "。此操作無法撤銷，所有相關的討論和學生資料將被永久刪除。",
+	"confirmDelete": "確認刪除",
+	"deleteClass": "刪除班級"
 }
