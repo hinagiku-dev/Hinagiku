@@ -102,7 +102,7 @@
 				on:input={handleInput}
 				size="sm"
 				class="h-8"
-				placeholder="New label"
+				placeholder={m.newLabel()}
 				on:keydown={(e) => e.key === 'Enter' && addLabel()}
 			/>
 		</div>
