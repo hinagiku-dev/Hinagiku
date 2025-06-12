@@ -374,6 +374,70 @@
 		}
 	}
 
+	async function archiveClass() {
+		if (!selectedClassId || !$user || !browser) return;
+
+		try {
+			isEditingClass = true;
+
+			const response = await fetch(`/api/class/${selectedClassId}/action/archive`, {
+				method: 'POST'
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || m.archiveClassFailed());
+			}
+
+			loadClasses();
+
+			// Reset selection
+			selectedClassId = null;
+			selectedClass = null;
+
+			cancelEditModal();
+			notifications.success(m.archiveClassSuccess());
+		} catch (error) {
+			console.error('Error archiving class:', error);
+			notifications.error(error instanceof Error ? error.message : m.archiveClassFailed());
+		} finally {
+			isEditingClass = false;
+		}
+	}
+
+	async function UnarchiveClass() {
+		if (!selectedClassId || !$user || !browser) return;
+
+		try {
+			isEditingClass = true;
+
+			const response = await fetch(`/api/class/${selectedClassId}/action/unarchive`, {
+				method: 'POST'
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || m.unarchiveClassFailed());
+			}
+
+			loadClasses();
+
+			// Reset selection
+			selectedClassId = null;
+			selectedClass = null;
+
+			cancelEditModal();
+			notifications.success(m.unarchiveClassSuccess());
+		} catch (error) {
+			console.error('Error archiving class:', error);
+			notifications.error(error instanceof Error ? error.message : m.unarchiveClassFailed());
+		} finally {
+			isEditingClass = false;
+		}
+	}
+
 	// Delete class
 	async function deleteClass() {
 		if (!selectedClassId || !$user || !browser) return;
@@ -456,10 +520,23 @@
 					>
 						<option value={null}>{m.selectClass()}</option>
 						{#each classes as classItem}
-							<option value={classItem.id}>
-								{classItem.data.className} - {classItem.data.schoolName} ({classItem.data
-									.academicYear})
-							</option>
+							{#if classItem.data.active_status === 'active'}
+								<option value={classItem.id}>
+									{classItem.data.className} - {classItem.data.schoolName} ({classItem.data
+										.academicYear})
+								</option>
+							{/if}
+						{/each}
+						<option disabled value={null} style="color: gray;">
+							--- {m.archived()} ---
+						</option>
+						{#each classes as classItem}
+							{#if classItem.data.active_status === 'archived'}
+								<option value={classItem.id} style="color: gray;">
+									{classItem.data.className} - {classItem.data.schoolName} ({classItem.data
+										.academicYear})
+								</option>
+							{/if}
 						{/each}
 					</Select>
 
@@ -917,15 +994,33 @@
 
 			<!-- Action Buttons -->
 			<div class="flex justify-between">
-				<Button
-					color="red"
-					outline
-					on:click={() => (showDeleteConfirm = true)}
-					disabled={isEditingClass}
-				>
-					<Trash2 class="mr-2 h-4 w-4" />
-					{m.deleteClass()}
-				</Button>
+				<div class="flex gap-2">
+					<Button
+						color="red"
+						outline
+						on:click={() => (showDeleteConfirm = true)}
+						disabled={isEditingClass}
+					>
+						<Trash2 class="h-4 w-4" />
+						{m.deleteClass()}
+					</Button>
+					{#if selectedClass?.active_status === 'active'}
+						<Button color="light" outline on:click={() => archiveClass()} disabled={isEditingClass}>
+							<Trash2 class="ml-0 h-4 w-4" />
+							{m.archiveClass()}
+						</Button>
+					{:else}
+						<Button
+							color="light"
+							outline
+							on:click={() => UnarchiveClass()}
+							disabled={isEditingClass}
+						>
+							<Trash2 class="ml-0 h-4 w-4" />
+							{m.unarchiveClass()}
+						</Button>
+					{/if}
+				</div>
 
 				<div class="flex gap-2">
 					<Button color="alternative" on:click={cancelEditModal} disabled={isEditingClass}>

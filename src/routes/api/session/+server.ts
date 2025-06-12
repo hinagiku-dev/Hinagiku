@@ -33,6 +33,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			subtasks: templateData.subtasks,
 			backgroundImage: templateData.backgroundImage || null,
 			createdAt: Timestamp.now(),
+			active_status: 'active',
 			status: 'preparing',
 			labels: [],
 			waitlist: [],

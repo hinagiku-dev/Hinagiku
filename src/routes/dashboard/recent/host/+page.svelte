@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import { Card, Button } from 'flowbite-svelte';
+	import { Card, Button, Modal } from 'flowbite-svelte';
 	import { MessageSquarePlus } from 'lucide-svelte';
 	import { collection, orderBy, query, where, Timestamp, limit } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
@@ -10,6 +10,7 @@
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import { deploymentConfig } from '$lib/config/deployment';
 	import * as m from '$lib/paraglide/messages.js';
+	import { notifications } from '$lib/stores/notifications';
 	let { data } = $props();
 
 	let [hostSessions, { unsubscribe: unsubscribe }] = subscribeAll<Session>(
@@ -54,6 +55,60 @@
 	onDestroy(() => {
 		unsubscribe();
 	});
+
+	let selectStatus = writable(false);
+	let selectedSession = writable<string[][]>([]);
+	async function handleSelectSession() {
+		$selectStatus = !$selectStatus;
+	}
+	function toggleSessionSelection(id: string, isChecked: boolean, active_status?: string) {
+		const status = active_status || 'active';
+		if (isChecked) {
+			$selectedSession = [...$selectedSession, [id, status]];
+		} else {
+			$selectedSession = $selectedSession.filter((session) => session[0] !== id);
+		}
+	}
+	let showArchiveModal = writable(false);
+	async function archiveSelectedSession() {
+		if ($selectedSession.length === 0) {
+			notifications.error(m.atLeastOneSelected());
+			return;
+		}
+		$showArchiveModal = true;
+		console.log('Selected sessions for archiving:', $selectedSession);
+	}
+	async function confirmArchiveSessions() {
+		try {
+			$selectedSession.forEach(async ([id, active_status]) => {
+				if (active_status === 'archived') {
+					const fetchResponse = await fetch(`/api/session/${id}/action/unarchive`, {
+						method: 'POST'
+					});
+					const result = await fetchResponse.json();
+					if (!fetchResponse.ok) {
+						throw new Error(result.error || m.archiveFailed());
+					}
+				} else {
+					const fetchResponse = await fetch(`/api/session/${id}/action/archive`, {
+						method: 'POST'
+					});
+					const result = await fetchResponse.json();
+					if (!fetchResponse.ok) {
+						throw new Error(result.error || m.archiveFailed());
+					}
+				}
+			});
+
+			notifications.success(m.successBatchArchive({ count: $selectedSession.length }));
+			$selectedSession = [];
+			$selectStatus = false;
+			$showArchiveModal = false;
+		} catch (e) {
+			console.error('Error archiving sessions:', e);
+			notifications.error(m.failedBatchArchive());
+		}
+	}
 </script>
 
 <svelte:head>
@@ -66,7 +121,19 @@
 			<h1 class="text-3xl font-bold text-gray-900">{m.recentHostActivity()}</h1>
 		</div>
 		<div class="text-right">
-			<Button href="/dashboard">{m.backToDashboard()}</Button>
+			{#if $selectStatus}
+				<Button color="primary" on:click={archiveSelectedSession} class="mr-4">
+					{m.archiveAndUnarchive()}
+				</Button>
+			{/if}
+			<Button onclick={handleSelectSession} color="alternative">
+				{#if $selectStatus}
+					{m.cancel()}
+				{:else}
+					{m.select()}
+				{/if}
+			</Button>
+			<Button class="ml-4" href="/dashboard">{m.backToDashboard()}</Button>
 		</div>
 	</div>
 
@@ -85,14 +152,51 @@
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 			{#if $filteredHostSessions?.length}
 				{#each $filteredHostSessions as [doc, session]}
-					<SessionCard
-						id={doc.id}
-						title={session.title}
-						status={session.status}
-						labels={session.labels}
-						task={session.task}
-						createdAt={(session.createdAt as Timestamp).toDate()}
-					/>
+					{#if session.active_status === 'active' || !session.active_status}
+						<div class="relative h-full">
+							{#if $selectStatus}
+								<input
+									type="checkbox"
+									class="absolute right-3 top-3 z-10"
+									checked={$selectedSession.includes([doc.id, session.active_status])}
+									onchange={(e) =>
+										toggleSessionSelection(doc.id, e.currentTarget.checked, session.active_status)}
+								/>
+							{/if}
+							<SessionCard
+								id={doc.id}
+								title={session.title}
+								status={session.status}
+								labels={session.labels}
+								task={session.task}
+								createdAt={(session.createdAt as Timestamp).toDate()}
+							/>
+						</div>
+					{/if}
+				{/each}
+				{#each $filteredHostSessions as [doc, session]}
+					{#if session.active_status === 'archived'}
+						<div class="relative h-full">
+							{#if $selectStatus}
+								<input
+									type="checkbox"
+									class="absolute right-3 top-3 z-10"
+									checked={$selectedSession.includes([doc.id, session.active_status])}
+									onchange={(e) =>
+										toggleSessionSelection(doc.id, e.currentTarget.checked, session.active_status)}
+								/>
+							{/if}
+							<SessionCard
+								id={doc.id}
+								title={session.title}
+								status={session.status}
+								labels={session.labels}
+								task={session.task}
+								createdAt={(session.createdAt as Timestamp).toDate()}
+								archived={true}
+							/>
+						</div>
+					{/if}
 				{/each}
 			{:else}
 				<Card class="md:col-span-2 lg:col-span-3">
@@ -112,3 +216,17 @@
 		</div>
 	</div>
 </main>
+
+<Modal bind:open={$showArchiveModal} size="xs" autoclose>
+	<div class="text-center">
+		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+			{m.archiveConfirmSession()}
+		</h3>
+		<div class="flex justify-center gap-4">
+			<Button color="red" on:click={confirmArchiveSessions}>{m.archiveConfirm()}</Button>
+			<Button color="alternative" on:click={() => ($showArchiveModal = false)}
+				>{m.noCancel()}</Button
+			>
+		</div>
+	</div>
+</Modal>

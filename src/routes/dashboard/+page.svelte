@@ -218,15 +218,31 @@
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $publicTemplates?.length}
 				{#each $publicTemplates as [doc, template]}
-					<TemplateCard
-						id={doc.id}
-						title={template.title}
-						task={template.task}
-						subtaskSize={template.subtasks.length}
-						resourceSize={template.resources.length}
-						owner={template.owner}
-						labels={template.labels}
-					/>
+					{#if template.active_status === 'active' || !template.active_status}
+						<TemplateCard
+							id={doc.id}
+							title={template.title}
+							task={template.task}
+							subtaskSize={template.subtasks.length}
+							resourceSize={template.resources.length}
+							owner={template.owner}
+							labels={template.labels}
+						/>
+					{/if}
+				{/each}
+				{#each $publicTemplates as [doc, template]}
+					{#if template.active_status === 'archived'}
+						<TemplateCard
+							id={doc.id}
+							title={template.title}
+							task={template.task}
+							subtaskSize={template.subtasks.length}
+							resourceSize={template.resources.length}
+							owner={template.owner}
+							labels={template.labels}
+							archived={true}
+						/>
+					{/if}
 				{/each}
 			{:else}
 				<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
@@ -256,16 +272,31 @@
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $templates?.length}
 				{#each $templates as [doc, template]}
-					<TemplateCard
-						id={doc.id}
-						title={template.title}
-						task={template.task}
-						subtaskSize={template.subtasks.length}
-						resourceSize={template.resources.length}
-						owner={template.owner}
-						isPublic={template.public}
-						labels={template.labels}
-					/>
+					{#if template.active_status === 'active' || !template.active_status}
+						<TemplateCard
+							id={doc.id}
+							title={template.title}
+							task={template.task}
+							subtaskSize={template.subtasks.length}
+							resourceSize={template.resources.length}
+							owner={template.owner}
+							labels={template.labels}
+						/>
+					{/if}
+				{/each}
+				{#each $templates as [doc, template]}
+					{#if template.active_status === 'archived'}
+						<TemplateCard
+							id={doc.id}
+							title={template.title}
+							task={template.task}
+							subtaskSize={template.subtasks.length}
+							resourceSize={template.resources.length}
+							owner={template.owner}
+							labels={template.labels}
+							archived={true}
+						/>
+					{/if}
 				{/each}
 			{:else}
 				<Card class="md:col-span-2 lg:col-span-3">
@@ -306,15 +337,33 @@
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $filteredHostSessions?.length}
 				{#each $filteredHostSessions as [doc, session]}
-					<SessionCard
-						id={doc.id}
-						title={session.title}
-						status={session.status}
-						labels={session.labels}
-						task={session.task}
-						createdAt={(session.createdAt as Timestamp).toDate()}
-						classId={session.classId}
-					/>
+					{#if session.active_status === 'active' || !session.active_status}
+						<SessionCard
+							id={doc.id}
+							title={session.title}
+							status={session.status}
+							labels={session.labels}
+							task={session.task}
+							host={session.host}
+							createdAt={(session.createdAt as Timestamp).toDate()}
+							classId={session.classId}
+						/>
+					{/if}
+				{/each}
+				{#each $filteredHostSessions as [doc, session]}
+					{#if session.active_status === 'archived'}
+						<SessionCard
+							id={doc.id}
+							title={session.title}
+							status={session.status}
+							labels={session.labels}
+							task={session.task}
+							host={session.host}
+							createdAt={(session.createdAt as Timestamp).toDate()}
+							classId={session.classId}
+							archived={true}
+						/>
+					{/if}
 				{/each}
 			{:else}
 				<Card class="md:col-span-2 lg:col-span-3">
