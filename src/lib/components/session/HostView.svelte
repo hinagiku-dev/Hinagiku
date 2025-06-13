@@ -3,9 +3,10 @@
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
 	import QRCode from '$lib/components/QRCode.svelte';
-	import { Button, Tooltip } from 'flowbite-svelte';
+	import { Button, Tooltip, Modal } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import type { Group } from '$lib/schema/group';
 	import { onMount } from 'svelte';
 	import {
@@ -516,13 +517,43 @@
 			notifications.error(m.announcementCancelFailed());
 		}
 	}
+
+	let showDeleteModal = writable(false);
+
+	async function handleDeleteModal() {
+		$showDeleteModal = !$showDeleteModal;
+	}
+
+	async function confirmDeleteDisscussion() {
+		try {
+			const response = await fetch(`/api/session/${$page.params.id}/action/delete`, {
+				method: 'POST'
+			});
+			if (!response.ok) {
+				const data = await response.json();
+				throw new Error(data.error || m.deleteClassFailed());
+			}
+			notifications.success(m.deleteClassSuccess());
+			$showDeleteModal = false;
+			goto('/dashboard');
+		} catch (error) {
+			console.error('Failed to delete session:', error);
+			notifications.error(m.failedDelete());
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
 	<div class="mb-8 space-y-6">
 		<!-- Labels and Title Section -->
+
 		<div class="rounded-lg border p-6 {UI_CLASSES.PANEL_BG}">
-			<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
+			<div class="mb-4 flex items-center justify-between">
+				<LabelManager sessionId={$page.params.id} labels={$session?.labels || []} />
+				<Button color="alternative" onclick={() => handleDeleteModal()}>
+					{m.deleteSession()}
+				</Button>
+			</div>
 			<div class="mt-4 flex items-center justify-between">
 				<h1 class="text-3xl font-bold">
 					{$session?.title}
@@ -744,3 +775,16 @@
 		<GroupChatHistory bind:open={showGroupChatHistory} group={selectedGroup} readonly={true} />
 	{/if}
 </main>
+
+<Modal bind:open={$showDeleteModal} size="xs" autoclose>
+	<div class="text-center">
+		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+			{m.deleteBatchSessionConfirmation()}
+		</h3>
+		<div class="flex justify-center gap-4">
+			<Button color="red" on:click={confirmDeleteDisscussion}>{m.deleteSession()}</Button>
+			<Button color="alternative" on:click={() => ($showDeleteModal = false)}>{m.noCancel()}</Button
+			>
+		</div>
+	</div>
+</Modal>

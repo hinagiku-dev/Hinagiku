@@ -56,7 +56,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			academicYear: academicYear.trim(),
 			className: className.trim(),
 			students: [],
-			groups: []
+			groups: [],
+			active_status: 'active'
 		};
 
 		// Validate against schema

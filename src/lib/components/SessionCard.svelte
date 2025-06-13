@@ -13,7 +13,8 @@
 		task,
 		host,
 		createdAt,
-		classId
+		classId,
+		archived = false
 	}: {
 		id: string;
 		title: string;
@@ -23,6 +24,7 @@
 		host?: string;
 		createdAt: Date;
 		classId?: string | null | undefined;
+		archived?: boolean;
 	} = $props();
 
 	let className = $state<string | null>(null);
@@ -58,7 +60,11 @@
 	});
 </script>
 
-<Card padding="lg" class="transition-all hover:border-primary-500">
+<Card
+	padding="lg"
+	class="h-full transition-all hover:border-primary-500"
+	style={archived ? 'opacity: 0.5' : ''}
+>
 	<div class="flex h-full flex-col">
 		<div class="mb-4 flex items-start justify-between">
 			<h3 class="line-clamp-1 text-xl font-bold">{title}</h3>

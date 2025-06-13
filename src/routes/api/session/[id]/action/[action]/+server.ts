@@ -56,6 +56,35 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			}
 		}
 
+		if (action === 'archive') {
+			if (sessionData.host !== locals.user.uid) {
+				return json({ error: 'Unauthorized' }, { status: 403 });
+			}
+			await sessionRef.update({
+				active_status: 'archived'
+			});
+			return json({ success: true });
+		}
+		if (action === 'unarchive') {
+			if (sessionData.host !== locals.user.uid) {
+				return json({ error: 'Unauthorized' }, { status: 403 });
+			}
+			await sessionRef.update({
+				active_status: 'active'
+			});
+			return json({ success: true });
+		}
+
+		if (action === 'delete') {
+			if (sessionData.host !== locals.user.uid) {
+				return json({ error: 'Unauthorized' }, { status: 403 });
+			}
+			await sessionRef.update({
+				active_status: 'deleted'
+			});
+			return json({ success: true });
+		}
+
 		if (action === 'joinWaitlist') {
 			try {
 				const sessionRef = adminDb.collection('sessions').doc(params.id);
