@@ -42,7 +42,7 @@
 				currentPassword = '';
 				newPassword = '';
 				confirmNewPassword = '';
-				await goto('/');
+				await goto('/login');
 			} else {
 				// Handle specific error messages from the API
 				if (response.status === 400 && result.error) {
