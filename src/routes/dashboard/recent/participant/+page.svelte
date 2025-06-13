@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { writable } from 'svelte/store';
+	import { writable, derived } from 'svelte/store';
 	import { Card, Button } from 'flowbite-svelte';
 	import { MessageSquarePlus } from 'lucide-svelte';
 	import {
@@ -22,6 +22,33 @@
 	let { data } = $props();
 
 	let sessions = writable<[string, Session][]>([]);
+	let selectedLabels = writable<string[]>([]);
+
+	let availableLabels = derived(sessions, ($sessions) => {
+		if (!$sessions) return [];
+		const labels = new Set<string>();
+		$sessions.forEach(([, session]) => {
+			session.labels?.forEach((label) => labels.add(label));
+		});
+		return Array.from(labels).sort();
+	});
+
+	let filteredSessions = derived([sessions, selectedLabels], ([$sessions, $selectedLabels]) => {
+		if (!$sessions || $selectedLabels.length === 0) return $sessions;
+		return $sessions.filter(([, session]) =>
+			$selectedLabels.every((label) => session.labels?.includes(label))
+		);
+	});
+
+	function handleLabelSelect(label: string) {
+		selectedLabels.update((labels) => {
+			if (labels.includes(label)) {
+				return labels.filter((l) => l !== label);
+			}
+			return [...labels, label].sort();
+		});
+	}
+
 	async function getSessions() {
 		const sessionQuery = query(
 			collectionGroup(db, 'groups'),
@@ -66,9 +93,20 @@
 	</div>
 
 	<div class="my-8">
+		<div class="mb-4 flex flex-wrap gap-2">
+			{#each $availableLabels as label}
+				<Button
+					size="xs"
+					color={$selectedLabels.includes(label) ? 'primary' : 'alternative'}
+					on:click={() => handleLabelSelect(label)}
+				>
+					{label}
+				</Button>
+			{/each}
+		</div>
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-			{#if $sessions.length}
-				{#each $sessions as [id, session]}
+			{#if $filteredSessions.length}
+				{#each $filteredSessions as [id, session]}
 					<SessionCard
 						{id}
 						title={session.title}
