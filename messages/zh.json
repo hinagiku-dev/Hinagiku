@@ -438,7 +438,7 @@
 	"resourcesNumber": "{count} 個資源",
 	"subtasksNumber": "{count} 個子任務",
 	"noStudentListAvailable": "沒有學生名單",
-	"noStudentListDesc": "目前此班級沒有學生。請點擊匯入按鈕以匯入學生名單。",
+	"noStudentListDesc": "目前此班級沒有學生。請點擊匯入按鈕以匯入學生名單",
 	"groupMustBeNumber": "組別必須是大於或等於 1 的數字",
 	"enterGroup": "輸入組別 (1+)",
 	"groupMustBeHigher": "組別必須為 1 或更高",
