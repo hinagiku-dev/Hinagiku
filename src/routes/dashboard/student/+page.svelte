@@ -31,7 +31,7 @@
 			collectionGroup(db, 'groups'),
 			where('participants', 'array-contains', data.user.uid),
 			orderBy('createdAt', 'desc'),
-			limit(6)
+			limit(MAX_RECENT_SESSIONS)
 		);
 		const sessionSnapshot = await getDocs(sessionQuery);
 		const sess: Promise<[string, Session]>[] = [];
