@@ -25,7 +25,7 @@
 	let selectedLabels = writable<string[]>([]);
 
 	let availableLabels = derived(sessions, ($sessions) => {
-		if (!$sessions) return [];
+		if ($sessions.length === 0) return [];
 		const labels = new Set<string>();
 		$sessions.forEach(([, session]) => {
 			session.labels?.forEach((label) => labels.add(label));
