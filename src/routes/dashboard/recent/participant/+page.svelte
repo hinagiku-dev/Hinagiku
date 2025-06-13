@@ -93,17 +93,19 @@
 	</div>
 
 	<div class="my-8">
-		<div class="mb-4 flex flex-wrap gap-2">
-			{#each $availableLabels as label}
-				<Button
-					size="xs"
-					color={$selectedLabels.includes(label) ? 'primary' : 'alternative'}
-					on:click={() => handleLabelSelect(label)}
-				>
-					{label}
-				</Button>
-			{/each}
-		</div>
+		{#if $availableLabels.length}
+			<div class="mb-4 flex flex-wrap gap-2">
+				{#each $availableLabels as label}
+					<Button
+						size="xs"
+						color={$selectedLabels.includes(label) ? 'primary' : 'alternative'}
+						on:click={() => handleLabelSelect(label)}
+					>
+						{label}
+					</Button>
+				{/each}
+			</div>
+		{/if}
 		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 			{#if $filteredSessions.length}
 				{#each $filteredSessions as [id, session]}
