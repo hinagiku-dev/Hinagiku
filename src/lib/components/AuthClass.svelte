@@ -47,8 +47,8 @@
 
 		const then = $page.url.searchParams.get('then') || '/dashboard';
 		const hasSessionParam = then.includes('session');
-		const sessionId = $page.url.searchParams.get('sessionId') || '';
-
+		const sessionIdMatch = then.match(/\/session\/([^/?#]+)/);
+		const sessionId = sessionIdMatch ? sessionIdMatch[1] : '';
 		// Construct email from studentId and classCode and convert to lowercase
 		const email = `${account}@${classCode}.student-account.hinagiku.dev`.toLowerCase();
 		const idToken = await loginWithEmail(email, password);
