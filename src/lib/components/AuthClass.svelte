@@ -45,6 +45,10 @@
 		loading = true;
 		error = '';
 
+		const then = $page.url.searchParams.get('then') || '/dashboard';
+		const hasSessionParam = then.includes('session');
+		const sessionId = $page.url.searchParams.get('sessionId') || '';
+
 		// Construct email from studentId and classCode and convert to lowercase
 		const email = `${account}@${classCode}.student-account.hinagiku.dev`.toLowerCase();
 		const idToken = await loginWithEmail(email, password);
@@ -62,8 +66,12 @@
 			const data = await response.json();
 
 			if (response.ok) {
-				// Redirect after successful login
-				goto('/dashboard');
+				// Go to session page if sessionId is provided or to "/dashboard"
+				if (hasSessionParam && sessionId) {
+					await goto(`/session/${sessionId}`);
+				} else {
+					await goto('/dashboard');
+				}
 			} else {
 				// Display error message
 				error = data.message || m.classLoginFailed();
