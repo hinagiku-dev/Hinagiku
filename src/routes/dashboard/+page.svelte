@@ -82,24 +82,6 @@
 		}
 	);
 
-	function handleLabelSelect(label: string) {
-		selectedLabels.update((labels) => {
-			if (labels.includes(label)) {
-				return labels.filter((l) => l !== label);
-			}
-			return [...labels, label].sort();
-		});
-	}
-
-	let availableLabels = derived(hostSessions, ($hostSessions) => {
-		if (!$hostSessions) return [];
-		const labels = new Set<string>();
-		$hostSessions.forEach(([, session]) => {
-			session.labels?.forEach((label) => labels.add(label));
-		});
-		return Array.from(labels).sort();
-	});
-
 	async function getSessions() {
 		const sessionQuery = query(
 			collectionGroup(db, 'groups'),
@@ -291,17 +273,6 @@
 		<div class="mb-6 flex items-center justify-between">
 			<h2 class="text-2xl font-semibold text-gray-900">{m.recentHostActivity()}</h2>
 			<Button color="alternative" href="/dashboard/recent/host">{m.viewAll()}</Button>
-		</div>
-		<div class="mb-4 flex flex-wrap gap-2">
-			{#each $availableLabels as label}
-				<Button
-					size="xs"
-					color={$selectedLabels.includes(label) ? 'primary' : 'alternative'}
-					on:click={() => handleLabelSelect(label)}
-				>
-					{label}
-				</Button>
-			{/each}
 		</div>
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $filteredHostSessions?.length}
