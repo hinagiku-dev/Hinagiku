@@ -1,9 +1,18 @@
+import { getUser } from '$lib/utils/getUser';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
 		throw redirect(303, '/login');
+	}
+
+	// 取得使用者 profile
+	const profile = await getUser(locals.user.uid);
+
+	// 判斷是否為 AuthClass（班級登入）使用者
+	if (profile.studentId) {
+		throw redirect(303, '/dashboard/student');
 	}
 
 	return {
