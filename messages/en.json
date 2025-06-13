@@ -117,7 +117,7 @@
 	"sessionLabels": "Session Labels",
 	"welcomeDashboard": "Welcome to your dashboard",
 	"stats": "Statistics",
-	"recentActivity": "Recent Participant Activity",
+	"recentActivity": "Recent Participant Sessions",
 	"createTemplate": "Create Template",
 	"createTemplateDesc": "Create a new discussion template",
 	"dashjoinSession": "Join Session",
@@ -299,7 +299,7 @@
 	"disabled": "Disabled",
 	"vad": "VAD",
 	"groupVocabulary": "Group",
-	"recentHostActivity": "Recent Host Activity",
+	"recentHostActivity": "Recent Host Sessions",
 	"createYourFirstTemplate": "Create your first template to get started",
 	"endAfterGroupStage": "End After Group Stage",
 	"stopRecordingReminderWithoutVAD": "Remember to press the stop button after speaking!",
@@ -480,5 +480,7 @@
 	"classGroupEditConfirm": "Yes",
 	"classGroupEditCancel": "No",
 	"classUpdateGroupSuccess": "group updated successfully",
-	"classUpdateGroupFailed": "failed to update group"
+	"classUpdateGroupFailed": "failed to update group",
+	"labelLengthLimit": "Label must be {limit} characters or less",
+	"newLabel": "New Label"
 }
