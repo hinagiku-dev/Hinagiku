@@ -34,7 +34,7 @@
 	});
 
 	let filteredSessions = derived([sessions, selectedLabels], ([$sessions, $selectedLabels]) => {
-		if (!$sessions || $selectedLabels.length === 0) return $sessions;
+		if ($selectedLabels.length === 0) return $sessions;
 		return $sessions.filter(([, session]) =>
 			$selectedLabels.every((label) => session.labels?.includes(label))
 		);
