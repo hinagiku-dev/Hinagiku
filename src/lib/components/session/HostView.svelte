@@ -611,7 +611,7 @@
 			const sessionTitle = $session?.title || 'Session';
 
 			// 處理個人參與者匯出（僅個人階段對話）
-			for (const participantId of selectedParticipants) {
+			const participantPromises = Array.from(selectedParticipants).map(async (participantId) => {
 				const conversation = conversationsMap.get(participantId);
 				const participantData = participantProgress.get(participantId);
 
