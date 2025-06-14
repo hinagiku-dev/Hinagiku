@@ -38,6 +38,58 @@
 	import { Input } from 'flowbite-svelte';
 	import { announcement } from '$lib/stores/announcement';
 	import { UI_CLASSES } from '$lib/config/ui';
+	import jsPDF from 'jspdf';
+	import JSZip from 'jszip';
+	import html2canvas from 'html2canvas';
+
+	async function createChinesePDF(htmlContent: string): Promise<jsPDF> {
+		const tempDiv = document.createElement('div');
+		tempDiv.innerHTML = htmlContent;
+		tempDiv.style.position = 'absolute';
+		tempDiv.style.left = '-9999px';
+		tempDiv.style.top = '-9999px';
+		tempDiv.style.width = '800px';
+		tempDiv.style.padding = '20px';
+		tempDiv.style.fontFamily = 'Arial, "Microsoft YaHei", "Helvetica Neue", sans-serif';
+		tempDiv.style.fontSize = '14px';
+		tempDiv.style.lineHeight = '1.6';
+		tempDiv.style.color = '#000';
+		tempDiv.style.backgroundColor = '#fff';
+
+		document.body.appendChild(tempDiv);
+
+		try {
+			const canvas = await html2canvas(tempDiv, {
+				scale: 2,
+				useCORS: true,
+				allowTaint: true,
+				backgroundColor: '#ffffff'
+			});
+
+			const pdf = new jsPDF('p', 'mm', 'a4');
+			const imgWidth = 210;
+			const pageHeight = 295;
+			const imgHeight = (canvas.height * imgWidth) / canvas.width;
+			let heightLeft = imgHeight;
+
+			const imgData = canvas.toDataURL('image/png');
+			let position = 0;
+
+			pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+			heightLeft -= pageHeight;
+
+			while (heightLeft >= 0) {
+				position = heightLeft - imgHeight;
+				pdf.addPage();
+				pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+				heightLeft -= pageHeight;
+			}
+
+			return pdf;
+		} finally {
+			document.body.removeChild(tempDiv);
+		}
+	}
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
@@ -57,6 +109,8 @@
 		};
 	};
 	let participantProgress = $state(new SvelteMap<string, ParticipantProgress>());
+	let conversationsMap = $state(new SvelteMap<string, Conversation>());
+	let groupsMap = $state(new SvelteMap<string, GroupWithId>());
 	let showChatHistory = $state(false);
 	let selectedParticipant = $state<{
 		displayName: string;
@@ -83,6 +137,10 @@
 	} | null>(null);
 	let conversationsData = $state<Array<Conversation>>([]);
 	let keywordData = $state<Record<string, number>>({});
+
+	let selectedParticipants = $state<Set<string>>(new Set());
+	let selectedGroups = $state<Set<string>>(new Set());
+	let isExporting = $state(false);
 
 	let current_waitlist: string[] = $state([]);
 	session.subscribe((value) => {
@@ -146,6 +204,12 @@
 						(doc) => ({ id: doc.id, ...doc.data() }) as GroupWithId
 					);
 					groups.set(groupsData);
+
+					// 存儲小組數據用於 PDF 生成
+					groupsData.forEach((group) => {
+						groupsMap.set(group.id, group);
+					});
+
 					console.log($groups);
 
 					const allParticipants = new Set<string>();
@@ -206,6 +270,8 @@
 											offTopic: conv.warning.offTopic
 										}
 									});
+
+									conversationsMap.set(conv.userId, conv);
 								}
 							});
 							unsubscribes.push(unsubscribe);
@@ -516,6 +582,170 @@
 			notifications.error(m.announcementCancelFailed());
 		}
 	}
+
+	// 匯出功能
+	function selectAllParticipants() {
+		selectedParticipants = new Set(current_waitlist);
+	}
+
+	function selectAllGroups() {
+		selectedGroups = new Set($groups.map((group) => group.id));
+	}
+
+	function deselectAll() {
+		selectedParticipants = new Set();
+		selectedGroups = new Set();
+	}
+
+	async function exportSelectedTranscripts() {
+		if (selectedParticipants.size === 0 && selectedGroups.size === 0) {
+			notifications.warning('請至少選擇一個參與者或小組');
+			return;
+		}
+
+		try {
+			isExporting = true;
+			notifications.info('正在生成 PDF 逐字稿...');
+
+			const zip = new JSZip();
+			const sessionTitle = $session?.title || 'Session';
+
+			// 處理個人參與者匯出（僅個人階段對話）
+			for (const participantId of selectedParticipants) {
+				const conversation = conversationsMap.get(participantId);
+				const participantData = participantProgress.get(participantId);
+
+				if (conversation && participantData) {
+					const pdf = await createPersonalTranscriptPDF(
+						sessionTitle,
+						participantData.displayName,
+						conversation,
+						$session
+					);
+
+					zip.file(`${participantData.displayName}_個人階段逐字稿.pdf`, pdf.output('arraybuffer'));
+				}
+			}
+
+			// 處理小組匯出（僅小組討論階段）
+			for (const groupId of selectedGroups) {
+				const group = groupsMap.get(groupId);
+
+				if (group) {
+					const pdf = await createGroupTranscriptPDF(sessionTitle, group, $session);
+
+					zip.file(`小組${group.number}_討論階段逐字稿.pdf`, pdf.output('arraybuffer'));
+				}
+			}
+
+			// 生成並下載 ZIP 檔案
+			const zipBlob = await zip.generateAsync({ type: 'blob' });
+			const url = window.URL.createObjectURL(zipBlob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `session-${sessionTitle}-${new Date().toISOString().split('T')[0]}.zip`;
+			document.body.appendChild(a);
+			a.click();
+			window.URL.revokeObjectURL(url);
+			document.body.removeChild(a);
+
+			notifications.success('匯出完成！');
+			selectedParticipants = new Set();
+			selectedGroups = new Set();
+		} catch (error) {
+			console.error('匯出失敗:', error);
+			notifications.error(error instanceof Error ? error.message : '匯出失敗');
+		} finally {
+			isExporting = false;
+		}
+	}
+
+	async function createPersonalTranscriptPDF(
+		sessionTitle: string,
+		userName: string,
+		conversation: Conversation,
+		session: Session | undefined
+	): Promise<jsPDF> {
+		const htmlContent = `
+			<div style="padding: 20px; font-family: Arial, 'Microsoft YaHei', sans-serif;">
+				<h1 style="font-size: 18px; margin-bottom: 20px; text-align: center;">個人階段逐字稿</h1>
+				
+				<div style="margin-bottom: 20px;">
+					<p><strong>Session:</strong> ${sessionTitle}</p>
+					<p><strong>學生:</strong> ${userName}</p>
+					<p><strong>生成時間:</strong> ${new Date().toLocaleString('zh-TW')}</p>
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<h2 style="font-size: 16px; margin-bottom: 10px;">任務內容:</h2>
+					<p style="line-height: 1.6;">${session?.task || '無任務描述'}</p>
+				</div>
+
+				<div>
+					<h2 style="font-size: 16px; margin-bottom: 10px;">對話內容:</h2>
+					${
+						conversation.history
+							?.map((message) => {
+								const speaker = message.role === 'user' ? userName : '小菊AI';
+								return `
+							<div style="margin-bottom: 15px; padding: 10px; border-left: 3px solid #ccc;">
+								<p style="margin: 0 0 5px 0; font-weight: bold; color: #333;">${speaker}:</p>
+								<p style="margin: 0; line-height: 1.6;">${message.content || ''}</p>
+							</div>
+						`;
+							})
+							.join('') || '<p>無對話記錄</p>'
+					}
+				</div>
+			</div>
+		`;
+
+		return await createChinesePDF(htmlContent, `${userName}_個人階段逐字稿.pdf`);
+	}
+
+	async function createGroupTranscriptPDF(
+		sessionTitle: string,
+		group: GroupWithId,
+		session: Session | undefined
+	): Promise<jsPDF> {
+		const htmlContent = `
+			<div style="padding: 20px; font-family: Arial, 'Microsoft YaHei', sans-serif;">
+				<h1 style="font-size: 18px; margin-bottom: 20px; text-align: center;">小組討論階段逐字稿</h1>
+				
+				<div style="margin-bottom: 20px;">
+					<p><strong>Session:</strong> ${sessionTitle}</p>
+					<p><strong>小組:</strong> 第 ${group.number} 組</p>
+					<p><strong>成員數:</strong> ${group.participants.length} 人</p>
+					<p><strong>生成時間:</strong> ${new Date().toLocaleString('zh-TW')}</p>
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<h2 style="font-size: 16px; margin-bottom: 10px;">任務內容:</h2>
+					<p style="line-height: 1.6;">${session?.task || '無任務描述'}</p>
+				</div>
+
+				<div>
+					<h2 style="font-size: 16px; margin-bottom: 10px;">討論內容:</h2>
+					${
+						(group.discussions || [])
+							.map((discussion) => {
+								const speaker = discussion.speaker || '未知發言者';
+								const content = discussion.content || '';
+								return `
+							<div style="margin-bottom: 15px; padding: 10px; border-left: 3px solid #ccc;">
+								<p style="margin: 0 0 5px 0; font-weight: bold; color: #333;">${speaker}:</p>
+								<p style="margin: 0; line-height: 1.6;">${content}</p>
+							</div>
+						`;
+							})
+							.join('') || '<p>無討論記錄</p>'
+					}
+				</div>
+			</div>
+		`;
+
+		return await createChinesePDF(htmlContent, `小組${group.number}_討論階段逐字稿.pdf`);
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
@@ -639,14 +869,32 @@
 					<h3 class="mb-3 text-lg font-semibold">
 						{m.currentParticipants()} ({current_waitlist?.length || 0})
 					</h3>
-					{#if className}
-						<span class="text-sm text-gray-500">{m.Class()} : {className}</span>
-					{/if}
+					<div class="flex items-center gap-3">
+						{#if className}
+							<span class="text-sm text-gray-500">{m.Class()} : {className}</span>
+						{/if}
+					</div>
 				</div>
 				<div class="flex flex-wrap gap-2">
 					{#if current_waitlist && current_waitlist.length > 0}
 						{#each current_waitlist as participantId}
 							<div class="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1">
+								{#if $session?.status === 'ended'}
+									<input
+										type="checkbox"
+										class="rounded border-gray-300"
+										checked={selectedParticipants.has(participantId)}
+										onchange={(e) => {
+											if (e.currentTarget.checked) {
+												selectedParticipants = new Set([...selectedParticipants, participantId]);
+											} else {
+												const newSet = new Set(selectedParticipants);
+												newSet.delete(participantId);
+												selectedParticipants = newSet;
+											}
+										}}
+									/>
+								{/if}
 								<span class="h-2 w-2 rounded-full bg-green-500"></span>
 								<span class="text-sm">
 									{#key participantId}
@@ -669,6 +917,7 @@
 				{unGroupedParticipantsNum}
 				{groups}
 				{participantProgress}
+				{selectedGroups}
 				on:open={(event) => {
 					if (event.detail.group) {
 						selectedGroup = event.detail.group;
@@ -680,6 +929,45 @@
 					}
 				}}
 			/>
+
+			<!-- Export Options Section -->
+			{#if $session?.status === 'ended'}
+				<div class="mt-6 rounded-lg border bg-gray-50 p-4">
+					<h3 class="mb-3 text-lg font-semibold">{m.exportTranscriptTitle()}</h3>
+					<div class="mb-4 flex gap-2">
+						<Button color="light" size="sm" on:click={selectAllParticipants}
+							>{m.selectAllParticipants()}</Button
+						>
+						<Button color="light" size="sm" on:click={selectAllGroups}>{m.selectAllGroups()}</Button
+						>
+						<Button color="red" outline size="sm" on:click={deselectAll}>{m.deselectAll()}</Button>
+						<Button
+							color="green"
+							size="sm"
+							on:click={exportSelectedTranscripts}
+							disabled={isExporting ||
+								(Array.from(selectedParticipants).length === 0 &&
+									Array.from(selectedGroups).length === 0)}
+						>
+							{#if isExporting}
+								{m.exporting()}
+							{:else}
+								{m.exportSelected()}
+							{/if}
+						</Button>
+					</div>
+					<p class="text-sm text-gray-600">
+						{m.selectedCount({
+							participants: Array.from(selectedParticipants).length,
+							groups: Array.from(selectedGroups).length
+						})}
+					</p>
+					<div class="mt-2 space-y-1 text-xs text-gray-500">
+						<p>{m.exportParticipantDesc()}</p>
+						<p>{m.exportGroupDesc()}</p>
+					</div>
+				</div>
+			{/if}
 		</div>
 
 		<!-- Task Section -->

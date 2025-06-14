@@ -462,5 +462,14 @@
 	"confirmDeleteClassWarning": "。此操作無法撤銷，所有相關的討論和學生資料將被永久刪除。",
 	"confirmDelete": "確認刪除",
 	"deleteClass": "刪除班級",
-	"newLabel": "新標籤"
+	"newLabel": "新標籤",
+	"exportTranscriptTitle": "選擇要匯出逐字稿的項目",
+	"selectAllParticipants": "全選參與者",
+	"selectAllGroups": "全選小組",
+	"deselectAll": "全部取消",
+	"exportSelected": "匯出選取項目",
+	"exporting": "匯出中...",
+	"selectedCount": "已選擇：{participants} 個參與者，{groups} 個小組",
+	"exportParticipantDesc": "• 選擇參與者：匯出該參與者在個人階段的對話逐字稿",
+	"exportGroupDesc": "• 選擇小組：匯出該小組在討論階段的聊天逐字稿"
 }

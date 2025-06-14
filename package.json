@@ -39,6 +39,7 @@
 		"@types/debug": "^4.1.12",
 		"@types/echarts": "^4.9.22",
 		"@types/eslint": "^9.6.1",
+		"@types/jspdf": "^2.0.0",
 		"@types/node": "^22.13.9",
 		"@types/qrcode": "^1.5.5",
 		"@types/rfc2047": "^2.0.3",
@@ -92,6 +93,10 @@
 	"packageManager": "pnpm@10.6.3",
 	"dependencies": {
 		"@inlang/paraglide-sveltekit": "0.15.5",
+		"html2canvas": "^1.4.1",
+		"jspdf": "^3.0.1",
+		"jspdf-autotable": "^5.0.2",
+		"jszip": "^3.10.1",
 		"xlsx": "^0.18.5"
 	}
 }

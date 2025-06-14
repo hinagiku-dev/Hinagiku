@@ -449,5 +449,14 @@
 	"classUpdateGroupSuccess": "group updated successfully",
 	"classUpdateGroupFailed": "failed to update group",
 	"labelLengthLimit": "Label must be {limit} characters or less",
-	"newLabel": "New Label"
+	"newLabel": "New Label",
+	"exportTranscriptTitle": "Select Items to Export Transcripts",
+	"selectAllParticipants": "Select All Participants",
+	"selectAllGroups": "Select All Groups",
+	"deselectAll": "Deselect All",
+	"exportSelected": "Export Selected",
+	"exporting": "Exporting...",
+	"selectedCount": "Selected: {participants} participants, {groups} groups",
+	"exportParticipantDesc": "• Select participants: Export individual stage conversation transcripts for that participant",
+	"exportGroupDesc": "• Select groups: Export discussion stage chat transcripts for that group"
 }
