@@ -163,7 +163,9 @@
 							<input
 								type="checkbox"
 								class="absolute right-3 top-3 z-10"
-								checked={$selectedTemplate.some(item => item[0] === doc.id && item[1] === template.active_status)}
+								checked={$selectedTemplate.some(
+									(item) => item[0] === doc.id && item[1] === template.active_status
+								)}
 								onchange={(e) =>
 									toggleTemplateSelection(doc.id, e.currentTarget.checked, template.active_status)}
 							/>
