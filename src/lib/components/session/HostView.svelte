@@ -298,7 +298,7 @@
 		});
 		if (!response.ok) {
 			const data = await response.json();
-			notifications.error(data.error || '無法生成代碼');
+			notifications.error(data.error || m.codeGenerationFailed());
 			return '';
 		}
 		const data = await response.json();
@@ -339,7 +339,7 @@
 			const failedResponse = responses.find((response) => !response.ok);
 			if (failedResponse) {
 				const data = await failedResponse.json();
-				notifications.error(data.error || '無法為部分小組的參與者創建對話');
+				notifications.error(data.error || m.conversationCreationFailed());
 				return;
 			}
 
@@ -353,14 +353,14 @@
 
 			if (!statusResponse.ok) {
 				const data = await statusResponse.json();
-				notifications.error(data.error || '無法開始個人階段');
+				notifications.error(data.error || m.personalStageStartFailed());
 				return;
 			}
 
-			notifications.success('成功開始個人階段', 3000);
+			notifications.success(m.personalStageStarted(), 3000);
 		} catch (error) {
 			console.error('無法開始個人階段:', error);
-			notifications.error('無法開始個人階段');
+			notifications.error(m.personalStageStartFailed());
 		}
 	}
 
@@ -443,7 +443,7 @@
 		ended: {
 			text: m.sessionEnded(),
 			action: () => {
-				notifications.error('Already Ended', 3000);
+				notifications.error(m.alreadyEnded(), 3000);
 			},
 			show: false
 		}
@@ -492,7 +492,7 @@
 			conversationsData = await response.json();
 		} catch (error) {
 			console.error('無法載入對話資料:', error);
-			notifications.error('無法載入對話資料');
+			notifications.error(m.conversationLoadFailed());
 		}
 	}
 
@@ -509,7 +509,7 @@
 			keywordData = await response.json();
 		} catch (error) {
 			console.error('無法載入關鍵字資料:', error);
-			notifications.error('無法載入關鍵字資料');
+			notifications.error(m.keywordsLoadFailed());
 		}
 	}
 
@@ -599,13 +599,13 @@
 
 	async function exportSelectedTranscripts() {
 		if (selectedParticipants.size === 0 && selectedGroups.size === 0) {
-			notifications.warning('請至少選擇一個參與者或小組');
+			notifications.warning(m.exportSelectAtLeastOne());
 			return;
 		}
 
 		try {
 			isExporting = true;
-			notifications.info('正在生成 PDF 逐字稿...');
+			notifications.info(m.exportGeneratingPDF());
 
 			const zip = new JSZip();
 			const sessionTitle = $session?.title || 'Session';
@@ -649,12 +649,12 @@
 			window.URL.revokeObjectURL(url);
 			document.body.removeChild(a);
 
-			notifications.success('匯出完成！');
+			notifications.success(m.exportCompleted());
 			selectedParticipants = new Set();
 			selectedGroups = new Set();
 		} catch (error) {
 			console.error('匯出失敗:', error);
-			notifications.error(error instanceof Error ? error.message : '匯出失敗');
+			notifications.error(error instanceof Error ? error.message : m.exportFailed());
 		} finally {
 			isExporting = false;
 		}

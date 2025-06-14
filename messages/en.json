@@ -458,5 +458,17 @@
 	"exporting": "Exporting...",
 	"selectedCount": "Selected: {participants} participants, {groups} groups",
 	"exportParticipantDesc": "• Select participants: Export individual stage conversation transcripts for that participant",
-	"exportGroupDesc": "• Select groups: Export discussion stage chat transcripts for that group"
+	"exportGroupDesc": "• Select groups: Export discussion stage chat transcripts for that group",
+	"exportSelectAtLeastOne": "Please select at least one participant or group",
+	"exportGeneratingPDF": "Generating PDF transcripts...",
+	"exportCompleted": "Export completed!",
+	"exportFailed": "Export failed",
+	"codeGenerationFailed": "Failed to generate code",
+	"conversationCreationFailed": "Failed to create conversations for some group participants",
+	"personalStageStartFailed": "Failed to start personal stage",
+	"personalStageStarted": "Successfully started personal stage",
+	"conversationLoadFailed": "Failed to load conversation data",
+	"keywordsLoadFailed": "Failed to load keywords data",
+	"alreadyEnded": "Already ended",
+	"stageChangeFailed": "Failed to change stage"
 }
