@@ -59,8 +59,12 @@
 		"genkit": "^0.9.12",
 		"genkitx-openai": "^0.22.3",
 		"globals": "^15.15.0",
+		"html2canvas": "^1.4.1",
 		"html5-qrcode": "^2.3.8",
 		"husky": "^9.1.7",
+		"jspdf": "^3.0.1",
+		"jspdf-autotable": "^5.0.2",
+		"jszip": "^3.10.1",
 		"lint-staged": "^15.4.3",
 		"lucide-svelte": "^0.454.0",
 		"marked": "^15.0.7",
@@ -82,6 +86,7 @@
 		"vite": "^5.4.14",
 		"vite-plugin-static-copy": "^2.3.0",
 		"vitest": "^2.1.9",
+		"xlsx": "^0.18.5",
 		"zod": "^3.24.2"
 	},
 	"lint-staged": {
@@ -92,11 +97,6 @@
 	},
 	"packageManager": "pnpm@10.6.3",
 	"dependencies": {
-		"@inlang/paraglide-sveltekit": "0.15.5",
-		"html2canvas": "^1.4.1",
-		"jspdf": "^3.0.1",
-		"jspdf-autotable": "^5.0.2",
-		"jszip": "^3.10.1",
-		"xlsx": "^0.18.5"
+		"@inlang/paraglide-sveltekit": "0.15.5"
 	}
 }
