@@ -30,7 +30,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			resources: [],
 			backgroundImage: null,
 			createdAt: Timestamp.now(),
-			updatedAt: Timestamp.now()
+			updatedAt: Timestamp.now(),
+			active_status: 'active'
 		};
 
 		const result = TemplateSchema.safeParse(template);
