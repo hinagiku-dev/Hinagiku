@@ -15,7 +15,8 @@
 		resourceSize,
 		owner,
 		isPublic,
-		labels
+		labels,
+		archived = false
 	}: {
 		id: string;
 		title: string;
@@ -25,6 +26,7 @@
 		owner: string;
 		isPublic?: boolean;
 		labels?: string[];
+		archived?: boolean;
 	} = $props();
 
 	let forking = $state(false);
@@ -59,7 +61,11 @@
 	}
 </script>
 
-<Card padding="lg" class="transition-all hover:border-primary-500">
+<Card
+	padding="lg"
+	class="h-full transition-all hover:border-primary-500"
+	style={archived ? 'opacity: 0.5;' : ''}
+>
 	<div class="flex h-full flex-col">
 		<div class="mb-2 flex items-start justify-between">
 			<h3 class="line-clamp-1 flex-1 text-xl font-bold">{title}</h3>

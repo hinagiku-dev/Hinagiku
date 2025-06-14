@@ -9,6 +9,7 @@ export const ClassSchema = z.object({
 	schoolName: z.string().min(1).max(100),
 	academicYear: z.string().min(1).max(20),
 	className: z.string().min(1).max(50),
+	active_status: z.enum(['active', 'archived', 'deleted']).default('active'),
 	students: z.array(z.string()).describe('Array of student user IDs').default([]),
 	groups: z
 		.array(
