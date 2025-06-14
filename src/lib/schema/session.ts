@@ -7,6 +7,7 @@ export const route = (id: string) => `/sessions/${id}`;
 export const SessionSchema = z.object({
 	title: z.string().min(1).max(200), // frozen, from template
 	host: z.string(),
+	classId: z.string().nullable().optional().describe('The class this session belongs to, if any'),
 	resources: z.array(ResourceSchema).max(10), // frozen, from template
 	task: z.string().min(1).max(200), // frozen, from template
 	subtasks: z.array(z.string().min(1).max(200)).max(10), // frozen, from template
@@ -26,10 +27,10 @@ export const SessionSchema = z.object({
 	}),
 	settings: z
 		.object({
-			autoGroup: z.boolean()
+			groupingMode: z.enum(['auto', 'manual', 'class'])
 		})
 		.optional()
-		.default({ autoGroup: true }),
+		.default({ groupingMode: 'auto' }),
 	waitlist: z.array(z.string()).default([]),
 	announcement: z
 		.object({

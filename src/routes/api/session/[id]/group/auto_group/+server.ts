@@ -76,10 +76,24 @@ export async function POST({ params, locals, request }) {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 	try {
-		const members = await request.json();
-		if (members.length === 0) {
-			throw error(400, members);
+		const requestData = await request.json();
+		let members = [];
+		let specifiedGroupNumber = null;
+
+		// Handle both old format (array of members) and new format (object with participants and group_number)
+		if (Array.isArray(requestData)) {
+			members = requestData;
+		} else if (requestData.participants) {
+			members = requestData.participants;
+			specifiedGroupNumber = requestData.group_number;
+		} else {
+			throw error(400, 'Invalid request format');
 		}
+
+		if (members.length === 0) {
+			throw error(400, 'No members specified');
+		}
+
 		const hasPermission = await checkRemoveParticipantPermission(
 			params.id,
 			locals.user.uid,
@@ -88,14 +102,48 @@ export async function POST({ params, locals, request }) {
 		if (!hasPermission) {
 			throw error(403, 'Permission denied');
 		}
-		const group_number = await createGroup(params.id, members[0]);
-		joinGroup(params.id, members.slice(1), group_number);
 
-		// Empty the waiting list
-		// const sessionRef = adminDb.collection('sessions').doc(params.id);
-		// await sessionRef.update({
-		// 	waitlist: []
-		// });
+		let group_number;
+		if (specifiedGroupNumber) {
+			// When group number is specified (for class grouping), check if the group exists
+			const groupsRef = adminDb.collection('sessions').doc(params.id).collection('groups');
+			const groupQuery = await groupsRef.where('number', '==', specifiedGroupNumber).limit(1).get();
+
+			if (groupQuery.empty) {
+				// If group doesn't exist, create it with the specified number
+				const groupRef = groupsRef.doc();
+				const groupData = {
+					participants: [members[0]],
+					concept: null,
+					discussions: [],
+					summary: null,
+					keywords: {},
+					number: specifiedGroupNumber,
+					createdAt: new Date(),
+					status: 'discussion',
+					moderation: false,
+					updatedAt: new Date()
+				};
+
+				const result = GroupSchema.safeParse(groupData);
+				if (!result.success) {
+					throw error(400, 'Invalid group data');
+				}
+				await groupRef.set(groupData);
+				group_number = specifiedGroupNumber;
+			} else {
+				// Group already exists
+				group_number = specifiedGroupNumber;
+			}
+		} else {
+			// Auto-assign group number (original behavior)
+			group_number = await createGroup(params.id, members[0]);
+		}
+
+		// Add remaining members to group
+		if (members.length > 1) {
+			await joinGroup(params.id, members.slice(1), group_number);
+		}
 
 		return json({ success: true });
 	} catch (error) {

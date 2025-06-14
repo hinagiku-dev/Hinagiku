@@ -1,3 +1,5 @@
+import { deploymentConfig } from '$lib/config/deployment';
+import * as m from '$lib/paraglide/messages.js';
 import { TemplateSchema, type Template } from '$lib/schema/template';
 import { adminDb } from '$lib/server/firebase';
 import { json } from '@sveltejs/kit';
@@ -10,18 +12,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	try {
+		const i18nServerCfg = { languageTag: deploymentConfig.defaultLanguage };
+
 		const data = await request.json();
 		const template: Template = {
-			title: 'New Discussion Template',
-			task: 'Discuss about the origin of the universe.',
+			title: m.defaultTemplateTitle({}, i18nServerCfg),
+			task: m.defaultTemplateTask({}, i18nServerCfg),
 			subtasks: [
-				'Explain your understanding of the Big Bang theory',
-				'Share your thoughts on alternative theories',
-				'Discuss the role of scientific evidence',
-				'Consider philosophical implications'
+				m.defaultTemplateSubtask1({}, i18nServerCfg),
+				m.defaultTemplateSubtask2({}, i18nServerCfg),
+				m.defaultTemplateSubtask3({}, i18nServerCfg),
+				m.defaultTemplateSubtask4({}, i18nServerCfg)
 			],
 			public: data.public ?? false,
 			owner: locals.user.uid,
+			labels: [],
 			resources: [],
 			backgroundImage: null,
 			createdAt: Timestamp.now(),

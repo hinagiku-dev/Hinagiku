@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { getUser } from '$lib/utils/getUser';
 	import { countWords } from '$lib/utils/countWords';
+	import * as m from '$lib/paraglide/messages.js';
 	import type { Conversation } from '$lib/schema/conversation';
 
 	type PartialConversation = Pick<Conversation, 'userId' | 'history'>;
@@ -76,19 +77,24 @@
 
 		chart.setOption({
 			title: {
-				text: 'Most Active Participants',
+				text: m.mostActiveParticipants(),
 				left: 'center'
 			},
 			tooltip: {
 				trigger: 'axis',
-				formatter: '{b}: {c} words'
+				formatter: (
+					params: { name: string; value: number } | { name: string; value: number }[]
+				) => {
+					const p = Array.isArray(params) ? params[0] : params;
+					return `${p.name}: ${p.value} ${m.words()}`;
+				}
 			},
 			grid: {
 				left: '15%'
 			},
 			xAxis: {
 				type: 'value',
-				name: 'Words'
+				name: m.words()
 			},
 			yAxis: {
 				type: 'category',
@@ -125,6 +131,6 @@
 
 <div bind:this={container} class="h-full w-full">
 	{#if !conversations || conversations.length === 0}
-		<div class="flex h-full w-full items-center justify-center text-gray-500">暫無數據</div>
+		<div class="flex h-full w-full items-center justify-center text-gray-500">{m.noData()}</div>
 	{/if}
 </div>

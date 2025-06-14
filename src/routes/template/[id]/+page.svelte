@@ -4,8 +4,9 @@
 	import { page } from '$app/stores';
 	import type { Template } from '$lib/schema/template';
 	import ResourceList from './ResourceList.svelte';
+	import TemplateLabelManager from '$lib/components/template/LabelManager.svelte';
 	import { onDestroy } from 'svelte';
-	import { doc } from 'firebase/firestore';
+	import { doc, collection, query, where, getDocs } from 'firebase/firestore';
 	import { db } from '$lib/firebase';
 	import { subscribe } from '$lib/firebase/store';
 	import { goto } from '$app/navigation';
@@ -13,10 +14,12 @@
 	import * as m from '$lib/paraglide/messages';
 	import { i18n } from '$lib/i18n';
 	import { deploymentConfig } from '$lib/config/deployment';
+	import { user } from '$lib/stores/auth';
 
 	let title = '';
 	let task = '';
 	let isPublic = false;
+	let labels: string[] = [];
 	let subtasks: string[] = [];
 	let showDeleteModal = false;
 	let isUploading = false;
@@ -24,6 +27,10 @@
 	let uploadingBackground = false;
 	let backgroundPreview: string | null = null; // Permanent URL from Cloud Storage
 	let localPreviewUrl: string | null = null; // Temporary blob URL for local preview
+	let showClassSelectionModal = false;
+	let classes: { id: string; className: string; schoolName: string; academicYear: string }[] = [];
+	let loadingClasses = false;
+	let selectedClassId: string | null = null;
 
 	const templateRef = doc(db, 'templates', $page.params.id);
 	const [template, { unsubscribe }] = subscribe<Template>(templateRef);
@@ -34,6 +41,7 @@
 			task = t.task;
 			isPublic = t.public;
 			subtasks = [...t.subtasks];
+			labels = t.labels ? [...t.labels] : [];
 			backgroundPreview = t.backgroundImage || null;
 		}
 	});
@@ -91,14 +99,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to upload background image');
+				notifications.error(data.error || m.failedUploadBackground());
 				return;
 			}
 
 			const data = await res.json();
 			// Update with permanent URL from Cloud Storage
 			backgroundPreview = data.imageUrl;
-			notifications.success('Background image uploaded successfully');
+			notifications.success(m.backgroundImageUploaded());
 
 			// Clean up local preview
 			if (localPreviewUrl) {
@@ -108,7 +116,7 @@
 			backgroundImage = null;
 		} catch (e) {
 			console.error('Error uploading background image:', e);
-			notifications.error('Failed to upload background image');
+			notifications.error(m.failedUploadBackground());
 		} finally {
 			uploadingBackground = false;
 		}
@@ -135,20 +143,21 @@
 					task: task.trim(),
 					public: isPublic,
 					subtasks: subtasks.filter((subtask) => subtask.trim()),
+					labels,
 					backgroundImage: backgroundPreview
 				})
 			});
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to save template');
+				notifications.error(data.error || m.failedSaveTemplate());
 				return;
 			}
 
-			notifications.success('Template saved successfully');
+			notifications.success(m.saveTemplateSuccess());
 		} catch (e) {
 			console.error('Error saving template:', e);
-			notifications.error('Failed to save template');
+			notifications.error(m.failedSaveTemplate());
 		}
 	}
 
@@ -160,7 +169,40 @@
 
 	function removeSubtask(index: number) {
 		subtasks = subtasks.filter((_, i) => i !== index);
-		notifications.info('Subtask removed');
+		notifications.success(m.subtaskRemoved());
+	}
+
+	async function openClassSelectionModal() {
+		if (unsavedChanges) {
+			return;
+		}
+
+		loadingClasses = true;
+		classes = [];
+		selectedClassId = null;
+		showClassSelectionModal = true;
+
+		try {
+			if ($user) {
+				const classesQuery = query(collection(db, 'classes'), where('teacherId', '==', $user.uid));
+
+				const snapshot = await getDocs(classesQuery);
+
+				if (!snapshot.empty) {
+					classes = snapshot.docs.map((doc) => ({
+						id: doc.id,
+						className: doc.data().className,
+						schoolName: doc.data().schoolName,
+						academicYear: doc.data().academicYear
+					}));
+				}
+			}
+		} catch (e) {
+			console.error('Error fetching classes:', e);
+			notifications.error(m.failedLoadClasses());
+		} finally {
+			loadingClasses = false;
+		}
 	}
 
 	async function startSession() {
@@ -169,21 +211,23 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					templateId: $page.params.id
+					templateId: $page.params.id,
+					classId: selectedClassId
 				})
 			});
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to create session');
+				notifications.error(data.error || m.failedCreateSession());
 				return;
 			}
 
 			const data = await res.json();
+			showClassSelectionModal = false;
 			await goto(i18n.resolveRoute(`/session/${data.sessionId}`));
 		} catch (e) {
 			console.error('Error creating session:', e);
-			notifications.error('Failed to create session');
+			notifications.error(m.failedCreateSession());
 		}
 	}
 
@@ -195,14 +239,14 @@
 
 			if (!res.ok) {
 				const data = await res.json();
-				notifications.error(data.error || 'Failed to delete template');
+				notifications.error(data.error || m.failedDeleteTemplate());
 				return;
 			}
 
 			await goto(i18n.resolveRoute('/dashboard'));
 		} catch (e) {
 			console.error('Error deleting template:', e);
-			notifications.error('Failed to delete template');
+			notifications.error(m.failedDeleteTemplate());
 		}
 	}
 </script>
@@ -215,7 +259,11 @@
 	<div class="container mx-auto max-w-4xl px-4 py-8">
 		<div class="mb-8 flex items-center justify-between">
 			<h1 class="text-3xl font-bold">{m.editTemplate()}</h1>
-			<Button color="primary" on:click={startSession} disabled={isUploading || unsavedChanges}>
+			<Button
+				color="primary"
+				on:click={openClassSelectionModal}
+				disabled={isUploading || unsavedChanges}
+			>
 				<Play class="mr-2 h-4 w-4" />
 				{m.startSession()}
 			</Button>
@@ -280,17 +328,21 @@
 				</Button>
 			</div>
 
+			<div>
+				<p class="mb-4 font-medium">{m.tags()}</p>
+				<TemplateLabelManager templateId={$page.params.id} {labels} />
+			</div>
+
 			<div class="flex items-center gap-2">
 				<Toggle bind:checked={isPublic} />
 				<label for="public">{m.makePublic()}</label>
 			</div>
 
 			<div class="border-t pt-6">
-				<h2 class="mb-4 text-xl font-semibold">Background Image</h2>
+				<h2 class="mb-4 text-xl font-semibold">{m.backgroundImageTitle()}</h2>
 				<div class="mb-4">
 					<p class="mb-2 text-sm text-gray-600">
-						Upload a background image for this template. It will be used as the background for all
-						sessions created from this template.
+						{m.backgroundImageDesc()}
 					</p>
 
 					{#if backgroundPreview}
@@ -308,7 +360,7 @@
 									size="xs"
 									class="absolute right-2 top-2"
 									on:click={() => {
-										if (confirm('Are you sure you want to remove the background image?')) {
+										if (confirm(m.removeBackgroundConfirm())) {
 											backgroundPreview = null;
 											saveTemplate();
 										}
@@ -354,7 +406,7 @@
 								class="flex cursor-pointer items-center justify-center rounded-lg bg-gray-100 p-3 hover:bg-gray-200"
 							>
 								<Upload class="mr-2 h-4 w-4" />
-								{backgroundImage ? 'Change image' : 'Select image'}
+								{backgroundImage ? m.changeImage() : m.selectImage()}
 							</label>
 
 							{#if backgroundImage}
@@ -365,10 +417,10 @@
 								>
 									{#if uploadingBackground}
 										<Spinner class="mr-2" size="4" color="white" />
-										Uploading...
+										{m.uploading()}
 									{:else}
 										<Save class="mr-2 h-4 w-4" />
-										Upload Image
+										{m.uploadImage()}
 									{/if}
 								</Button>
 							{/if}
@@ -420,6 +472,39 @@
 		<div class="flex justify-center gap-4">
 			<Button color="red" on:click={deleteTemplate}>{m.yesDelete()}</Button>
 			<Button color="alternative" on:click={() => (showDeleteModal = false)}>{m.noCancel()}</Button>
+		</div>
+	</div>
+</Modal>
+
+<Modal bind:open={showClassSelectionModal} size="sm" autoclose>
+	<div class="text-center">
+		<h3 class="mb-5 text-lg font-semibold">{m.selectClass()}</h3>
+
+		{#if loadingClasses}
+			<div class="flex justify-center py-4">
+				<Spinner size="6" />
+			</div>
+		{:else}
+			<div class="mb-5">
+				<select
+					class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+					bind:value={selectedClassId}
+				>
+					<option value="">{m.startWithoutClass()}</option>
+					{#each classes as cls}
+						<option value={cls.id}>{cls.className} - {cls.schoolName}({cls.academicYear})</option>
+					{/each}
+				</select>
+			</div>
+		{/if}
+
+		<div class="flex justify-center gap-4">
+			<Button color="primary" on:click={startSession}>
+				{m.startSession()}
+			</Button>
+			<Button color="alternative" on:click={() => (showClassSelectionModal = false)}>
+				{m.cancel()}
+			</Button>
 		</div>
 	</div>
 </Modal>

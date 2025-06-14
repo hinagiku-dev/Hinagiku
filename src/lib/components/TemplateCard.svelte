@@ -14,7 +14,8 @@
 		subtaskSize,
 		resourceSize,
 		owner,
-		isPublic
+		isPublic,
+		labels
 	}: {
 		id: string;
 		title: string;
@@ -23,6 +24,7 @@
 		resourceSize: number;
 		owner: string;
 		isPublic?: boolean;
+		labels?: string[];
 	} = $props();
 
 	let forking = $state(false);
@@ -59,8 +61,8 @@
 
 <Card padding="lg" class="transition-all hover:border-primary-500">
 	<div class="flex h-full flex-col">
-		<div class="mb-4 flex items-start justify-between">
-			<h3 class="line-clamp-1 text-xl font-bold">{title}</h3>
+		<div class="mb-2 flex items-start justify-between">
+			<h3 class="line-clamp-1 flex-1 text-xl font-bold">{title}</h3>
 			{#if isPublic !== undefined}
 				<span
 					class="rounded-full px-3 py-1 text-sm font-medium {isPublic
@@ -71,14 +73,23 @@
 				</span>
 			{/if}
 		</div>
+		{#if labels?.length}
+			<div class="mb-2 flex flex-wrap gap-1">
+				{#each labels as label}
+					<span class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
+						{label}
+					</span>
+				{/each}
+			</div>
+		{/if}
 		<p class="mb-4 line-clamp-2 text-gray-600">{task}</p>
 		<div class="mt-auto w-full">
 			<div class="mb-4 flex items-center gap-4">
 				<span class="text-sm text-gray-500">
-					{subtaskSize} subtasks
+					{m.subtasksNumber({ count: subtaskSize })}
 				</span>
 				<span class="text-sm text-gray-500">
-					{resourceSize} resources
+					{m.resourcesNumber({ count: resourceSize })}
 				</span>
 			</div>
 			<div class="flex gap-2">

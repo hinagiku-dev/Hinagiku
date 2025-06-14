@@ -2,7 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { writable, derived } from 'svelte/store';
 	import { Card, Button } from 'flowbite-svelte';
-	import { MessageSquarePlus, UserPlus, UserCog } from 'lucide-svelte';
+	import { MessageSquarePlus, UserPlus, UserCog, Users } from 'lucide-svelte';
 	import {
 		collection,
 		orderBy,
@@ -82,24 +82,6 @@
 		}
 	);
 
-	function handleLabelSelect(label: string) {
-		selectedLabels.update((labels) => {
-			if (labels.includes(label)) {
-				return labels.filter((l) => l !== label);
-			}
-			return [...labels, label].sort();
-		});
-	}
-
-	let availableLabels = derived(hostSessions, ($hostSessions) => {
-		if (!$hostSessions) return [];
-		const labels = new Set<string>();
-		$hostSessions.forEach(([, session]) => {
-			session.labels?.forEach((label) => labels.add(label));
-		});
-		return Array.from(labels).sort();
-	});
-
 	async function getSessions() {
 		const sessionQuery = query(
 			collectionGroup(db, 'groups'),
@@ -157,7 +139,7 @@
 	</div>
 
 	<!-- Main Actions -->
-	<div class="mb-16 grid gap-6 md:grid-cols-3">
+	<div class="mb-16 grid gap-6 md:grid-cols-3 lg:grid-cols-4">
 		<Card padding="xl" class="text-center transition-all hover:border-primary-500">
 			<button onclick={handleCreateTemplate} class="flex w-full flex-col items-center">
 				<div class="mb-4 rounded-full bg-primary-100 p-4">
@@ -193,6 +175,18 @@
 				<p class="text-gray-600">{m.editProfileDesc()}</p>
 			</a>
 		</Card>
+
+		<Card padding="xl" class="text-center transition-all hover:border-primary-500">
+			<a href="/manage" class="flex flex-col items-center">
+				<div class="mb-4 rounded-full bg-primary-100 p-4">
+					<Users size={32} class="text-primary-600" />
+				</div>
+				<h2 class="mb-2 text-xl font-semibold text-gray-900">
+					{m.manageClasses()}
+				</h2>
+				<p class="text-gray-600">{m.manageClassesDesc()}</p>
+			</a>
+		</Card>
 	</div>
 
 	<!-- Public Templates -->
@@ -213,6 +207,7 @@
 						subtaskSize={template.subtasks.length}
 						resourceSize={template.resources.length}
 						owner={template.owner}
+						labels={template.labels}
 					/>
 				{/each}
 			{:else}
@@ -251,6 +246,7 @@
 						resourceSize={template.resources.length}
 						owner={template.owner}
 						isPublic={template.public}
+						labels={template.labels}
 					/>
 				{/each}
 			{:else}
@@ -278,17 +274,6 @@
 			<h2 class="text-2xl font-semibold text-gray-900">{m.recentHostActivity()}</h2>
 			<Button color="alternative" href="/dashboard/recent/host">{m.viewAll()}</Button>
 		</div>
-		<div class="mb-4 flex flex-wrap gap-2">
-			{#each $availableLabels as label}
-				<Button
-					size="xs"
-					color={$selectedLabels.includes(label) ? 'primary' : 'alternative'}
-					on:click={() => handleLabelSelect(label)}
-				>
-					{label}
-				</Button>
-			{/each}
-		</div>
 		<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 			{#if $filteredHostSessions?.length}
 				{#each $filteredHostSessions as [doc, session]}
@@ -299,6 +284,7 @@
 						labels={session.labels}
 						task={session.task}
 						createdAt={(session.createdAt as Timestamp).toDate()}
+						classId={session.classId}
 					/>
 				{/each}
 			{:else}
@@ -336,6 +322,7 @@
 						task={session.task}
 						host={session.host}
 						createdAt={(session.createdAt as Timestamp).toDate()}
+						classId={session.classId}
 					/>
 				{/each}
 			</div>
