@@ -23,7 +23,8 @@
 		unGroupedParticipantsNum,
 		groups,
 		participantProgress,
-		selectedGroups = new Set<string>()
+		selectedGroups = new Set<string>(),
+		showExportOptions = false
 	} = $props();
 
 	// Define types
@@ -437,7 +438,7 @@
 				<div class="rounded border p-3 {UI_CLASSES.PANEL_BG} shadow-sm">
 					<div class="mb-2 flex items-center justify-between">
 						<div class="flex items-center gap-2">
-							{#if $session?.status === 'ended'}
+							{#if $session?.status === 'ended' && showExportOptions}
 								<input
 									type="checkbox"
 									class="rounded border-gray-300"

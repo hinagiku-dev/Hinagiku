@@ -463,6 +463,8 @@
 	"exportGeneratingPDF": "Generating PDF transcripts...",
 	"exportCompleted": "Export completed!",
 	"exportFailed": "Export failed",
+	"showExportOptions": "Show Export Options",
+	"hideExportOptions": "Hide Export Options",
 	"pdfPersonalTranscriptTitle": "Personal Stage Transcript",
 	"pdfGroupTranscriptTitle": "Group Discussion Stage Transcript",
 	"pdfSession": "Session",

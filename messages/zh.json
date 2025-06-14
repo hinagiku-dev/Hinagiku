@@ -476,6 +476,8 @@
 	"exportGeneratingPDF": "正在生成 PDF 逐字稿...",
 	"exportCompleted": "匯出完成！",
 	"exportFailed": "匯出失敗",
+	"showExportOptions": "顯示匯出選項",
+	"hideExportOptions": "隱藏匯出選項",
 	"pdfPersonalTranscriptTitle": "個人階段逐字稿",
 	"pdfGroupTranscriptTitle": "小組討論階段逐字稿",
 	"pdfSession": "Session",
