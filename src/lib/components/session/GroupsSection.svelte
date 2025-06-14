@@ -68,6 +68,10 @@
 			} | null;
 			conversation?: { data: Conversation; id: string } | null;
 		};
+		groupSelection: {
+			groupId: string;
+			selected: boolean;
+		};
 	}>();
 
 	let selectedGroup = $state<{
@@ -439,13 +443,10 @@
 									class="rounded border-gray-300"
 									checked={selectedGroups.has(group.id)}
 									onchange={(e) => {
-										if (e.currentTarget.checked) {
-											selectedGroups = new Set([...selectedGroups, group.id]);
-										} else {
-											const newSet = new Set(selectedGroups);
-											newSet.delete(group.id);
-											selectedGroups = newSet;
-										}
+										dispatch('groupSelection', {
+											groupId: group.id,
+											selected: e.currentTarget.checked
+										});
 									}}
 								/>
 							{/if}

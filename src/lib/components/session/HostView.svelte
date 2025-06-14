@@ -928,6 +928,15 @@
 						showChatHistory = true;
 					}
 				}}
+				on:groupSelection={(event) => {
+					if (event.detail.selected) {
+						selectedGroups = new Set([...selectedGroups, event.detail.groupId]);
+					} else {
+						const newSet = new Set(selectedGroups);
+						newSet.delete(event.detail.groupId);
+						selectedGroups = newSet;
+					}
+				}}
 			/>
 
 			<!-- Export Options Section -->
