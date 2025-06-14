@@ -35,6 +35,7 @@
 	import LabelManager from './LabelManager.svelte';
 	import ResolveUsername from '../ResolveUsername.svelte';
 	import * as m from '$lib/paraglide/messages.js';
+	import { languageTag } from '$lib/paraglide/runtime.js';
 	import { Input } from 'flowbite-svelte';
 	import { announcement } from '$lib/stores/announcement';
 	import { UI_CLASSES } from '$lib/config/ui';
@@ -205,7 +206,6 @@
 					);
 					groups.set(groupsData);
 
-					// 存儲小組數據用於 PDF 生成
 					groupsData.forEach((group) => {
 						groupsMap.set(group.id, group);
 					});
@@ -323,7 +323,6 @@
 
 	async function handleStartSession() {
 		try {
-			// 為每個小組的個參與者創建對話
 			const responses = await Promise.all(
 				$groups.map((group) =>
 					fetch(`/api/session/${$page.params.id}/group/${group.id}/conversations`, {
@@ -623,9 +622,13 @@
 						$session
 					);
 
-					zip.file(`${participantData.displayName}_個人階段逐字稿.pdf`, pdf.output('arraybuffer'));
+					const filename = m.pdfPersonalTranscriptFilename({ name: participantData.displayName });
+					zip.file(filename, pdf.output('arraybuffer'));
 				}
-			}
+			});
+
+			// 等待所有個人 PDF 完成
+			await Promise.all(participantPromises);
 
 			// 處理小組匯出（僅小組討論階段）
 			for (const groupId of selectedGroups) {
@@ -634,7 +637,8 @@
 				if (group) {
 					const pdf = await createGroupTranscriptPDF(sessionTitle, group, $session);
 
-					zip.file(`小組${group.number}_討論階段逐字稿.pdf`, pdf.output('arraybuffer'));
+					const filename = m.pdfGroupTranscriptFilename({ number: group.number });
+					zip.file(filename, pdf.output('arraybuffer'));
 				}
 			}
 
@@ -660,45 +664,82 @@
 		}
 	}
 
+	// 建立 PDF HTML 模板的共用 helper
+	// 將 createPersonalTranscriptPDF 和 createGroupTranscriptPDF 的共同 HTML 模板抽出，減少重複代碼
+	function createTranscriptHTMLTemplate(
+		title: string,
+		sessionTitle: string,
+		metaInfo: Array<{ label: string; value: string }>,
+		taskContent: string,
+		contentSectionTitle: string,
+		contentHTML: string
+	): string {
+		const metaInfoHTML = metaInfo
+			.map((info) => `<p><strong>${info.label}:</strong> ${info.value}</p>`)
+			.join('');
+
+		// 格式化生成時間，根據語言選擇地區格式
+		const currentLang = languageTag();
+		const locale = currentLang === 'zh' ? 'zh-TW' : 'en-US';
+		const generatedTime = new Date().toLocaleString(locale);
+
+		return `
+			<div style="padding: 20px; font-family: Arial, 'Microsoft YaHei', sans-serif;">
+				<h1 style="font-size: 18px; margin-bottom: 20px; text-align: center;">${title}</h1>
+				
+				<div style="margin-bottom: 20px;">
+					<p><strong>${m.pdfSession()}:</strong> ${sessionTitle}</p>
+					${metaInfoHTML}
+					<p><strong>${m.pdfGeneratedTime()}:</strong> ${generatedTime}</p>
+				</div>
+
+				<div style="margin-bottom: 20px;">
+					<h2 style="font-size: 16px; margin-bottom: 10px;">${m.pdfTaskContent()}:</h2>
+					<p style="line-height: 1.6;">${taskContent}</p>
+				</div>
+
+				<div>
+					<h2 style="font-size: 16px; margin-bottom: 10px;">${contentSectionTitle}:</h2>
+					${contentHTML}
+				</div>
+			</div>
+		`;
+	}
+
+	// 產生對話訊息的 HTML
+	function createMessageHTML(speaker: string, content: string): string {
+		return `
+			<div style="margin-bottom: 15px; padding: 10px; border-left: 3px solid #ccc;">
+				<p style="margin: 0 0 5px 0; font-weight: bold; color: #333;">${speaker}:</p>
+				<p style="margin: 0; line-height: 1.6;">${content || ''}</p>
+			</div>
+		`;
+	}
+
 	async function createPersonalTranscriptPDF(
 		sessionTitle: string,
 		userName: string,
 		conversation: Conversation,
 		session: Session | undefined
 	): Promise<jsPDF> {
-		const htmlContent = `
-			<div style="padding: 20px; font-family: Arial, 'Microsoft YaHei', sans-serif;">
-				<h1 style="font-size: 18px; margin-bottom: 20px; text-align: center;">個人階段逐字稿</h1>
-				
-				<div style="margin-bottom: 20px;">
-					<p><strong>Session:</strong> ${sessionTitle}</p>
-					<p><strong>學生:</strong> ${userName}</p>
-					<p><strong>生成時間:</strong> ${new Date().toLocaleString('zh-TW')}</p>
-				</div>
+		const metaInfo = [{ label: m.pdfStudent(), value: userName }];
 
-				<div style="margin-bottom: 20px;">
-					<h2 style="font-size: 16px; margin-bottom: 10px;">任務內容:</h2>
-					<p style="line-height: 1.6;">${session?.task || '無任務描述'}</p>
-				</div>
+		const conversationHTML =
+			conversation.history
+				?.map((message) => {
+					const speaker = message.role === 'user' ? userName : m.pdfAISpeaker();
+					return createMessageHTML(speaker, message.content || '');
+				})
+				.join('') || `<p>${m.pdfNoConversationRecord()}</p>`;
 
-				<div>
-					<h2 style="font-size: 16px; margin-bottom: 10px;">對話內容:</h2>
-					${
-						conversation.history
-							?.map((message) => {
-								const speaker = message.role === 'user' ? userName : '小菊AI';
-								return `
-							<div style="margin-bottom: 15px; padding: 10px; border-left: 3px solid #ccc;">
-								<p style="margin: 0 0 5px 0; font-weight: bold; color: #333;">${speaker}:</p>
-								<p style="margin: 0; line-height: 1.6;">${message.content || ''}</p>
-							</div>
-						`;
-							})
-							.join('') || '<p>無對話記錄</p>'
-					}
-				</div>
-			</div>
-		`;
+		const htmlContent = createTranscriptHTMLTemplate(
+			m.pdfPersonalTranscriptTitle(),
+			sessionTitle,
+			metaInfo,
+			session?.task || m.pdfNoTaskDescription(),
+			m.pdfConversationContent(),
+			conversationHTML
+		);
 
 		return await createChinesePDF(htmlContent);
 	}
@@ -708,41 +749,31 @@
 		group: GroupWithId,
 		session: Session | undefined
 	): Promise<jsPDF> {
-		const htmlContent = `
-			<div style="padding: 20px; font-family: Arial, 'Microsoft YaHei', sans-serif;">
-				<h1 style="font-size: 18px; margin-bottom: 20px; text-align: center;">小組討論階段逐字稿</h1>
-				
-				<div style="margin-bottom: 20px;">
-					<p><strong>Session:</strong> ${sessionTitle}</p>
-					<p><strong>小組:</strong> 第 ${group.number} 組</p>
-					<p><strong>成員數:</strong> ${group.participants.length} 人</p>
-					<p><strong>生成時間:</strong> ${new Date().toLocaleString('zh-TW')}</p>
-				</div>
+		const metaInfo = [
+			{ label: m.pdfGroup(), value: m.pdfGroupNumber({ number: group.number }) },
+			{
+				label: m.pdfMemberCount(),
+				value: m.pdfMemberCountValue({ count: group.participants.length })
+			}
+		];
 
-				<div style="margin-bottom: 20px;">
-					<h2 style="font-size: 16px; margin-bottom: 10px;">任務內容:</h2>
-					<p style="line-height: 1.6;">${session?.task || '無任務描述'}</p>
-				</div>
+		const discussionHTML =
+			(group.discussions || [])
+				.map((discussion) => {
+					const speaker = discussion.speaker || m.pdfUnknownSpeaker();
+					const content = discussion.content || '';
+					return createMessageHTML(speaker, content);
+				})
+				.join('') || `<p>${m.pdfNoDiscussionRecord()}</p>`;
 
-				<div>
-					<h2 style="font-size: 16px; margin-bottom: 10px;">討論內容:</h2>
-					${
-						(group.discussions || [])
-							.map((discussion) => {
-								const speaker = discussion.speaker || '未知發言者';
-								const content = discussion.content || '';
-								return `
-							<div style="margin-bottom: 15px; padding: 10px; border-left: 3px solid #ccc;">
-								<p style="margin: 0 0 5px 0; font-weight: bold; color: #333;">${speaker}:</p>
-								<p style="margin: 0; line-height: 1.6;">${content}</p>
-							</div>
-						`;
-							})
-							.join('') || '<p>無討論記錄</p>'
-					}
-				</div>
-			</div>
-		`;
+		const htmlContent = createTranscriptHTMLTemplate(
+			m.pdfGroupTranscriptTitle(),
+			sessionTitle,
+			metaInfo,
+			session?.task || m.pdfNoTaskDescription(),
+			m.pdfDiscussionContent(),
+			discussionHTML
+		);
 
 		return await createChinesePDF(htmlContent);
 	}
