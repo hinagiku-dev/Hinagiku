@@ -46,7 +46,6 @@
 		error = '';
 
 		const then = $page.url.searchParams.get('then') || '/dashboard';
-		const hasSessionParam = then.includes('session');
 		const sessionIdMatch = then.match(/\/session\/([^/?#]+)/);
 		const sessionId = sessionIdMatch ? sessionIdMatch[1] : '';
 		// Construct email from studentId and classCode and convert to lowercase
