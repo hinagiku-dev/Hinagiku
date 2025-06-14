@@ -67,7 +67,7 @@
 
 			if (response.ok) {
 				// Go to session page if sessionId is provided or to "/dashboard"
-				if (hasSessionParam && sessionId) {
+				if (sessionId) {
 					await goto(`/session/${sessionId}`);
 				} else {
 					await goto('/dashboard');
