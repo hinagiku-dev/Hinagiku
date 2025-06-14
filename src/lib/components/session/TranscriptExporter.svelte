@@ -115,22 +115,22 @@
 		const generatedTime = new Date().toLocaleString(locale);
 
 		return `
-			<div style="padding: 20px; font-family: Arial, 'Microsoft YaHei', sans-serif;">
-				<h1 style="font-size: 18px; margin-bottom: 20px; text-align: center;">${title}</h1>
+			<div class="transcript-container">
+				<h1 class="transcript-title">${title}</h1>
 				
-				<div style="margin-bottom: 20px;">
+				<div class="transcript-meta">
 					<p><strong>${m.pdfSession()}:</strong> ${sessionTitle}</p>
 					${metaInfoHTML}
 					<p><strong>${m.pdfGeneratedTime()}:</strong> ${generatedTime}</p>
 				</div>
 
-				<div style="margin-bottom: 20px;">
-					<h2 style="font-size: 16px; margin-bottom: 10px;">${m.pdfTaskContent()}:</h2>
-					<p style="line-height: 1.6;">${taskContent}</p>
+				<div class="transcript-task">
+					<h2 class="transcript-section-title">${m.pdfTaskContent()}:</h2>
+					<p class="transcript-task-content">${taskContent}</p>
 				</div>
 
-				<div>
-					<h2 style="font-size: 16px; margin-bottom: 10px;">${contentSectionTitle}:</h2>
+				<div class="transcript-content">
+					<h2 class="transcript-section-title">${contentSectionTitle}:</h2>
 					${contentHTML}
 				</div>
 			</div>
