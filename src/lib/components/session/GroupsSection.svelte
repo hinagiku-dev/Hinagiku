@@ -433,7 +433,7 @@
 				<div class="rounded border p-3 {UI_CLASSES.PANEL_BG} shadow-sm">
 					<div class="mb-2 flex items-center justify-between">
 						<div class="flex items-center gap-2">
-							{#if session?.status === 'ended'}
+							{#if $session?.status === 'ended'}
 								<input
 									type="checkbox"
 									class="rounded border-gray-300"
@@ -451,13 +451,13 @@
 							{/if}
 							<button
 								class="cursor-pointer text-sm font-semibold hover:text-primary-600"
-								onclick={() => session?.status !== 'ended' && handleGroupClick(group)}
+								onclick={() => $session?.status !== 'ended' && handleGroupClick(group)}
 								onkeydown={(e) =>
-									e.key === 'Enter' && session?.status !== 'ended' && handleGroupClick(group)}
+									e.key === 'Enter' && $session?.status !== 'ended' && handleGroupClick(group)}
 							>
 								{m.groupVocabulary()} #{group.number}
 							</button>
-							{#if session?.status !== 'ended'}
+							{#if $session?.status !== 'ended'}
 								<Tooltip>{m.openGroupChatHistory()}</Tooltip>
 							{/if}
 						</div>
@@ -476,11 +476,11 @@
 											<span
 												class="min-w-[60px] max-w-[60px] cursor-pointer truncate text-xs hover:text-primary-600"
 												onclick={() =>
-													session?.status !== 'ended' &&
+													$session?.status !== 'ended' &&
 													handleParticipantClick(group.id, participant)}
 												onkeydown={(e) =>
 													e.key === 'Enter' &&
-													session?.status !== 'ended' &&
+													$session?.status !== 'ended' &&
 													handleParticipantClick(group.id, participant)}
 												role="button"
 												tabindex="0"
@@ -489,7 +489,7 @@
 													<ResolveUsername id={participant} />
 												{/key}
 											</span>
-											{#if session?.status !== 'ended'}
+											{#if $session?.status !== 'ended'}
 												<Tooltip>{m.openChatHistory()}</Tooltip>
 											{/if}
 

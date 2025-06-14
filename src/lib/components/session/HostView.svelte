@@ -700,7 +700,7 @@
 			</div>
 		`;
 
-		return await createChinesePDF(htmlContent, `${userName}_個人階段逐字稿.pdf`);
+		return await createChinesePDF(htmlContent);
 	}
 
 	async function createGroupTranscriptPDF(
@@ -744,7 +744,7 @@
 			</div>
 		`;
 
-		return await createChinesePDF(htmlContent, `小組${group.number}_討論階段逐字稿.pdf`);
+		return await createChinesePDF(htmlContent);
 	}
 </script>
 
