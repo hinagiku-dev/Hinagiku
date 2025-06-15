@@ -22,7 +22,9 @@
 		allGroupParticipants,
 		unGroupedParticipantsNum,
 		groups,
-		participantProgress
+		participantProgress,
+		selectedGroups = new Set<string>(),
+		showExportOptions = false
 	} = $props();
 
 	// Define types
@@ -66,6 +68,10 @@
 				}>;
 			} | null;
 			conversation?: { data: Conversation; id: string } | null;
+		};
+		groupSelection: {
+			groupId: string;
+			selected: boolean;
 		};
 	}>();
 
@@ -431,14 +437,32 @@
 			{#each $groups.sort((a: GroupWithId, b: GroupWithId) => a.number - b.number) as group}
 				<div class="rounded border p-3 {UI_CLASSES.PANEL_BG} shadow-sm">
 					<div class="mb-2 flex items-center justify-between">
-						<button
-							class="cursor-pointer text-sm font-semibold hover:text-primary-600"
-							onclick={() => handleGroupClick(group)}
-							onkeydown={(e) => e.key === 'Enter' && handleGroupClick(group)}
-						>
-							{m.groupVocabulary()} #{group.number}
-						</button>
-						<Tooltip>{m.openGroupChatHistory()}</Tooltip>
+						<div class="flex items-center gap-2">
+							{#if $session?.status === 'ended' && showExportOptions}
+								<input
+									type="checkbox"
+									class="rounded border-gray-300"
+									checked={selectedGroups.has(group.id)}
+									onchange={(e) => {
+										dispatch('groupSelection', {
+											groupId: group.id,
+											selected: e.currentTarget.checked
+										});
+									}}
+								/>
+							{/if}
+							<button
+								class="cursor-pointer text-sm font-semibold hover:text-primary-600"
+								onclick={() => $session?.status !== 'ended' && handleGroupClick(group)}
+								onkeydown={(e) =>
+									e.key === 'Enter' && $session?.status !== 'ended' && handleGroupClick(group)}
+							>
+								{m.groupVocabulary()} #{group.number}
+							</button>
+							{#if $session?.status !== 'ended'}
+								<Tooltip>{m.openGroupChatHistory()}</Tooltip>
+							{/if}
+						</div>
 						<GroupStatus {group} showStatus={$session?.status === 'group'} />
 					</div>
 					{#if group.participants.length === 0}
@@ -453,9 +477,13 @@
 										<div class="flex flex-1 items-center gap-1.5">
 											<span
 												class="min-w-[60px] max-w-[60px] cursor-pointer truncate text-xs hover:text-primary-600"
-												onclick={() => handleParticipantClick(group.id, participant)}
+												onclick={() =>
+													$session?.status !== 'ended' &&
+													handleParticipantClick(group.id, participant)}
 												onkeydown={(e) =>
-													e.key === 'Enter' && handleParticipantClick(group.id, participant)}
+													e.key === 'Enter' &&
+													$session?.status !== 'ended' &&
+													handleParticipantClick(group.id, participant)}
 												role="button"
 												tabindex="0"
 											>
@@ -463,7 +491,9 @@
 													<ResolveUsername id={participant} />
 												{/key}
 											</span>
-											<Tooltip>{m.openChatHistory()}</Tooltip>
+											{#if $session?.status !== 'ended'}
+												<Tooltip>{m.openChatHistory()}</Tooltip>
+											{/if}
 
 											{#if participantProgress.has(participant)}
 												<div class="flex flex-1 items-center gap-1.5">

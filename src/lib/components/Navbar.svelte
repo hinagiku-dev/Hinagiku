@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Navbar, NavBrand, Avatar, Dropdown, DropdownItem, Button } from 'flowbite-svelte';
-	import { LogOut, User, Settings, LayoutDashboard, Globe } from 'lucide-svelte';
+	import { LogOut, User, Settings, LayoutDashboard, Globe, KeyRound } from 'lucide-svelte';
 	import { signOut, user } from '$lib/stores/auth';
 	import { profile } from '$lib/stores/profile';
 	import { onMount } from 'svelte';
@@ -131,6 +131,9 @@
 				</div>
 				<DropdownItem href="/profile" class="flex items-center">
 					<User class="mr-2 h-4 w-4" />{m.profile()}
+				</DropdownItem>
+				<DropdownItem href="/profile/change-password" class="flex items-center">
+					<KeyRound class="mr-2 h-4 w-4" />{m.changePassword()}
 				</DropdownItem>
 				<DropdownItem href="/setting" class="flex items-center">
 					<Settings class="mr-2 h-4 w-4" />{m.settings()}
