@@ -1,17 +1,38 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
-	import { Card, Button, Select, Alert, Spinner, Input, Label, Modal } from 'flowbite-svelte';
-	import { Users, Calendar, UserPlus, Info, X, Check, Trash2, Edit } from 'lucide-svelte';
+	import {
+		Card,
+		Button,
+		Select,
+		Alert,
+		Spinner,
+		Input,
+		Label,
+		Modal,
+		Checkbox
+	} from 'flowbite-svelte';
+	import {
+		Users,
+		Calendar,
+		UserPlus,
+		Info,
+		X,
+		Check,
+		Trash2,
+		Edit,
+		BarChart3
+	} from 'lucide-svelte';
 	import Title from '$lib/components/Title.svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import ResolveUsername from '$lib/components/ResolveUsername.svelte';
 	import QRCode from '$lib/components/QRCode.svelte';
+	import WordCloud from '$lib/components/session/WordCloud.svelte';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { user } from '$lib/stores/auth';
 	import { UI_CLASSES } from '$lib/config/ui';
-	import { writable, derived } from 'svelte/store';
+	import { writable, derived as derivedStore } from 'svelte/store';
 	import {
 		collection,
 		query,
@@ -27,10 +48,17 @@
 	import type { Session } from '$lib/schema/session';
 	import { notifications } from '$lib/stores/notifications';
 
+	// Origin for QR code generation
+	let origin = $derived(browser ? $page.url.origin : '');
+
 	// State variables using runes
 	let classes = $state<Array<{ id: string; data: Class }>>([]);
 	let selectedClassId = $state<string | null>(null);
 	let selectedClass = $state<Class | null>(null);
+
+	// All sessions state
+	let allSessions = $state<Array<{ id: string; data: Session }>>([]);
+	let isLoadingAllSessions = $state(false);
 
 	// Loading states
 	let isLoadingClasses = $state(false);
@@ -61,7 +89,14 @@
 	let selectedLabels = writable<string[]>([]);
 	let classSessionsStore = writable<Array<[string, Session]>>([]);
 
-	let filteredClassSessions = derived(
+	// Session title filtering - using runes
+	let selectedTitles = $state<string[]>([]);
+
+	// Word cloud data
+	let keywordData = $state<Record<string, number>>({});
+	let isLoadingKeywords = $state(false);
+
+	let filteredClassSessions = derivedStore(
 		[classSessionsStore, selectedLabels],
 		([$classSessionsStore, $selectedLabels]) => {
 			if (!$classSessionsStore || $selectedLabels.length === 0) return $classSessionsStore;
@@ -71,13 +106,74 @@
 		}
 	);
 
-	let availableLabels = derived(classSessionsStore, ($classSessionsStore) => {
+	let availableLabels = derivedStore(classSessionsStore, ($classSessionsStore) => {
 		if (!$classSessionsStore) return [];
 		const labels = new Set<string>();
 		$classSessionsStore.forEach(([, session]) => {
 			session.labels?.forEach((label) => labels.add(label));
 		});
 		return Array.from(labels).sort();
+	});
+
+	// Group all sessions by title - using runes
+	let sessionsByTitle = $derived(() => {
+		if (!allSessions || allSessions.length === 0) return {};
+
+		// Only show sessions for selected titles
+		if (selectedTitles.length === 0) return {};
+
+		const sessionsToGroup = allSessions.filter((session) =>
+			selectedTitles.includes(session.data.title)
+		);
+
+		const grouped: Record<string, Array<{ id: string; data: Session }>> = {};
+
+		sessionsToGroup.forEach((session) => {
+			const title = session.data.title;
+			if (!grouped[title]) {
+				grouped[title] = [];
+			}
+			grouped[title].push(session);
+		});
+
+		// Sort sessions within each group by creation date (descending)
+		Object.keys(grouped).forEach((title) => {
+			grouped[title].sort((a, b) => {
+				const aTime = (a.data.createdAt as Timestamp).toMillis();
+				const bTime = (b.data.createdAt as Timestamp).toMillis();
+				return bTime - aTime;
+			});
+		});
+
+		return grouped;
+	});
+
+	let availableTitles = $derived(() => {
+		console.log('Computing availableTitles, allSessions length:', allSessions?.length);
+		if (!allSessions || allSessions.length === 0) return [];
+		const titles = new Set<string>();
+		allSessions.forEach((session) => {
+			titles.add(session.data.title);
+		});
+		const result = Array.from(titles).sort();
+		console.log('Available titles:', result);
+		return result;
+	});
+
+	// Effect to debug session title selection
+	$effect(() => {
+		console.log('Selected titles changed:', selectedTitles);
+		console.log('Available titles:', availableTitles);
+		console.log('All sessions count:', allSessions?.length);
+	});
+
+	// Effect to load keyword data when selected titles change
+	$effect(() => {
+		if (selectedTitles.length > 0) {
+			loadKeywordData();
+		} else {
+			keywordData = {};
+		}
 	});
 
 	function handleLabelSelect(label: string) {
@@ -87,6 +183,22 @@
 			}
 			return [...labels, label].sort();
 		});
+	}
+
+	function handleTitleSelect(title: string) {
+		if (selectedTitles.includes(title)) {
+			selectedTitles = selectedTitles.filter((t) => t !== title);
+		} else {
+			selectedTitles = [...selectedTitles, title].sort();
+		}
+	}
+
+	function selectAllTitles() {
+		selectedTitles = [...availableTitles()];
+	}
+
+	function deselectAllTitles() {
+		selectedTitles = [];
 	}
 
 	// Reactive effect
@@ -101,6 +213,7 @@
 	$effect(() => {
 		if ($user && browser && !hasInitialized && !isLoadingClasses) {
 			loadClasses();
+			loadAllSessions();
 		}
 	});
 
@@ -160,6 +273,91 @@
 		} finally {
 			isLoadingClasses = false;
 			hasInitialized = true;
+		}
+	}
+
+	// Load all sessions created by the user (only those with classId)
+	async function loadAllSessions() {
+		if (!$user || !browser) return;
+
+		try {
+			isLoadingAllSessions = true;
+			console.log('Loading all sessions for user:', $user.uid);
+
+			const sessionsQuery = query(
+				collection(db, 'sessions'),
+				where('host', '==', $user.uid),
+				where('classId', '!=', null),
+				orderBy('classId'),
+				orderBy('createdAt', 'desc')
+			);
+
+			const snapshot = await getDocs(sessionsQuery);
+			const sessionsData = snapshot.docs.map((doc) => ({
+				id: doc.id,
+				data: doc.data() as Session
+			}));
+
+			console.log('Loaded sessions:', sessionsData.length, sessionsData);
+			allSessions = sessionsData;
+		} catch (error) {
+			console.error('Error loading all sessions:', error);
+			notifications.error(m.loadingAllSessions());
+		} finally {
+			isLoadingAllSessions = false;
+		}
+	}
+
+	// Load keyword data from selected sessions
+	async function loadKeywordData() {
+		if (!browser || selectedTitles.length === 0) {
+			keywordData = {};
+			return;
+		}
+
+		try {
+			isLoadingKeywords = true;
+
+			// Get session IDs for selected titles
+			const selectedSessionIds = allSessions
+				.filter((session) => selectedTitles.includes(session.data.title))
+				.map((session) => session.id);
+
+			if (selectedSessionIds.length === 0) {
+				keywordData = {};
+				return;
+			}
+
+			// Fetch keyword data for each selected session
+			const keywordPromises = selectedSessionIds.map(async (sessionId) => {
+				try {
+					const response = await fetch(`/api/session/${sessionId}/conversations/keywords`);
+					if (response.ok) {
+						return await response.json();
+					}
+					return {};
+				} catch (error) {
+					console.error(`Error loading keywords for session ${sessionId}:`, error);
+					return {};
+				}
+			});
+
+			const keywordResults = await Promise.all(keywordPromises);
+
+			// Merge all keyword data
+			const mergedKeywords: Record<string, number> = {};
+			keywordResults.forEach((keywords) => {
+				Object.entries(keywords).forEach(([word, count]) => {
+					mergedKeywords[word] = (mergedKeywords[word] || 0) + (count as number);
+				});
+			});
+
+			keywordData = mergedKeywords;
+		} catch (error) {
+			console.error('Error loading keyword data:', error);
+			notifications.error('載入關鍵字數據失敗');
+		} finally {
+			isLoadingKeywords = false;
 		}
 	}
 
@@ -730,6 +928,56 @@
 				{/if}
 			</Card>
 
+			<!-- Session Title Filter -->
+			<Card padding="lg" class="w-full !max-w-none">
+				<div class="mb-4">
+					<div class="mb-3 flex items-center gap-3">
+						<div class="rounded-full bg-primary-100 p-2">
+							<BarChart3 size={20} class="text-primary-600" />
+						</div>
+						<h2 class="text-lg font-semibold text-gray-900">{m.sessionFilter()}</h2>
+					</div>
+					<p class="mb-4 text-sm text-gray-600">{m.sessionTitleFilter()}</p>
+				</div>
+
+				{#if isLoadingAllSessions}
+					<div class="flex justify-center">
+						<Spinner size="6" />
+					</div>
+				{:else if availableTitles().length > 0}
+					<!-- Select All / Deselect All buttons -->
+					<div class="mb-4 flex gap-2">
+						<Button size="xs" color="primary" outline on:click={selectAllTitles}>
+							{m.selectAll()}
+						</Button>
+						<Button size="xs" color="alternative" outline on:click={deselectAllTitles}>
+							{m.deselectAll()}
+						</Button>
+					</div>
+
+					<!-- Title checkboxes -->
+					<div class="max-h-64 space-y-2 overflow-y-auto">
+						{#each availableTitles() as title}
+							<label class="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-gray-50">
+								<Checkbox
+									checked={selectedTitles.includes(title)}
+									on:change={() => handleTitleSelect(title)}
+									color="primary"
+								/>
+								<span class="text-sm">{title}</span>
+								<span class="ml-auto text-xs text-gray-500">
+									({allSessions.filter((s) => s.data.title === title).length})
+								</span>
+							</label>
+						{/each}
+					</div>
+				{:else}
+					<div class="py-4 text-center text-gray-500">
+						{m.noSessions()}
+					</div>
+				{/if}
+			</Card>
+
 			<!-- Class Information -->
 			{#if selectedClassId && selectedClass}
 				<Card padding="lg" class="w-full !max-w-none">
@@ -895,16 +1143,158 @@
 					</Card>
 				</div>
 			{:else}
-				<div class="flex h-64 w-full items-center justify-center">
-					<div class="text-center">
-						<div class="mb-4 inline-flex rounded-full bg-gray-100 p-6">
-							<Users size={48} class="text-gray-400" />
+				<!-- Analytics Panel when no class is selected -->
+				<div class="w-full space-y-6">
+					<Card padding="lg" class="w-full !max-w-none">
+						<div class="mb-4">
+							<div class="mb-3 flex items-center gap-3">
+								<div class="rounded-full bg-primary-100 p-2">
+									<BarChart3 size={20} class="text-primary-600" />
+								</div>
+								<h3 class="text-lg font-semibold text-gray-900">{m.sessionAnalysis()}</h3>
+							</div>
+							<p class="text-sm text-gray-600">{m.analyticsPanel()}</p>
 						</div>
-						<p class="text-lg font-medium text-gray-900">{m.selectClass()}</p>
-						<p class="text-gray-600">
-							{m.chooseClassToViewSessions()}
-						</p>
-					</div>
+
+						<!-- Statistics Summary -->
+						<div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+							<div class="rounded-lg bg-blue-50 p-4">
+								<div class="flex items-center">
+									<div class="rounded-full bg-blue-100 p-2">
+										<Calendar size={20} class="text-blue-600" />
+									</div>
+									<div class="ml-3">
+										<p class="text-sm font-medium text-blue-900">{m.totalSessions()}</p>
+										<p class="text-2xl font-bold text-blue-600">{allSessions.length}</p>
+									</div>
+								</div>
+							</div>
+							<div class="rounded-lg bg-green-50 p-4">
+								<div class="flex items-center">
+									<div class="rounded-full bg-green-100 p-2">
+										<Check size={20} class="text-green-600" />
+									</div>
+									<div class="ml-3">
+										<p class="text-sm font-medium text-green-900">{m.selectedSessions()}</p>
+										<p class="text-2xl font-bold text-green-600">
+											{Object.values(sessionsByTitle()).reduce(
+												(total: number, sessions: Array<{ id: string; data: Session }>) =>
+													total + sessions.length,
+												0
+											)}
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Sessions by Title -->
+						{#if Object.keys(sessionsByTitle()).length > 0}
+							<div class="mb-4">
+								<h4 class="mb-3 font-semibold text-gray-900">{m.sessionsByTitle()}</h4>
+
+								<!-- Word Cloud Section -->
+								<div class="mb-6">
+									<h5 class="mb-3 font-medium text-gray-700">{m.keywordWordCloud()}</h5>
+									<div class="rounded-lg border bg-gray-50 p-4">
+										{#if isLoadingKeywords}
+											<div class="flex h-64 items-center justify-center">
+												<Spinner size="8" />
+												<p class="ml-2 text-gray-600">{m.loadingKeywords()}</p>
+											</div>
+										{:else if Object.keys(keywordData).length > 0}
+											<div class="h-64">
+												<WordCloud words={keywordData} />
+											</div>
+										{:else}
+											<div class="flex h-64 items-center justify-center text-gray-500">
+												<p>{m.noKeywordData()}</p>
+											</div>
+										{/if}
+									</div>
+								</div>
+
+								<div class="space-y-4">
+									{#each Object.entries(sessionsByTitle()) as [title, sessions]}
+										{@const typedSessions = sessions as Array<{ id: string; data: Session }>}
+										<Card class="!max-w-none">
+											<div class="mb-3 flex items-center justify-between">
+												<h5 class="font-medium text-gray-900">{title}</h5>
+												<span
+													class="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium text-primary-600"
+												>
+													{typedSessions.length}
+													{typedSessions.length === 1 ? 'session' : 'sessions'}
+												</span>
+											</div>
+											<div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+												{#each typedSessions.slice(0, 3) as session}
+													<div class="rounded border p-3 text-sm {UI_CLASSES.PANEL_BG} shadow-sm">
+														<div class="mb-1 flex items-center justify-between">
+															<span class="font-medium"
+																>{session.data.task.substring(0, 30)}{session.data.task.length > 30
+																	? '...'
+																	: ''}</span
+															>
+															<span class="text-xs text-gray-500">
+																{(session.data.createdAt as Timestamp)
+																	.toDate()
+																	.toLocaleDateString()}
+															</span>
+														</div>
+														<div class="flex items-center gap-2">
+															<span
+																class="rounded px-1.5 py-0.5 text-xs {session.data.status ===
+																'ended'
+																	? 'bg-gray-100 text-gray-600'
+																	: session.data.status === 'group'
+																		? 'bg-green-100 text-green-600'
+																		: 'bg-blue-100 text-blue-600'}"
+															>
+																{session.data.status}
+															</span>
+															{#if session.data.labels?.length > 0}
+																<div class="flex gap-1">
+																	{#each session.data.labels.slice(0, 2) as label}
+																		<span
+																			class="rounded-full bg-primary-100 px-1.5 py-0.5 text-xs text-primary-600"
+																		>
+																			{label}
+																		</span>
+																	{/each}
+																</div>
+															{/if}
+														</div>
+													</div>
+												{/each}
+												{#if typedSessions.length > 3}
+													<div
+														class="flex items-center justify-center rounded border-2 border-dashed border-gray-300 p-3 text-sm text-gray-500"
+													>
+														+{typedSessions.length - 3} more sessions
+													</div>
+												{/if}
+											</div>
+										</Card>
+									{/each}
+								</div>
+							</div>
+						{:else}
+							<div class="py-8 text-center">
+								<div class="mb-4 inline-flex rounded-full bg-gray-100 p-4">
+									<BarChart3 size={32} class="text-gray-400" />
+								</div>
+								<p class="mb-2 text-lg font-medium text-gray-900">{m.chartArea()}</p>
+								<p class="mb-4 text-gray-600">{m.comingSoon()}</p>
+								{#if availableTitles().length > 0}
+									<p class="text-sm text-gray-500">
+										{m.selectAll()}
+										{m.sessionTitleFilter().toLowerCase()}
+									</p>
+								{/if}
+							</div>
+						{/if}
+					</Card>
 				</div>
 			{/if}
 		</div>

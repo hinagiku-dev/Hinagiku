@@ -540,5 +540,21 @@
 	"keywordsLoadFailed": "Failed to load keywords data",
 	"alreadyEnded": "Already ended",
 	"stageChangeFailed": "Failed to change stage",
-	"failedDelete": "Failed to delete"
+	"failedDelete": "Failed to delete",
+	"allSessions": "All Sessions",
+	"sessionFilter": "Session Filter",
+	"selectAll": "Select All",
+	"deselectAll": "Deselect All",
+	"sessionTitleFilter": "Filter by Session Title",
+	"sessionAnalysis": "Session Analysis",
+	"analyticsPanel": "Analytics Panel",
+	"totalSessions": "Total Sessions",
+	"selectedSessions": "Selected Sessions",
+	"chartArea": "Chart Area",
+	"comingSoon": "Coming Soon",
+	"sessionsByTitle": "Sessions by Title",
+	"loadingAllSessions": "Loading all sessions...",
+	"keywordWordCloud": "Keyword Word Cloud",
+	"loadingKeywords": "Loading keywords...",
+	"noKeywordData": "No keyword data available"
 }
