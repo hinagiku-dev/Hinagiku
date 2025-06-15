@@ -201,6 +201,25 @@
 		selectedTitles = [];
 	}
 
+	// Convert between empty string and null for selectedClassId to work with Select component
+	let selectValue = $state<string>('');
+
+	$effect(() => {
+		if (selectedClassId === null) {
+			selectValue = '';
+		} else {
+			selectValue = selectedClassId;
+		}
+	});
+
+	$effect(() => {
+		if (selectValue === '') {
+			selectedClassId = null;
+		} else {
+			selectedClassId = selectValue;
+		}
+	});
+
 	// Reactive effect
 	$effect(() => {
 		if (selectedClassId) {
@@ -218,9 +237,15 @@
 		}
 	});
 
-	// Effect to handle URL parameter for pre-selecting class
+	// Effect to handle URL parameter for pre-selecting class (only on initial load)
 	$effect(() => {
-		if (browser && classes.length > 0 && !selectedClassId) {
+		if (
+			browser &&
+			classes.length > 0 &&
+			!selectedClassId &&
+			hasInitialized &&
+			!$page.url.searchParams.has('manualSelection')
+		) {
 			const urlClassId = $page.url.searchParams.get('classId');
 			if (urlClassId && classes.some((c) => c.id === urlClassId)) {
 				selectedClassId = urlClassId;
@@ -234,12 +259,17 @@
 			const currentUrl = new URL($page.url);
 			if (currentUrl.searchParams.get('classId') !== selectedClassId) {
 				currentUrl.searchParams.set('classId', selectedClassId);
+				currentUrl.searchParams.set('manualSelection', 'true');
 				goto(currentUrl.toString(), { replaceState: true });
 			}
 		} else if (browser && selectedClassId === null && hasInitialized) {
 			const currentUrl = new URL($page.url);
-			if (currentUrl.searchParams.has('classId')) {
+			if (
+				currentUrl.searchParams.has('classId') ||
+				currentUrl.searchParams.has('manualSelection')
+			) {
 				currentUrl.searchParams.delete('classId');
+				currentUrl.searchParams.delete('manualSelection');
 				goto(currentUrl.toString(), { replaceState: true });
 			}
 		}
@@ -725,11 +755,11 @@
 					<div class="text-center text-gray-500">{m.initializing()}</div>
 				{:else if classes.length > 0}
 					<Select
-						bind:value={selectedClassId}
+						bind:value={selectValue}
 						placeholder="{m.chooseClassToManage()}..."
 						class="w-full"
 					>
-						<option value={null}>{m.selectClass()}</option>
+						<option value="">{m.allClasses()}</option>
 						{#each classes as classItem}
 							{#if classItem.data.active_status === 'active'}
 								<option value={classItem.id}>
@@ -738,7 +768,7 @@
 								</option>
 							{/if}
 						{/each}
-						<option disabled value={null} style="color: gray;">
+						<option disabled value="" style="color: gray;">
 							--- {m.archived()} ---
 						</option>
 						{#each classes as classItem}
