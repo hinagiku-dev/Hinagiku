@@ -1,6 +1,6 @@
 import { i18n } from '$lib/i18n';
 import { adminAuth } from '$lib/server/firebase';
-import type { Handle } from '@sveltejs/kit';
+import { type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
 const authHandle: Handle = async ({ event, resolve }) => {
@@ -13,12 +13,33 @@ const authHandle: Handle = async ({ event, resolve }) => {
 		try {
 			// Verify the session cookie and get the user's ID token
 			const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+			if (decodedClaims.requiresPasswordChange) {
+				if (
+					!event.url.pathname.startsWith('/api') &&
+					!event.url.pathname.startsWith('/profile/change-password') &&
+					!event.url.pathname.startsWith('/en/profile/change-password') &&
+					!event.url.pathname.startsWith('/zh/profile/change-password')
+				) {
+					const url = new URL(event.url);
+					url.pathname = '/profile/change-password';
+					return Response.redirect(url, 302);
+				}
+			}
+
 			event.locals.user = decodedClaims;
 		} catch (error) {
 			console.log(error);
 			// Session cookie is invalid/expired
 			event.locals.user = null;
+			// see https://github.com/sveltejs/kit/discussions/7869
 			event.cookies.delete('session', { path: '/' });
+			return new Response(null, {
+				status: 300,
+				headers: {
+					location: `${event.url.origin}/login`,
+					'set-cookie': `session=; Path=/; Expires=${new Date(0)}`
+				}
+			});
 		}
 	}
 
