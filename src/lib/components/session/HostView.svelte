@@ -35,13 +35,15 @@
 	import MostActiveGroups from './MostActiveGroups.svelte';
 	import LabelManager from './LabelManager.svelte';
 	import ResolveUsername from '../ResolveUsername.svelte';
+	import TranscriptExporter from './TranscriptExporter.svelte';
 	import * as m from '$lib/paraglide/messages.js';
-	import { Input } from 'flowbite-svelte';
+	import { Input, Toggle } from 'flowbite-svelte';
 	import { announcement } from '$lib/stores/announcement';
 	import { UI_CLASSES } from '$lib/config/ui';
 
 	let { session }: { session: Readable<Session> } = $props();
 	let code = $state('');
+	let showExportOptions = $state(false);
 	type GroupWithId = Group & {
 		id: string;
 		updatedAt: Timestamp | undefined;
@@ -58,6 +60,8 @@
 		};
 	};
 	let participantProgress = $state(new SvelteMap<string, ParticipantProgress>());
+	let conversationsMap = $state(new SvelteMap<string, Conversation>());
+	let groupsMap = $state(new SvelteMap<string, GroupWithId>());
 	let showChatHistory = $state(false);
 	let selectedParticipant = $state<{
 		displayName: string;
@@ -84,6 +88,9 @@
 	} | null>(null);
 	let conversationsData = $state<Array<Conversation>>([]);
 	let keywordData = $state<Record<string, number>>({});
+
+	let selectedParticipants = $state<Set<string>>(new Set());
+	let selectedGroups = $state<Set<string>>(new Set());
 
 	let current_waitlist: string[] = $state([]);
 	session.subscribe((value) => {
@@ -147,6 +154,11 @@
 						(doc) => ({ id: doc.id, ...doc.data() }) as GroupWithId
 					);
 					groups.set(groupsData);
+
+					groupsData.forEach((group) => {
+						groupsMap.set(group.id, group);
+					});
+
 					console.log($groups);
 
 					const allParticipants = new Set<string>();
@@ -207,6 +219,8 @@
 											offTopic: conv.warning.offTopic
 										}
 									});
+
+									conversationsMap.set(conv.userId, conv);
 								}
 							});
 							unsubscribes.push(unsubscribe);
@@ -233,7 +247,7 @@
 		});
 		if (!response.ok) {
 			const data = await response.json();
-			notifications.error(data.error || '無法生成代碼');
+			notifications.error(data.error || m.codeGenerationFailed());
 			return '';
 		}
 		const data = await response.json();
@@ -258,7 +272,6 @@
 
 	async function handleStartSession() {
 		try {
-			// 為每個小組的個參與者創建對話
 			const responses = await Promise.all(
 				$groups.map((group) =>
 					fetch(`/api/session/${$page.params.id}/group/${group.id}/conversations`, {
@@ -274,7 +287,7 @@
 			const failedResponse = responses.find((response) => !response.ok);
 			if (failedResponse) {
 				const data = await failedResponse.json();
-				notifications.error(data.error || '無法為部分小組的參與者創建對話');
+				notifications.error(data.error || m.conversationCreationFailed());
 				return;
 			}
 
@@ -288,14 +301,14 @@
 
 			if (!statusResponse.ok) {
 				const data = await statusResponse.json();
-				notifications.error(data.error || '無法開始個人階段');
+				notifications.error(data.error || m.personalStageStartFailed());
 				return;
 			}
 
-			notifications.success('成功開始個人階段', 3000);
+			notifications.success(m.personalStageStarted(), 3000);
 		} catch (error) {
 			console.error('無法開始個人階段:', error);
-			notifications.error('無法開始個人階段');
+			notifications.error(m.personalStageStartFailed());
 		}
 	}
 
@@ -378,7 +391,7 @@
 		ended: {
 			text: m.sessionEnded(),
 			action: () => {
-				notifications.error('Already Ended', 3000);
+				notifications.error(m.alreadyEnded(), 3000);
 			},
 			show: false
 		}
@@ -427,7 +440,7 @@
 			conversationsData = await response.json();
 		} catch (error) {
 			console.error('無法載入對話資料:', error);
-			notifications.error('無法載入對話資料');
+			notifications.error(m.conversationLoadFailed());
 		}
 	}
 
@@ -444,7 +457,7 @@
 			keywordData = await response.json();
 		} catch (error) {
 			console.error('無法載入關鍵字資料:', error);
-			notifications.error('無法載入關鍵字資料');
+			notifications.error(m.keywordsLoadFailed());
 		}
 	}
 
@@ -518,13 +531,18 @@
 		}
 	}
 
+	function handleSelectionChange(participants: Set<string>, groups: Set<string>) {
+		selectedParticipants = participants;
+		selectedGroups = groups;
+	}
+
 	let showDeleteModal = writable(false);
 
 	async function handleDeleteModal() {
 		$showDeleteModal = !$showDeleteModal;
 	}
 
-	async function confirmDeleteDisscussion() {
+	async function confirmDeleteDiscussion() {
 		try {
 			const response = await fetch(`/api/session/${$page.params.id}/action/delete`, {
 				method: 'POST'
@@ -670,14 +688,32 @@
 					<h3 class="mb-3 text-lg font-semibold">
 						{m.currentParticipants()} ({current_waitlist?.length || 0})
 					</h3>
-					{#if className}
-						<span class="text-sm text-gray-500">{m.Class()} : {className}</span>
-					{/if}
+					<div class="flex items-center gap-3">
+						{#if className}
+							<span class="text-sm text-gray-500">{m.Class()} : {className}</span>
+						{/if}
+					</div>
 				</div>
 				<div class="flex flex-wrap gap-2">
 					{#if current_waitlist && current_waitlist.length > 0}
 						{#each current_waitlist as participantId}
 							<div class="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1">
+								{#if $session?.status === 'ended' && showExportOptions}
+									<input
+										type="checkbox"
+										class="rounded border-gray-300"
+										checked={selectedParticipants.has(participantId)}
+										onchange={(e) => {
+											if (e.currentTarget.checked) {
+												selectedParticipants = new Set([...selectedParticipants, participantId]);
+											} else {
+												const newSet = new Set(selectedParticipants);
+												newSet.delete(participantId);
+												selectedParticipants = newSet;
+											}
+										}}
+									/>
+								{/if}
 								<span class="h-2 w-2 rounded-full bg-green-500"></span>
 								<span class="text-sm">
 									{#key participantId}
@@ -700,6 +736,8 @@
 				{unGroupedParticipantsNum}
 				{groups}
 				{participantProgress}
+				{selectedGroups}
+				{showExportOptions}
 				on:open={(event) => {
 					if (event.detail.group) {
 						selectedGroup = event.detail.group;
@@ -710,7 +748,42 @@
 						showChatHistory = true;
 					}
 				}}
+				on:groupSelection={(event) => {
+					if (event.detail.selected) {
+						selectedGroups = new Set([...selectedGroups, event.detail.groupId]);
+					} else {
+						const newSet = new Set(selectedGroups);
+						newSet.delete(event.detail.groupId);
+						selectedGroups = newSet;
+					}
+				}}
 			/>
+
+			<!-- Export Options Section -->
+			{#if $session?.status === 'ended'}
+				<div class="mt-6 space-y-3">
+					<!-- Export Toggle -->
+					<div class="flex items-center gap-2">
+						<Toggle bind:checked={showExportOptions} size="small" />
+						<span class="text-sm font-medium text-gray-700">
+							{showExportOptions ? m.hideExportOptions() : m.showExportOptions()}
+						</span>
+					</div>
+
+					<!-- Export Options (conditionally shown) -->
+					{#if showExportOptions}
+						<TranscriptExporter
+							session={$session}
+							{selectedParticipants}
+							{selectedGroups}
+							{conversationsMap}
+							{groupsMap}
+							{participantProgress}
+							onSelectionChange={handleSelectionChange}
+						/>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 		<!-- Task Section -->
@@ -782,7 +855,7 @@
 			{m.deleteBatchSessionConfirmation()}
 		</h3>
 		<div class="flex justify-center gap-4">
-			<Button color="red" on:click={confirmDeleteDisscussion}>{m.deleteSession()}</Button>
+			<Button color="red" on:click={confirmDeleteDiscussion}>{m.deleteSession()}</Button>
 			<Button color="alternative" on:click={() => ($showDeleteModal = false)}>{m.noCancel()}</Button
 			>
 		</div>
