@@ -212,8 +212,9 @@
 	// Effect to load classes when user is available
 	$effect(() => {
 		if ($user && browser && !hasInitialized && !isLoadingClasses) {
-			loadClasses();
-			loadAllSessions();
+			loadClasses().then(() => {
+				loadAllSessions();
+			});
 		}
 	});
 
@@ -284,11 +285,23 @@
 			isLoadingAllSessions = true;
 			console.log('Loading all sessions for user:', $user.uid);
 
+			const activeClassIds = classes
+				.filter((cls) => cls.data.active_status !== 'archived')
+				.map((cls) => cls.id);
+
+			// If no active classes, return empty array
+			if (activeClassIds.length === 0) {
+				console.log('No active classes found, skipping session loading');
+				allSessions = [];
+				return;
+			}
+
 			const sessionsQuery = query(
 				collection(db, 'sessions'),
 				where('host', '==', $user.uid),
-				where('classId', '!=', null),
-				orderBy('classId'),
+				where('classId', 'in', activeClassIds),
+				where('status', '==', 'ended'),
+				where('active_status', '!=', 'archived'),
 				orderBy('createdAt', 'desc')
 			);
 
