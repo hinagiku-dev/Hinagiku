@@ -123,6 +123,10 @@
 	let resetPasswordValue = $state<string>('');
 	let showPassword = $state<boolean>(false);
 
+	// Group editing state - track confirmation and group input
+	let editingGroupId = $state<string | null>(null);
+	let groupValue = $state<string>('');
+
 	function confirmReset(studentId: string) {
 		confirmingResetId = studentId;
 		resetPasswordValue = studentId; // Default to student ID
@@ -137,6 +141,81 @@
 
 	function togglePasswordVisibility() {
 		showPassword = !showPassword;
+	}
+
+	// Group editing functions
+	function editGroup(studentId: string, currentGroup: string | null) {
+		editingGroupId = studentId;
+		groupValue = currentGroup || '';
+	}
+
+	function cancelGroupEdit() {
+		editingGroupId = null;
+		groupValue = '';
+	}
+
+	// Validate group value - must be a number >= 1
+	function isValidGroup(value: string): boolean {
+		const num = parseInt(value.trim());
+		return !isNaN(num) && num >= 1;
+	}
+
+	// Update group - call API with new group
+	async function updateGroup(studentId: string) {
+		if (!groupValue.trim() || !isValidGroup(groupValue)) {
+			notifications.error(m.groupMustBeNumber());
+			return;
+		}
+
+		// Find the student's UID from the students array
+		const studentUid = students.find((uid) => {
+			const student = student_list.find((s) => s.studentId === studentId);
+			return student && students.includes(uid);
+		});
+
+		if (!studentUid) {
+			notifications.error('Student UID not found');
+			return;
+		}
+
+		try {
+			const res = await fetch('/api/auth/update-group', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					classId: classId,
+					studentId: studentUid,
+					groupsData: student_list.map((student) => ({
+						displayName: student.displayName,
+						studentId: student.studentId,
+						seatNumber: student.seatNumber,
+						group: student.studentId === studentId ? groupValue.trim() : student.group
+					}))
+				})
+			});
+
+			if (res.ok) {
+				const data = await res.json();
+				console.log('Update group response:', data);
+
+				// Update the local student list
+				student_list = student_list.map((student) =>
+					student.studentId === studentId ? { ...student, group: groupValue.trim() } : student
+				);
+
+				notifications.success(`${studentId} ${m.classUpdateGroupSuccess()}`);
+			} else {
+				const errorData = await res.json();
+				console.error('Update group error:', errorData);
+				notifications.error(`${studentId} ${m.classUpdateGroupFailed()}`);
+			}
+		} catch (e) {
+			console.error(e);
+			notifications.error('Error updating group');
+		} finally {
+			editingGroupId = null;
+			groupValue = '';
+		}
 	}
 
 	// Reset password - call API with custom password
@@ -304,46 +383,89 @@
 			// Extract student data directly from parsed rows and validate with StudentSchema
 			const newStudentList: Student[] = [];
 			const validationErrors: string[] = [];
+			const seenStudentIds = new Set<string>();
+			const seenSeatNumbers = new Set<string>();
+			let hasDuplicates = false;
 
+			// First pass: Check for duplicates and required fields
+			for (let idx = 0; idx < rows.length; idx++) {
+				const row = rows[idx];
+
+				// Check if all required fields have data
+				const displayName = String(row[requiredFields[0].index] || '').trim();
+				const studentIdValue = String(row[requiredFields[2].index] || '').trim();
+				const seatNumberValue = String(row[requiredFields[1].index] || '').trim();
+				const groupValue = String(row[requiredFields[3].index] || '').trim();
+
+				// Validate required fields are not empty
+				if (!displayName || !studentIdValue || !seatNumberValue || !groupValue) {
+					validationErrors.push(
+						`Row ${idx + 2}: All fields (name, student ID, seat number, group) are required and cannot be empty`
+					);
+					continue;
+				}
+
+				// Check if student ID length is >= 6
+				if (studentIdValue.length < 6) {
+					validationErrors.push(
+						`Row ${idx + 2}: Student ID "${studentIdValue}" ${m.classImportStudentsIDLength()}`
+					);
+					continue;
+				}
+
+				// Check for duplicate student ID
+				if (seenStudentIds.has(studentIdValue)) {
+					validationErrors.push(`Duplicate student ID "${studentIdValue}" found at row ${idx + 2}`);
+					hasDuplicates = true;
+				} else {
+					seenStudentIds.add(studentIdValue);
+				}
+
+				// Check for duplicate seat number
+				if (seenSeatNumbers.has(seatNumberValue)) {
+					validationErrors.push(
+						`Duplicate seat number "${seatNumberValue}" found at row ${idx + 2}`
+					);
+					hasDuplicates = true;
+				} else {
+					seenSeatNumbers.add(seatNumberValue);
+				}
+			}
+
+			// If there are any validation errors or duplicates, reject the entire file
+			if (validationErrors.length > 0 || hasDuplicates) {
+				throw new Error('File contains duplicate or invalid data');
+			}
+
+			// Second pass: Process valid data only if no duplicates found
 			for (let idx = 0; idx < rows.length; idx++) {
 				const row = rows[idx];
 				try {
-					// Get student ID and validate length
+					const displayName = String(row[requiredFields[0].index] || '').trim();
 					const studentIdValue = String(row[requiredFields[2].index] || '').trim();
-
-					// Check if student ID length is >= 6
-					if (studentIdValue.length < 6) {
-						validationErrors.push(`${studentIdValue}" ${m.classImportStudentsIDLength()}`);
-						continue;
-					}
+					const seatNumberValue = String(row[requiredFields[1].index] || '').trim();
+					const groupValue = String(row[requiredFields[3].index] || '').trim();
 
 					// Create a student object according to schema
 					const studentData = {
-						displayName: String(row[requiredFields[0].index] || '').trim(),
+						displayName: displayName,
 						studentId: studentIdValue,
-						seatNumber: String(row[requiredFields[1].index] || '').trim() || null,
-						group: String(row[requiredFields[3].index] || '').trim() || null
+						seatNumber: seatNumberValue,
+						group: groupValue
 					};
 
 					// Validate with Zod schema
 					const validatedStudent = StudentSchema.parse(studentData);
 
-					// Add directly to the list without custom id
+					// Add directly to the list
 					newStudentList.push(validatedStudent);
 				} catch (validationError) {
 					console.error(`Row ${idx + 2} validation failed:`, validationError);
-					validationErrors.push(`${idx + 2} ${m.classImportDataformatErrorbyRow()}`);
-					// Continue with next row
+					// This shouldn't happen if first pass worked correctly
 				}
 			}
 
-			// Show validation errors if any
-			if (validationErrors.length > 0) {
-				const errorMessage = `${m.classImportDataformatError()} \n${validationErrors.join('\n')}`;
-				notifications.error(errorMessage);
-			}
-
-			// Update student list immediately without waiting for server
+			// Update student list only if all validations passed
 			if (newStudentList.length > 0) {
 				student_list = newStudentList;
 				totalPages = Math.ceil(student_list.length / pageSize);
@@ -368,6 +490,8 @@
 					const data = await res.json();
 					if (data.success) {
 						notifications.success(m.classImportSuccess());
+						// Reload class data to update the students array with new UIDs
+						await loadData();
 					} else {
 						notifications.error(m.classImportFailed());
 					}
@@ -413,7 +537,7 @@
 			<!-- Left side: Credential Management -->
 			<aside class="w-full space-y-6 md:w-1/3">
 				<div class="flex flex-col space-y-4">
-					<Button color="primary" class="w-2/4" on:click={triggerFileImport}>
+					<Button color="primary" class="w-2/4" onclick={triggerFileImport}>
 						{m.importStudentListButton()}
 					</Button>
 					<input
@@ -440,88 +564,158 @@
 				<div class="border-b border-gray-200 p-5">
 					<h2 class="text-xl font-semibold">{m.studentList()}</h2>
 				</div>
-				<div class="overflow-x-auto">
-					<table class="w-full text-left text-sm text-gray-500">
-						<thead class="bg-gray-50 text-xs uppercase text-gray-700">
-							<tr>
-								<th class="px-6 py-3">{m.studentListName()}</th>
-								<th class="px-6 py-3">{m.studentListSeat()}</th>
-								<th class="px-6 py-3">{m.studentListID()}</th>
-								<th class="px-6 py-3">{m.studentListGroup()}</th>
-								<th class="px-6 py-3">{m.studentListAction()}</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each paginated as s, i}
-								<tr class={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-									<td class="px-6 py-4">{s.displayName}</td>
-									<td class="px-6 py-4">{s.seatNumber}</td>
-									<td class="px-6 py-4">{s.studentId}</td>
-									<td class="px-6 py-4">{s.group}</td>
-									<td class="px-6 py-4">
-										{#if confirmingResetId === s.studentId}
-											<div class="flex flex-col space-y-2">
+
+				{#if student_list.length === 0}
+					<div class="flex flex-col items-center justify-center py-16">
+						<div class="text-center">
+							<h3 class="mb-2 text-lg font-medium text-gray-900">{m.noStudentListAvailable()}</h3>
+							<p class="mb-4 text-gray-600">
+								{m.noStudentListDesc()}
+							</p>
+						</div>
+					</div>
+				{:else}
+					<div class="overflow-x-auto">
+						<table class="w-full text-left text-sm text-gray-500">
+							<thead class="bg-gray-50 text-xs uppercase text-gray-700">
+								<tr>
+									<th class="px-6 py-3">{m.studentListName()}</th>
+									<th class="px-6 py-3">{m.studentListSeat()}</th>
+									<th class="px-6 py-3">{m.studentListID()}</th>
+									<th class="px-6 py-3">{m.studentListGroup()}</th>
+									<th class="px-6 py-3">{m.studentListAction()}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each paginated as s, i}
+									<tr class={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+										<td class="px-6 py-4">{s.displayName}</td>
+										<td class="px-6 py-4">{s.seatNumber}</td>
+										<td class="px-6 py-4">{s.studentId}</td>
+										<td class="px-6 py-4">
+											{#if editingGroupId === s.studentId}
 												<div class="flex items-center space-x-2">
-													<div class="relative w-32">
+													<div class="relative">
 														<Input
-															type={showPassword ? 'text' : 'password'}
-															bind:value={resetPasswordValue}
-															placeholder="Enter new password"
-															class="pr-10"
+															type="text"
+															bind:value={groupValue}
+															placeholder={m.enterGroup()}
+															class="w-20"
 															size="sm"
 														/>
-														<button
-															type="button"
-															class="absolute inset-y-0 right-0 flex items-center pr-3"
-															onclick={togglePasswordVisibility}
-														>
-															{#if showPassword}
-																<EyeOff class="h-4 w-4 text-gray-400" />
-															{:else}
-																<Eye class="h-4 w-4 text-gray-400" />
-															{/if}
-														</button>
+														{#if groupValue.trim() && !isValidGroup(groupValue)}
+															<div
+																class="absolute left-0 top-full z-10 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-1 text-xs text-white shadow-lg"
+															>
+																{m.groupMustBeHigher()}
+															</div>
+														{/if}
 													</div>
-													<Button size="xs" color="red" on:click={() => resetPassword(s.studentId)}>
-														{m.classResetPasswordConfirm()}
+													<Button
+														size="xs"
+														color="blue"
+														disabled={!groupValue.trim() || !isValidGroup(groupValue)}
+														onclick={() => updateGroup(s.studentId)}
+													>
+														{m.classGroupEditConfirm()}
 													</Button>
-													<Button size="xs" outline on:click={cancelReset}>
-														{m.classResetPasswordCancel()}
+													<Button size="xs" outline onclick={cancelGroupEdit}
+														>{m.classGroupEditCancel()}</Button
+													>
+												</div>
+											{:else}
+												<div class="flex items-center space-x-2">
+													<Input
+														type="text"
+														value={s.group || ''}
+														placeholder={m.noGroup()}
+														class="w-20"
+														size="sm"
+														disabled
+													/>
+													<Button size="xs" outline onclick={() => editGroup(s.studentId, s.group)}>
+														{m.editGroup()}
 													</Button>
 												</div>
-											</div>
-										{:else}
-											<Button
-												size="xs"
-												outline
-												class="w-auto"
-												on:click={() => confirmReset(s.studentId)}
-											>
-												<RefreshCw class="mr-1 h-4 w-4" />
-												{m.studentListResetPassword()}
-											</Button>
-										{/if}
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
+											{/if}
+										</td>
+										<td class="px-6 py-4">
+											{#if confirmingResetId === s.studentId}
+												<div class="flex flex-col space-y-2">
+													<div class="flex items-center space-x-2">
+														<div class="relative w-32">
+															<Input
+																type={showPassword ? 'text' : 'password'}
+																bind:value={resetPasswordValue}
+																placeholder={m.enterNewPassword()}
+																class="pr-10"
+																size="sm"
+															/>
+															<button
+																type="button"
+																class="absolute inset-y-0 right-0 flex items-center pr-3"
+																onclick={togglePasswordVisibility}
+															>
+																{#if showPassword}
+																	<EyeOff class="h-4 w-4 text-gray-400" />
+																{:else}
+																	<Eye class="h-4 w-4 text-gray-400" />
+																{/if}
+															</button>
+															{#if resetPasswordValue.trim().length > 0 && resetPasswordValue.trim().length < 6}
+																<div
+																	class="absolute left-0 top-full z-10 mt-1 whitespace-nowrap rounded bg-red-500 px-2 py-1 text-xs text-white shadow-lg"
+																>
+																	{m.passwordLengthMinSix()}
+																</div>
+															{/if}
+														</div>
+														<Button
+															size="xs"
+															color="red"
+															disabled={resetPasswordValue.trim().length < 6}
+															onclick={() => resetPassword(s.studentId)}
+														>
+															{m.classResetPasswordConfirm()}
+														</Button>
+														<Button size="xs" outline onclick={cancelReset}>
+															{m.classResetPasswordCancel()}
+														</Button>
+													</div>
+												</div>
+											{:else}
+												<Button
+													size="xs"
+													outline
+													class="w-auto"
+													onclick={() => confirmReset(s.studentId)}
+												>
+													<RefreshCw class="mr-1 h-4 w-4" />
+													{m.studentListResetPassword()}
+												</Button>
+											{/if}
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
 
-				<!-- Pagination -->
-				<div class="mt-4 flex items-center justify-center space-x-4">
-					<button
-						class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
-						onclick={prevPage}
-						disabled={currentPage === 1}>{m.studentListPreviousPage()}</button
-					>
-					<span>Page {currentPage} of {totalPages}</span>
-					<button
-						class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
-						onclick={nextPage}
-						disabled={currentPage === totalPages}>{m.studentListNextPage()}</button
-					>
-				</div>
+					<!-- Pagination -->
+					<div class="mt-4 flex items-center justify-center space-x-4">
+						<button
+							class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
+							onclick={prevPage}
+							disabled={currentPage === 1}>{m.studentListPreviousPage()}</button
+						>
+						<span>{m.page({ current: currentPage, total: totalPages })}</span>
+						<button
+							class="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
+							onclick={nextPage}
+							disabled={currentPage === totalPages}>{m.studentListNextPage()}</button
+						>
+					</div>
+				{/if}
 			</section>
 		</div>
 	</div>
