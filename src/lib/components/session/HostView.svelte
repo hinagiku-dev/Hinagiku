@@ -534,15 +534,15 @@
 	function handleSelectionChange(participants: Set<string>, groups: Set<string>) {
 		selectedParticipants = participants;
 		selectedGroups = groups;
-  }
-  
+	}
+
 	let showDeleteModal = writable(false);
 
 	async function handleDeleteModal() {
 		$showDeleteModal = !$showDeleteModal;
 	}
 
-	async function confirmDeleteDisscussion() {
+	async function confirmDeleteDiscussion() {
 		try {
 			const response = await fetch(`/api/session/${$page.params.id}/action/delete`, {
 				method: 'POST'
@@ -855,7 +855,7 @@
 			{m.deleteBatchSessionConfirmation()}
 		</h3>
 		<div class="flex justify-center gap-4">
-			<Button color="red" on:click={confirmDeleteDisscussion}>{m.deleteSession()}</Button>
+			<Button color="red" on:click={confirmDeleteDiscussion}>{m.deleteSession()}</Button>
 			<Button color="alternative" on:click={() => ($showDeleteModal = false)}>{m.noCancel()}</Button
 			>
 		</div>
