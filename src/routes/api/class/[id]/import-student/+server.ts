@@ -68,6 +68,10 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 					displayName: student.displayName,
 					emailVerified: true // 預設為已驗證
 				});
+				// 強制學生首次登入時更改密碼
+				await adminAuth.setCustomUserClaims(userRecord.uid, {
+					requiresPasswordChange: true
+				});
 
 				// 2. 準備 Profile 資料
 				const profileData: Omit<Profile, 'createdAt' | 'updatedAt'> = {
