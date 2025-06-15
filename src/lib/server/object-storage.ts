@@ -1,7 +1,6 @@
 import { env } from '$env/dynamic/private';
-import { storageBucket } from '$lib/firebase';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { getDownloadURL, ref, updateMetadata, uploadBytes } from 'firebase/storage';
+import { getDownloadURL, getStorage } from 'firebase-admin/storage';
 import rfc2047 from 'rfc2047';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -61,13 +60,19 @@ class CloudflareAdapter implements StorageAdapter {
 }
 
 class FirebaseAdapter implements StorageAdapter {
+	private storage: ReturnType<typeof getStorage>;
+	private bucket: ReturnType<ReturnType<typeof getStorage>['bucket']>;
+	constructor() {
+		this.storage = getStorage();
+		this.bucket = this.storage.bucket(env.GOOGLE_CLOUD_STORAGE_BUCKET);
+	}
+
 	async upload(object: Buffer, type: keyof typeof EXT, metadata: Record<string, string>) {
 		const ext = EXT[type];
 		const key = `${uuidv4()}.${ext}`;
-		const storageRef = ref(storageBucket, key);
-		await uploadBytes(storageRef, object, { contentType: type });
-		await updateMetadata(storageRef, { customMetadata: metadata });
-		return getDownloadURL(storageRef);
+		const file = this.bucket.file(key);
+		await file.save(object, { contentType: type, metadata });
+		return getDownloadURL(file);
 	}
 }
 
