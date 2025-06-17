@@ -6,6 +6,10 @@
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import ResolveUsername from '$lib/components/ResolveUsername.svelte';
 	import QRCode from '$lib/components/QRCode.svelte';
+	import ParticipationChart from '$lib/components/ParticipationChart.svelte';
+	import SubtaskCompletionChart from '$lib/components/SubtaskCompletionChart.svelte';
+	import StudentParticipationChart from '$lib/components/StudentParticipationChart.svelte';
+	import DiscussionParticipationChart from '$lib/components/DiscussionParticipationChart.svelte';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -130,6 +134,93 @@
 			}
 		}
 	});
+
+	const mockParticipationData = [
+		{
+			className: '101',
+			sessions: [
+				{ sessionName: '關於美食與教育的討論', participation: 150 },
+				{ sessionName: '社會情緒與道德學習：慈悲', participation: 200 },
+				{ sessionName: '人際價值觀', participation: 180 }
+			]
+		},
+		{
+			className: '102',
+			sessions: [
+				{ sessionName: '關於美食與教育的討論', participation: 180 },
+				{ sessionName: '社會情緒與道德學習：慈悲', participation: 220 },
+				{ sessionName: '人際價值觀', participation: 190 }
+			]
+		},
+		{
+			className: '204',
+			sessions: [
+				{ sessionName: '關於美食與教育的討論', participation: 160 },
+				{ sessionName: '社會情緒與道德學習：慈悲', participation: 190 },
+				{ sessionName: '人際價值觀', participation: 210 }
+			]
+		},
+		{
+			className: '303',
+			sessions: [
+				{ sessionName: '關於美食與教育的討論', participation: 170 },
+				{ sessionName: '社會情緒與道德學習：慈悲', participation: 210 },
+				{ sessionName: '人際價值觀', participation: 200 }
+			]
+		}
+	];
+
+	const mockSubtaskData = [
+		{
+			studentId: '王一',
+			subtaskCompleted: [true, true, false, true, false]
+		},
+		{
+			studentId: '李二',
+			subtaskCompleted: [true, false, true, true, true]
+		},
+		{
+			studentId: '陳三',
+			subtaskCompleted: [false, true, true, false, true]
+		}
+	];
+
+	const mockDiscussionData = [
+		{ discussionName: '關於美食與教育的討論', participation: 120 },
+		{ discussionName: '社會情緒與道德學習：慈悲', participation: 180 },
+		{ discussionName: '人際價值觀', participation: 150 },
+		{ discussionName: '0318社會情緒學習', participation: 200 }
+	];
+
+	const mockStudentParticipationData = [
+		{
+			sessionId: '1',
+			sessionTitle: '關於美食與教育的討論',
+			participants: {
+				王一: { words: 150 },
+				李二: { words: 200 },
+				陳三: { words: 180 }
+			}
+		},
+		{
+			sessionId: '2',
+			sessionTitle: '社會情緒與道德學習：慈悲',
+			participants: {
+				王一: { words: 220 },
+				李二: { words: 180 },
+				陳三: { words: 250 }
+			}
+		},
+		{
+			sessionId: '3',
+			sessionTitle: '人際價值觀',
+			participants: {
+				王一: { words: 190 },
+				李二: { words: 210 },
+				陳三: { words: 170 }
+			}
+		}
+	];
 
 	// Load user's classes
 	async function loadClasses() {
@@ -771,6 +862,12 @@
 		<div class="w-full px-4 lg:col-span-3">
 			{#if selectedClassId && selectedClass}
 				<div class="w-full space-y-6">
+					<!-- Student Participation Chart -->
+					<StudentParticipationChart sessions={mockStudentParticipationData} />
+					<!-- Subtask Completion Chart -->
+					<SubtaskCompletionChart data={mockSubtaskData} />
+					<!-- Discussion Participation Overview -->
+					<DiscussionParticipationChart data={mockDiscussionData} />
 					<!-- Class Groups -->
 					{#if selectedClass.groups.length > 0}
 						<Card padding="lg" class="w-full !max-w-none">
@@ -895,6 +992,10 @@
 					</Card>
 				</div>
 			{:else}
+				<!-- Participation Chart -->
+				<ParticipationChart data={mockParticipationData} />
+				<!-- Discussion Participation Overview -->
+				<DiscussionParticipationChart data={mockDiscussionData} />
 				<div class="flex h-64 w-full items-center justify-center">
 					<div class="text-center">
 						<div class="mb-4 inline-flex rounded-full bg-gray-100 p-6">
