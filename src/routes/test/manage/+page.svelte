@@ -611,7 +611,7 @@
 					>
 						<option value={null}>{m.selectClass()}</option>
 						{#each classes as classItem}
-							{#if classItem.data.active_status === 'active' || classItem.data.active_status == null}
+							{#if classItem.data.active_status === 'active'}
 								<option value={classItem.id}>
 									{classItem.data.className} - {classItem.data.schoolName} ({classItem.data
 										.academicYear})
