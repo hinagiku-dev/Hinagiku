@@ -1,5 +1,5 @@
 import { getGroupData, getGroupRef } from '$lib/server/firebase';
-import { summarizeGroupOpinions } from '$lib/server/gemini';
+import { summarizeGroupOpinions } from '$lib/server/llm';
 import type { Discussion } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json } from '@sveltejs/kit';

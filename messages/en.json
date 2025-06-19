@@ -559,5 +559,12 @@
 	"chartSubtaskCompletion": "Issue Comprehension Level",
 	"chartSubtaskCompletionDesc": "Average completion rate of subtasks for each student",
 	"chartSubtaskCompletionRate": "Issue Comprehension Rate",
-	"chartCompletionRate": "Completion Rate"
+	"chartCompletionRate": "Completion Rate",
+	"sessionSummary": "Session Summary",
+	"summary": "Summary",
+	"keyMoments": "Key Moments",
+	"suggestions": "Suggestions",
+	"noSummaryAvailable": "No summary available",
+	"generateSummary": "Generate Summary",
+	"regenerate": "Regenerate"
 }

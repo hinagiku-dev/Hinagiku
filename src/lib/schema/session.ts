@@ -40,7 +40,8 @@ export const SessionSchema = z.object({
 			timestamp: Timestamp
 		})
 		.optional()
-		.nullable()
+		.nullable(),
+	summary: z.string().nullable().optional()
 });
 
 export type Session = z.infer<typeof SessionSchema>;

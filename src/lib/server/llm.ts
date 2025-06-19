@@ -13,6 +13,7 @@ import {
 	HISTORY_PROMPT,
 	INTRODUCTION_PROMPT,
 	OFF_TOPIC_DETECTION_PROMPT,
+	SESSION_SUMMARY_PROMPT,
 	SUBTASKS_COMPLETED_PROMPT,
 	SUBTASK_PREFIX_PROMPT
 } from './prompt';
@@ -678,6 +679,52 @@ export async function getHeyHelpMessage(
 			success: false,
 			response: '',
 			error: 'Error in chatWithLLMByDocs'
+		};
+	}
+}
+
+export async function summarizeSession(history: LLMChatMessage[]) {
+	const formatted_history = history
+		.map((msg) => `${msg.name || msg.role}: ${msg.content}`)
+		.join('\n');
+
+	const system_prompt = SESSION_SUMMARY_PROMPT;
+	const history_prompt = [
+		{
+			role: 'user' as const,
+			content: formatted_history
+		}
+	];
+
+	try {
+		const schema = z.object({
+			summary: z.string()
+		});
+
+		const { result } = await requestLLM(system_prompt, history_prompt, schema, 0.7);
+		if (!result) {
+			throw new Error('Failed to get result from LLM');
+		}
+		const parsed_result = schema.parse(result);
+
+		// Normalize and clean the output
+		let summary = normalizeText(parsed_result.summary);
+		const summaryCheck = await cleanForeignLanguage(summary);
+		if (summaryCheck.success && summaryCheck.containsForeignLanguage) {
+			summary = summaryCheck.revisedText;
+		}
+
+		return {
+			success: true,
+			summary,
+			error: ''
+		};
+	} catch (error) {
+		console.error('Error in summarizeSession:', error);
+		return {
+			success: false,
+			summary: '',
+			error: 'Error in summarizeSession'
 		};
 	}
 }

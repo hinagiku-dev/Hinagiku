@@ -571,5 +571,12 @@
 	"chartSubtaskCompletion": "議題掌握度",
 	"chartSubtaskCompletionDesc": "每位學生的子目標平均完成率",
 	"chartSubtaskCompletionRate": "掌握率",
-	"chartCompletionRate": "完成率"
+	"chartCompletionRate": "完成率",
+	"sessionSummary": "討論總結",
+	"summary": "總結",
+	"keyMoments": "關鍵時刻",
+	"suggestions": "建議",
+	"noSummaryAvailable": "尚無總結",
+	"generateSummary": "生成總結",
+	"regenerate": "重新生成"
 }
