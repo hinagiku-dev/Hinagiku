@@ -549,7 +549,7 @@
 	"failedToSaveLearningRecord": "Failed to save learning record",
 	"updateReflection": "Update Reflection",
 	"saveReflection": "Save Reflection",
-	"defaultReflectionQuestion": "What was your biggest takeaway from this discussion?"
+	"defaultReflectionQuestion": "What was your biggest takeaway from this discussion?",
 	"chartStudentParticipation": "Student Participation Overview",
 	"chartStudentParticipationDesc": "Total words contributed by each student across different sessions",
 	"chartClassParticipation": "Class Participation Overview",
@@ -569,5 +569,4 @@
 	"chartSubtaskCompletionDesc": "Average completion rate of subtasks for each student",
 	"chartSubtaskCompletionRate": "Issue Comprehension Rate",
 	"chartCompletionRate": "Completion Rate"
-
 }
