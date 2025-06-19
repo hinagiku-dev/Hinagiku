@@ -466,6 +466,8 @@
 			loadConversationsData();
 			loadKeywordData();
 			if (!$session.summary && !isSummarizing) {
+				generateSummary();
+			}
 		}
 	});
 
