@@ -18,6 +18,7 @@
 
 	let title = '';
 	let task = '';
+	let reflectionQuestion = '';
 	let isPublic = false;
 	let labels: string[] = [];
 	let subtasks: string[] = [];
@@ -39,6 +40,7 @@
 		if (t) {
 			title = t.title;
 			task = t.task;
+			reflectionQuestion = t.reflectionQuestion || '';
 			isPublic = t.public;
 			subtasks = [...t.subtasks];
 			labels = t.labels ? [...t.labels] : [];
@@ -52,6 +54,7 @@
 			unsavedChanges =
 				title.trim() !== $template.title ||
 				task.trim() !== $template.task ||
+				(reflectionQuestion?.trim() ?? '') !== ($template.reflectionQuestion || '') ||
 				isPublic !== $template.public ||
 				subtasks.join() !== $template.subtasks.join() ||
 				backgroundPreview !== $template.backgroundImage;
@@ -141,6 +144,7 @@
 				body: JSON.stringify({
 					title: title.trim(),
 					task: task.trim(),
+					reflectionQuestion: reflectionQuestion.trim(),
 					public: isPublic,
 					subtasks: subtasks.filter((subtask) => subtask.trim()),
 					labels,
@@ -297,6 +301,15 @@
 					maxlength={200}
 					rows={3}
 					placeholder={m.mainTaskDesc()}
+				/>
+			</div>
+
+			<div>
+				<label for="reflectionQuestion" class="mb-2 block">{m.reflectionQuestion()}</label>
+				<Textarea
+					id="reflectionQuestion"
+					bind:value={reflectionQuestion}
+					placeholder={m.reflectionQuestionPlaceholder()}
 				/>
 			</div>
 

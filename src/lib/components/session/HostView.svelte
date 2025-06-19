@@ -37,7 +37,7 @@
 	import ResolveUsername from '../ResolveUsername.svelte';
 	import TranscriptExporter from './TranscriptExporter.svelte';
 	import * as m from '$lib/paraglide/messages.js';
-	import { Input, Toggle } from 'flowbite-svelte';
+	import { Input, Toggle, Textarea } from 'flowbite-svelte';
 	import { announcement } from '$lib/stores/announcement';
 	import { UI_CLASSES } from '$lib/config/ui';
 
@@ -142,6 +142,15 @@
 
 	let announcementMessage = $state('');
 	let isBroadcasting = $state(false);
+
+	let reflectionQuestion = $state('');
+	let isSavingReflectionQuestion = $state(false);
+
+	$effect(() => {
+		if ($session) {
+			reflectionQuestion = $session.reflectionQuestion || '';
+		}
+	});
 
 	onMount(() => {
 		const unsubscribes: (() => void)[] = [];
@@ -559,6 +568,27 @@
 			notifications.error(m.failedDelete());
 		}
 	}
+
+	async function saveReflectionQuestion() {
+		isSavingReflectionQuestion = true;
+		try {
+			const response = await fetch(`/api/session/${$page.params.id}/settings`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ reflectionQuestion })
+			});
+			if (response.ok) {
+				notifications.success('Reflection question updated');
+			} else {
+				notifications.error('Failed to update reflection question');
+			}
+		} catch (error) {
+			console.error('Failed to save reflection question', error);
+			notifications.error('Failed to update reflection question');
+		} finally {
+			isSavingReflectionQuestion = false;
+		}
+	}
 </script>
 
 <main class="mx-auto max-w-7xl px-4 py-16">
@@ -833,6 +863,20 @@
 					{/each}
 				</div>
 			{/if}
+		</div>
+
+		<!-- Reflection Question Section for Host -->
+		<div class="col-span-4 mt-6 rounded-lg border p-6 {UI_CLASSES.PANEL_BG} shadow">
+			<h2 class="mb-4 text-xl font-semibold">{m.reflectionQuestion()}</h2>
+			<Textarea
+				bind:value={reflectionQuestion}
+				placeholder={m.reflectionQuestionPlaceholder()}
+				rows={4}
+				class="w-full"
+			/>
+			<Button class="mt-4" on:click={saveReflectionQuestion} disabled={isSavingReflectionQuestion}>
+				{isSavingReflectionQuestion ? m.saving() : 'Save Question'}
+			</Button>
 		</div>
 	</div>
 
