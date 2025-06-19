@@ -29,7 +29,13 @@
 	let backgroundPreview: string | null = null; // Permanent URL from Cloud Storage
 	let localPreviewUrl: string | null = null; // Temporary blob URL for local preview
 	let showClassSelectionModal = false;
-	let classes: { id: string; className: string; schoolName: string; academicYear: string }[] = [];
+	let classes: {
+		id: string;
+		className: string;
+		schoolName: string;
+		academicYear: string;
+		active_status: string;
+	}[] = [];
 	let loadingClasses = false;
 	let selectedClassId: string | null = null;
 
@@ -197,7 +203,8 @@
 						id: doc.id,
 						className: doc.data().className,
 						schoolName: doc.data().schoolName,
-						academicYear: doc.data().academicYear
+						academicYear: doc.data().academicYear,
+						active_status: doc.data().active_status || 'active'
 					}));
 				}
 			}
@@ -505,7 +512,9 @@
 				>
 					<option value="">{m.startWithoutClass()}</option>
 					{#each classes as cls}
-						<option value={cls.id}>{cls.className} - {cls.schoolName}({cls.academicYear})</option>
+						{#if cls.active_status === 'active' || !cls.active_status}
+							<option value={cls.id}>{cls.className} - {cls.schoolName}({cls.academicYear})</option>
+						{/if}
 					{/each}
 				</select>
 			</div>

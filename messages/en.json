@@ -550,4 +550,24 @@
 	"updateReflection": "Update Reflection",
 	"saveReflection": "Save Reflection",
 	"defaultReflectionQuestion": "What was your biggest takeaway from this discussion?"
+	"chartStudentParticipation": "Student Participation Overview",
+	"chartStudentParticipationDesc": "Total words contributed by each student across different sessions",
+	"chartClassParticipation": "Class Participation Overview",
+	"chartClassParticipationDesc": "Total words contributed per session for each class",
+	"chartDiscussionParticipation": "Discussion Participation Overview",
+	"chartDiscussionParticipationDesc": "Average number of words contributed per participant for each discussion",
+	"chartWords": "words",
+	"chartStudents": "Students",
+	"chartTotalWords": "Total Words",
+	"chartClass": "Class",
+	"chartDiscussion": "Discussion",
+	"chartAverageWords": "Average Words per Participant",
+	"chartSession": "Session",
+	"chartParticipation": "Participation",
+	"chartAverageWordsPerParticipant": "Average Words per Participant",
+	"chartSubtaskCompletion": "Issue Comprehension Level",
+	"chartSubtaskCompletionDesc": "Average completion rate of subtasks for each student",
+	"chartSubtaskCompletionRate": "Issue Comprehension Rate",
+	"chartCompletionRate": "Completion Rate"
+
 }
