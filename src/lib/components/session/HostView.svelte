@@ -465,9 +465,7 @@
 		if ($session?.status === 'ended') {
 			loadConversationsData();
 			loadKeywordData();
-			if (!$session.summary) {
-				generateSummary();
-			}
+			if (!$session.summary && !isSummarizing) {
 		}
 	});
 
