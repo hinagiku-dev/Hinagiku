@@ -566,5 +566,9 @@
 	"suggestions": "Suggestions",
 	"noSummaryAvailable": "No summary available",
 	"generateSummary": "Generate Summary",
-	"regenerate": "Regenerate"
+	"regenerate": "Regenerate",
+	"integratedViewpoint": "Integrated Viewpoint",
+	"differences": "Differences and Disagreements",
+	"learningProgress": "Learning Progress",
+	"finalConclusion": "Final Conclusion"
 }

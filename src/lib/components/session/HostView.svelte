@@ -712,8 +712,40 @@
 								<div class="flex items-center justify-center py-4">
 									<p>{m.generatingSummary()}</p>
 								</div>
+							{:else if $session.summary && typeof $session.summary === 'object'}
+								<div class="prose prose-hina max-w-none space-y-4 dark:prose-invert">
+									<div>
+										<h4 class="font-semibold">{m.integratedViewpoint()}</h4>
+										<p>{$session.summary.integratedViewpoint}</p>
+									</div>
+									<div>
+										<h4 class="font-semibold">{m.differences()}</h4>
+										<p>{$session.summary.differences}</p>
+									</div>
+									<div>
+										<h4 class="font-semibold">{m.learningProgress()}</h4>
+										<p>{$session.summary.learningProgress}</p>
+									</div>
+									<div>
+										<h4 class="font-semibold">{m.finalConclusion()}</h4>
+										<p>{$session.summary.finalConclusion}</p>
+									</div>
+								</div>
 							{:else if $session.summary}
-								<p class="prose prose-hina max-w-none dark:prose-invert">{$session.summary}</p>
+								{#if typeof $session.summary === 'string'}
+									<p class="prose prose-hina max-w-none dark:prose-invert">{$session.summary}</p>
+								{:else if typeof $session.summary === 'object' && $session.summary}
+									<div class="prose prose-hina max-w-none dark:prose-invert">
+										<h4 class="font-semibold">{m.integratedViewpoint()}</h4>
+										<p>{$session.summary.integratedViewpoint}</p>
+										<h4 class="mt-4 font-semibold">{m.differences()}</h4>
+										<p>{$session.summary.differences}</p>
+										<h4 class="mt-4 font-semibold">{m.learningProgress()}</h4>
+										<p>{$session.summary.learningProgress}</p>
+										<h4 class="mt-4 font-semibold">{m.finalConclusion()}</h4>
+										<p>{$session.summary.finalConclusion}</p>
+									</div>
+								{/if}
 							{:else}
 								<div class="flex flex-col items-center justify-center py-4">
 									<p>{m.noSummaryAvailable()}</p>

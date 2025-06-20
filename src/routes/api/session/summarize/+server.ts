@@ -1,6 +1,9 @@
-import { getConversationsFromAllParticipantsData, getSessionRef } from '$lib/server/firebase';
+import {
+	getConversationsFromAllParticipantsData,
+	getDiscussionsFromAllGroupsData,
+	getSessionRef
+} from '$lib/server/firebase';
 import { summarizeSession } from '$lib/server/llm';
-import type { LLMChatMessage } from '$lib/server/types';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -12,27 +15,22 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	try {
-		const conversations = await getConversationsFromAllParticipantsData(sessionId);
-		if (!conversations || conversations.length === 0) {
-			return json(
-				{ success: false, error: 'No conversations found for this session' },
-				{ status: 404 }
-			);
-		}
+		const [conversations, discussions] = await Promise.all([
+			getConversationsFromAllParticipantsData(sessionId),
+			getDiscussionsFromAllGroupsData(sessionId)
+		]);
 
-		const history: LLMChatMessage[] = conversations.flatMap((c) => c.history);
+		const individualRecords = conversations.map((c) => ({
+			studentId: c.userId,
+			history: c.history
+		}));
 
-		// Filter out any empty messages, just in case
-		const filteredHistory = history.filter((h) => h.content.trim() !== '');
+		const groupRecords = discussions.map((d) => ({
+			groupId: d.groupId,
+			discussion: d.discussion
+		}));
 
-		if (filteredHistory.length === 0) {
-			return json(
-				{ success: false, error: 'No content in conversations to summarize' },
-				{ status: 400 }
-			);
-		}
-
-		const result = await summarizeSession(filteredHistory);
+		const result = await summarizeSession(individualRecords, groupRecords);
 
 		if (result.success) {
 			const sessionRef = getSessionRef(sessionId);

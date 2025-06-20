@@ -41,7 +41,15 @@ export const SessionSchema = z.object({
 		})
 		.optional()
 		.nullable(),
-	summary: z.string().nullable().optional()
+	summary: z
+		.object({
+			integratedViewpoint: z.string(),
+			differences: z.string(),
+			learningProgress: z.string(),
+			finalConclusion: z.string()
+		})
+		.nullable()
+		.optional()
 });
 
 export type Session = z.infer<typeof SessionSchema>;
