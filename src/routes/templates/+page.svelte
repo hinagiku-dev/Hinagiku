@@ -62,15 +62,25 @@
 
 	let selectStatus = writable(false);
 	let selectedTemplate = writable<string[][]>([]);
+	let selectedIsArchived = writable<number>(0); // 0: none, 1: all active, 2: all archived
 	async function handleSelectTemplate() {
 		$selectStatus = !$selectStatus;
 	}
 	function toggleTemplateSelection(id: string, isChecked: boolean, active_status?: string) {
 		const status = active_status || 'active';
-		if (isChecked) {
+		if (
+			isChecked &&
+			($selectedIsArchived === (status === 'archived' ? 2 : 1) || $selectedIsArchived === 0)
+		) {
 			$selectedTemplate = [...$selectedTemplate, [id, status]];
+			$selectedIsArchived = status === 'archived' ? 2 : 1;
+			return true;
 		} else {
-			$selectedTemplate = $selectedTemplate.filter((template) => template[0] !== id);
+			$selectedTemplate = $selectedTemplate.filter((session) => session[0] !== id);
+			if ($selectedTemplate.length === 0) {
+				$selectedIsArchived = 0;
+			}
+			return false;
 		}
 	}
 	let showArchiveModal = writable(false);
@@ -85,6 +95,7 @@
 	async function confirmArchiveTemplates() {
 		try {
 			$selectedTemplate.forEach(async ([id, active_status]) => {
+				$selectedIsArchived = 0;
 				if (active_status === 'archived') {
 					const fetchResponse = await fetch(`/api/template/${id}/action/unarchive`, {
 						method: 'POST'
@@ -125,7 +136,13 @@
 		<div class="text-right">
 			{#if $selectStatus}
 				<Button color="primary" on:click={archiveSelectedTemplate} class="mr-4">
-					{m.archiveAndUnarchive()}
+					{#if $selectedIsArchived === 2}
+						{m.unarchive()}
+					{:else if $selectedIsArchived === 1}
+						{m.archive()}
+					{:else}
+						{m.archiveAndUnarchive()}
+					{/if}
 				</Button>
 			{/if}
 			<Button onclick={handleSelectTemplate} color="alternative">
@@ -167,7 +184,11 @@
 									(item) => item[0] === doc.id && item[1] === template.active_status
 								)}
 								onchange={(e) =>
-									toggleTemplateSelection(doc.id, e.currentTarget.checked, template.active_status)}
+									(e.currentTarget.checked = toggleTemplateSelection(
+										doc.id,
+										e.currentTarget.checked,
+										template.active_status
+									))}
 							/>
 						{/if}
 						<TemplateCard
@@ -192,7 +213,11 @@
 								class="absolute right-3 top-3 z-10"
 								checked={$selectedTemplate.includes([doc.id, template.active_status])}
 								onchange={(e) =>
-									toggleTemplateSelection(doc.id, e.currentTarget.checked, template.active_status)}
+									(e.currentTarget.checked = toggleTemplateSelection(
+										doc.id,
+										e.currentTarget.checked,
+										template.active_status
+									))}
 							/>
 						{/if}
 						<TemplateCard
@@ -233,10 +258,20 @@
 <Modal bind:open={$showArchiveModal} size="xs" autoclose>
 	<div class="text-center">
 		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-			{m.archiveConfirmTemplate()}
+			{#if $selectedIsArchived === 2}
+				{m.unarchiveConfirmTemplate()}
+			{:else if $selectedIsArchived === 1}
+				{m.archiveConfirmTemplate()}
+			{/if}
 		</h3>
 		<div class="flex justify-center gap-4">
-			<Button color="red" on:click={confirmArchiveTemplates}>{m.archiveConfirm()}</Button>
+			<Button color="red" on:click={confirmArchiveTemplates}>
+				{#if $selectedIsArchived === 2}
+					{m.unarchive()}
+				{:else if $selectedIsArchived === 1}
+					{m.archive()}
+				{/if}
+			</Button>
 			<Button color="alternative" on:click={() => ($showArchiveModal = false)}
 				>{m.noCancel()}</Button
 			>

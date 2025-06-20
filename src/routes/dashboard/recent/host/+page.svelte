@@ -58,15 +58,25 @@
 
 	let selectStatus = writable(false);
 	let selectedSession = writable<string[][]>([]);
+	let selectedIsArchived = writable(0); // 0 equals none, 1 equals active, 2 equals archived
 	async function handleSelectSession() {
 		$selectStatus = !$selectStatus;
 	}
 	function toggleSessionSelection(id: string, isChecked: boolean, active_status?: string) {
 		const status = active_status || 'active';
-		if (isChecked) {
+		if (
+			isChecked &&
+			($selectedIsArchived === (status === 'archived' ? 2 : 1) || $selectedIsArchived === 0)
+		) {
 			$selectedSession = [...$selectedSession, [id, status]];
+			$selectedIsArchived = status === 'archived' ? 2 : 1;
+			return true;
 		} else {
 			$selectedSession = $selectedSession.filter((session) => session[0] !== id);
+			if ($selectedSession.length === 0) {
+				$selectedIsArchived = 0;
+			}
+			return false;
 		}
 	}
 	let showArchiveModal = writable(false);
@@ -81,6 +91,7 @@
 	async function confirmArchiveSessions() {
 		try {
 			$selectedSession.forEach(async ([id, active_status]) => {
+				$selectedIsArchived = 0;
 				if (active_status === 'archived') {
 					const fetchResponse = await fetch(`/api/session/${id}/action/unarchive`, {
 						method: 'POST'
@@ -123,7 +134,13 @@
 		<div class="text-right">
 			{#if $selectStatus}
 				<Button color="primary" on:click={archiveSelectedSession} class="mr-4">
-					{m.archiveAndUnarchive()}
+					{#if $selectedIsArchived === 2}
+						{m.unarchive()}
+					{:else if $selectedIsArchived === 1}
+						{m.archive()}
+					{:else}
+						{m.archiveAndUnarchive()}
+					{/if}
 				</Button>
 			{/if}
 			<Button onclick={handleSelectSession} color="alternative">
@@ -162,7 +179,11 @@
 										([id, status]) => id === doc.id && status === session.active_status
 									)}
 									onchange={(e) =>
-										toggleSessionSelection(doc.id, e.currentTarget.checked, session.active_status)}
+										(e.currentTarget.checked = toggleSessionSelection(
+											doc.id,
+											e.currentTarget.checked,
+											session.active_status
+										))}
 								/>
 							{/if}
 							<SessionCard
@@ -183,9 +204,15 @@
 								<input
 									type="checkbox"
 									class="absolute right-3 top-3 z-10"
-									checked={$selectedSession.includes([doc.id, session.active_status])}
+									checked={$selectedSession.some(
+										([id, status]) => id === doc.id && status === session.active_status
+									)}
 									onchange={(e) =>
-										toggleSessionSelection(doc.id, e.currentTarget.checked, session.active_status)}
+										(e.currentTarget.checked = toggleSessionSelection(
+											doc.id,
+											e.currentTarget.checked,
+											session.active_status
+										))}
 								/>
 							{/if}
 							<SessionCard
@@ -222,10 +249,20 @@
 <Modal bind:open={$showArchiveModal} size="xs" autoclose>
 	<div class="text-center">
 		<h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-			{m.archiveConfirmSession()}
+			{#if $selectedIsArchived === 2}
+				{m.unarchiveConfirmSession()}
+			{:else if $selectedIsArchived === 1}
+				{m.archiveConfirmSession()}
+			{/if}
 		</h3>
 		<div class="flex justify-center gap-4">
-			<Button color="red" on:click={confirmArchiveSessions}>{m.archiveConfirm()}</Button>
+			<Button color="red" on:click={confirmArchiveSessions}>
+				{#if $selectedIsArchived === 2}
+					{m.unarchive()}
+				{:else if $selectedIsArchived === 1}
+					{m.archive()}
+				{/if}
+			</Button>
 			<Button color="alternative" on:click={() => ($showArchiveModal = false)}
 				>{m.noCancel()}</Button
 			>
