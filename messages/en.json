@@ -560,5 +560,6 @@
 	"chartSubtaskCompletionDesc": "Average completion rate of subtasks for each student",
 	"chartSubtaskCompletionRate": "Issue Comprehension Rate",
 	"chartCompletionRate": "Completion Rate",
-	"allClasses": "All Classes"
+	"allClasses": "All Classes",
+	"selectCoursesPlaceholder": "Please select course titles on the left"
 }

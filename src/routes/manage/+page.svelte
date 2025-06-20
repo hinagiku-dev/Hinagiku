@@ -20,7 +20,9 @@
 		Check,
 		Trash2,
 		Edit,
-		BarChart3
+		BarChart3,
+		Activity,
+		MessageSquare
 	} from 'lucide-svelte';
 	import Title from '$lib/components/Title.svelte';
 	import SessionCard from '$lib/components/SessionCard.svelte';
@@ -51,6 +53,26 @@
 	import type { Class } from '$lib/schema/class';
 	import type { Session } from '$lib/schema/session';
 	import { notifications } from '$lib/stores/notifications';
+	import { getUser } from '$lib/utils/getUser';
+	import { countWords } from '$lib/utils/countWords';
+
+	type ConversationMessage = {
+		role: 'system' | 'user' | 'assistant';
+		content: string;
+		audio: string | null;
+		warning: {
+			moderation: boolean;
+			offTopic: boolean;
+		} | null;
+	};
+
+	type GroupDiscussion = {
+		content: string;
+		id: string | null;
+		speaker: string;
+		audio: string | null;
+		moderation: boolean;
+	};
 
 	// Origin for QR code generation
 	let origin = $derived(browser ? $page.url.origin : '');
@@ -96,9 +118,34 @@
 	// Session title filtering - using runes
 	let selectedTitles = $state<string[]>([]);
 
+	// Flag to ensure default title selection happens only once
+	let titlesInitialized = $state(false);
+
 	// Word cloud data
 	let keywordData = $state<Record<string, number>>({});
 	let isLoadingKeywords = $state(false);
+
+	// Real chart data states
+	let participationData = $state<
+		Array<{ className: string; sessions: Array<{ sessionName: string; participation: number }> }>
+	>([]);
+	let studentParticipationData = $state<
+		Array<{
+			sessionId: string;
+			sessionTitle: string;
+			participants: Record<string, { words: number }>;
+		}>
+	>([]);
+	let subtaskCompletionData = $state<Array<{ studentId: string; subtaskCompleted: boolean[] }>>([]);
+	let discussionParticipationData = $state<
+		Array<{ discussionName: string; participation: number }>
+	>([]);
+
+	// Loading states for charts
+	let isLoadingParticipationData = $state(false);
+	let isLoadingStudentParticipationData = $state(false);
+	let isLoadingSubtaskData = $state(false);
+	let isLoadingDiscussionData = $state(false);
 
 	let filteredClassSessions = derivedStore(
 		[classSessionsStore, selectedLabels],
@@ -117,39 +164,6 @@
 			session.labels?.forEach((label) => labels.add(label));
 		});
 		return Array.from(labels).sort();
-	});
-
-	// Group all sessions by title - using runes
-	let sessionsByTitle = $derived(() => {
-		if (!allSessions || allSessions.length === 0) return {};
-
-		// Only show sessions for selected titles
-		if (selectedTitles.length === 0) return {};
-
-		const sessionsToGroup = allSessions.filter((session) =>
-			selectedTitles.includes(session.data.title)
-		);
-
-		const grouped: Record<string, Array<{ id: string; data: Session }>> = {};
-
-		sessionsToGroup.forEach((session) => {
-			const title = session.data.title;
-			if (!grouped[title]) {
-				grouped[title] = [];
-			}
-			grouped[title].push(session);
-		});
-
-		// Sort sessions within each group by creation date (descending)
-		Object.keys(grouped).forEach((title) => {
-			grouped[title].sort((a, b) => {
-				const aTime = (a.data.createdAt as Timestamp).toMillis();
-				const bTime = (b.data.createdAt as Timestamp).toMillis();
-				return bTime - aTime;
-			});
-		});
-
-		return grouped;
 	});
 
 	let availableTitles = $derived(() => {
@@ -174,9 +188,66 @@
 	// Effect to load keyword data when selected titles change
 	$effect(() => {
 		if (selectedTitles.length > 0) {
+			console.log('Loading keyword data for titles:', selectedTitles);
 			loadKeywordData();
 		} else {
+			console.log('No titles selected, clearing keyword data');
 			keywordData = {};
+		}
+
+		// Also reload chart data when titles change
+		if (hasInitialized && browser) {
+			console.log('Reloading all chart data due to title change');
+			loadParticipationData();
+			loadDiscussionParticipationData();
+			if (selectedClassId) {
+				loadStudentParticipationData();
+			}
+		}
+	});
+
+	// Effect to load chart data when classes are loaded
+	$effect(() => {
+		if (classes.length > 0 && hasInitialized) {
+			loadParticipationData();
+			loadDiscussionParticipationData();
+		}
+	});
+
+	// Effect to load class-specific chart data when class is selected
+	$effect(() => {
+		if (selectedClassId && hasInitialized) {
+			loadStudentParticipationData();
+			loadSubtaskCompletionData();
+			loadDiscussionParticipationData();
+		} else if (!selectedClassId) {
+			// Clear class-specific data when no class is selected
+			studentParticipationData = [];
+			subtaskCompletionData = [];
+		}
+	});
+
+	// Effect to reload chart data when selectedTitles changes
+	$effect(() => {
+		console.log('Selected titles changed:', selectedTitles);
+		if (hasInitialized && browser) {
+			console.log('Reloading participation data...');
+			loadParticipationData();
+			if (selectedClassId) {
+				console.log('Reloading student participation data...');
+				loadStudentParticipationData();
+			}
+			loadDiscussionParticipationData();
+		}
+	});
+
+	// Effect: Automatically select all session titles on first load
+	$effect(() => {
+		const titles = availableTitles();
+		if (!titlesInitialized && titles.length > 0) {
+			selectedTitles = [...titles];
+			titlesInitialized = true;
+			console.log('Defaulting selectedTitles to all available titles:', selectedTitles);
 		}
 	});
 
@@ -190,19 +261,23 @@
 	}
 
 	function handleTitleSelect(title: string) {
+		console.log('Handling title select:', title);
 		if (selectedTitles.includes(title)) {
 			selectedTitles = selectedTitles.filter((t) => t !== title);
 		} else {
 			selectedTitles = [...selectedTitles, title].sort();
 		}
+		console.log('New selected titles:', selectedTitles);
 	}
 
 	function selectAllTitles() {
 		selectedTitles = [...availableTitles()];
+		console.log('Selected all titles:', selectedTitles);
 	}
 
 	function deselectAllTitles() {
 		selectedTitles = [];
+		console.log('Deselected all titles');
 	}
 
 	// Convert between empty string and null for selectedClassId to work with Select component
@@ -278,93 +353,6 @@
 			}
 		}
 	});
-
-	const mockParticipationData = [
-		{
-			className: '101',
-			sessions: [
-				{ sessionName: '關於美食與教育的討論', participation: 150 },
-				{ sessionName: '社會情緒與道德學習：慈悲', participation: 200 },
-				{ sessionName: '人際價值觀', participation: 180 }
-			]
-		},
-		{
-			className: '102',
-			sessions: [
-				{ sessionName: '關於美食與教育的討論', participation: 180 },
-				{ sessionName: '社會情緒與道德學習：慈悲', participation: 220 },
-				{ sessionName: '人際價值觀', participation: 190 }
-			]
-		},
-		{
-			className: '204',
-			sessions: [
-				{ sessionName: '關於美食與教育的討論', participation: 160 },
-				{ sessionName: '社會情緒與道德學習：慈悲', participation: 190 },
-				{ sessionName: '人際價值觀', participation: 210 }
-			]
-		},
-		{
-			className: '303',
-			sessions: [
-				{ sessionName: '關於美食與教育的討論', participation: 170 },
-				{ sessionName: '社會情緒與道德學習：慈悲', participation: 210 },
-				{ sessionName: '人際價值觀', participation: 200 }
-			]
-		}
-	];
-
-	const mockSubtaskData = [
-		{
-			studentId: '王一',
-			subtaskCompleted: [true, true, false, true, false]
-		},
-		{
-			studentId: '李二',
-			subtaskCompleted: [true, false, true, true, true]
-		},
-		{
-			studentId: '陳三',
-			subtaskCompleted: [false, true, true, false, true]
-		}
-	];
-
-	const mockDiscussionData = [
-		{ discussionName: '關於美食與教育的討論', participation: 120 },
-		{ discussionName: '社會情緒與道德學習：慈悲', participation: 180 },
-		{ discussionName: '人際價值觀', participation: 150 },
-		{ discussionName: '0318社會情緒學習', participation: 200 }
-	];
-
-	const mockStudentParticipationData = [
-		{
-			sessionId: '1',
-			sessionTitle: '關於美食與教育的討論',
-			participants: {
-				王一: { words: 150 },
-				李二: { words: 200 },
-				陳三: { words: 180 }
-			}
-		},
-		{
-			sessionId: '2',
-			sessionTitle: '社會情緒與道德學習：慈悲',
-			participants: {
-				王一: { words: 220 },
-				李二: { words: 180 },
-				陳三: { words: 250 }
-			}
-		},
-		{
-			sessionId: '3',
-			sessionTitle: '人際價值觀',
-			participants: {
-				王一: { words: 190 },
-				李二: { words: 210 },
-				陳三: { words: 170 }
-			}
-		}
-	];
 
 	// Load user's classes
 	async function loadClasses() {
@@ -492,6 +480,401 @@
 			notifications.error('載入關鍵字數據失敗');
 		} finally {
 			isLoadingKeywords = false;
+		}
+	}
+
+	// Load participation data across all classes
+	async function loadParticipationData() {
+		if (!$user || !browser) return;
+
+		try {
+			isLoadingParticipationData = true;
+			const classParticipationData: Array<{
+				className: string;
+				sessions: Array<{ sessionName: string; participation: number }>;
+			}> = [];
+
+			// Get participation data for each class
+			for (const cls of classes) {
+				if (cls.data.active_status === 'archived') continue;
+
+				const sessionsQuery = query(
+					collection(db, 'sessions'),
+					where('classId', '==', cls.id),
+					where('status', '==', 'ended'),
+					orderBy('createdAt', 'desc')
+				);
+
+				const snapshot = await getDocs(sessionsQuery);
+				const sessions: Array<{ sessionName: string; participation: number }> = [];
+
+				for (const sessionDoc of snapshot.docs) {
+					const sessionData = sessionDoc.data() as Session;
+
+					// Skip if session title is not selected
+					if (selectedTitles.length > 0 && !selectedTitles.includes(sessionData.title)) {
+						continue;
+					}
+
+					// Get groups for this session to calculate participation
+					const groupsQuery = query(collection(db, 'sessions', sessionDoc.id, 'groups'));
+
+					try {
+						const groupsSnapshot = await getDocs(groupsQuery);
+						let totalWords = 0;
+
+						// Go through each group and get their conversations
+						for (const groupDoc of groupsSnapshot.docs) {
+							const conversationsQuery = query(
+								collection(db, 'sessions', sessionDoc.id, 'groups', groupDoc.id, 'conversations')
+							);
+
+							try {
+								const conversationsSnapshot = await getDocs(conversationsQuery);
+								conversationsSnapshot.docs.forEach((convDoc) => {
+									const convData = convDoc.data();
+									if (convData.history && Array.isArray(convData.history)) {
+										convData.history.forEach((message: ConversationMessage) => {
+											if (message.role === 'user' && message.content) {
+												totalWords += countWords(message.content);
+											}
+										});
+									}
+								});
+							} catch (error) {
+								console.error(`Error loading conversations for group ${groupDoc.id}:`, error);
+							}
+						}
+
+						sessions.push({
+							sessionName: sessionData.title,
+							participation: totalWords
+						});
+					} catch (error) {
+						console.error(`Error loading groups for session ${sessionDoc.id}:`, error);
+					}
+				}
+
+				if (sessions.length > 0) {
+					classParticipationData.push({
+						className: cls.data.className,
+						sessions: sessions
+					});
+				}
+			}
+
+			participationData = classParticipationData;
+		} catch (error) {
+			console.error('Error loading participation data:', error);
+			notifications.error('載入參與度數據失敗');
+		} finally {
+			isLoadingParticipationData = false;
+		}
+	}
+
+	// Load student participation data for selected class
+	async function loadStudentParticipationData() {
+		if (!selectedClassId || !browser) {
+			studentParticipationData = [];
+			return;
+		}
+
+		try {
+			isLoadingStudentParticipationData = true;
+			const sessionParticipationData: Array<{
+				sessionId: string;
+				sessionTitle: string;
+				participants: Record<string, { words: number }>;
+			}> = [];
+
+			const sessionsQuery = query(
+				collection(db, 'sessions'),
+				where('classId', '==', selectedClassId),
+				where('status', '==', 'ended'),
+				orderBy('createdAt', 'desc')
+				// Limit to recent sessions to avoid too much data
+				// You can adjust this limit as needed
+			);
+
+			const snapshot = await getDocs(sessionsQuery);
+
+			for (const sessionDoc of snapshot.docs) {
+				const sessionData = sessionDoc.data() as Session;
+
+				// Skip if session title is not selected
+				if (selectedTitles.length > 0 && !selectedTitles.includes(sessionData.title)) {
+					continue;
+				}
+
+				// Get groups for this session
+				const groupsQuery = query(collection(db, 'sessions', sessionDoc.id, 'groups'));
+
+				try {
+					const groupsSnapshot = await getDocs(groupsQuery);
+
+					// Go through each group and get their conversations
+					const userWordCounts: Record<string, number> = {};
+
+					for (const groupDoc of groupsSnapshot.docs) {
+						const conversationsQuery = query(
+							collection(db, 'sessions', sessionDoc.id, 'groups', groupDoc.id, 'conversations')
+						);
+
+						try {
+							const conversationsSnapshot = await getDocs(conversationsQuery);
+
+							conversationsSnapshot.docs.forEach((convDoc) => {
+								const convData = convDoc.data();
+								const userId = convData.userId;
+
+								if (userId && convData.history && Array.isArray(convData.history)) {
+									let userWords = 0;
+									convData.history.forEach((message: ConversationMessage) => {
+										if (message.role === 'user' && message.content) {
+											userWords += countWords(message.content);
+										}
+									});
+
+									if (userWords > 0) {
+										if (userWordCounts[userId]) {
+											userWordCounts[userId] += userWords;
+										} else {
+											userWordCounts[userId] = userWords;
+										}
+									}
+								}
+							});
+						} catch (error) {
+							console.error(`Error loading conversations for group ${groupDoc.id}:`, error);
+						}
+					}
+
+					// Convert userId to displayName
+					if (Object.keys(userWordCounts).length > 0) {
+						const participants: Record<string, { words: number }> = {};
+
+						// Get displayName for each userId
+						const userPromises = Object.entries(userWordCounts).map(async ([userId, words]) => {
+							try {
+								const user = await getUser(userId);
+								return { displayName: user.displayName, words };
+							} catch (error) {
+								console.error(`Error getting user ${userId}:`, error);
+								return { displayName: userId, words }; // Fallback to userId if getUser fails
+							}
+						});
+
+						const userResults = await Promise.all(userPromises);
+						userResults.forEach(({ displayName, words }) => {
+							if (participants[displayName]) {
+								participants[displayName].words += words;
+							} else {
+								participants[displayName] = { words };
+							}
+						});
+
+						sessionParticipationData.push({
+							sessionId: sessionDoc.id,
+							sessionTitle: sessionData.title,
+							participants: participants
+						});
+					}
+				} catch (error) {
+					console.error(`Error loading groups for session ${sessionDoc.id}:`, error);
+				}
+			}
+
+			studentParticipationData = sessionParticipationData;
+		} catch (error) {
+			console.error('Error loading student participation data:', error);
+			notifications.error('載入學生參與度數據失敗');
+		} finally {
+			isLoadingStudentParticipationData = false;
+		}
+	}
+
+	// Load subtask completion data for selected class
+	async function loadSubtaskCompletionData() {
+		if (!selectedClassId || !browser) {
+			subtaskCompletionData = [];
+			return;
+		}
+
+		try {
+			isLoadingSubtaskData = true;
+
+			const sessionsQuery = query(
+				collection(db, 'sessions'),
+				where('classId', '==', selectedClassId),
+				where('status', '==', 'ended'),
+				orderBy('createdAt', 'desc')
+			);
+
+			const snapshot = await getDocs(sessionsQuery);
+			const userSubtaskMap = new Map<string, boolean[][]>();
+
+			for (const sessionDoc of snapshot.docs) {
+				// Get groups for this session
+				const groupsQuery = query(collection(db, 'sessions', sessionDoc.id, 'groups'));
+
+				try {
+					const groupsSnapshot = await getDocs(groupsQuery);
+
+					// Go through each group and get their conversations
+					for (const groupDoc of groupsSnapshot.docs) {
+						const conversationsQuery = query(
+							collection(db, 'sessions', sessionDoc.id, 'groups', groupDoc.id, 'conversations')
+						);
+
+						try {
+							const conversationsSnapshot = await getDocs(conversationsQuery);
+
+							conversationsSnapshot.docs.forEach((convDoc) => {
+								const convData = convDoc.data();
+								const userId = convData.userId;
+
+								if (
+									userId &&
+									convData.subtaskCompleted &&
+									Array.isArray(convData.subtaskCompleted)
+								) {
+									if (!userSubtaskMap.has(userId)) {
+										userSubtaskMap.set(userId, []);
+									}
+									userSubtaskMap.get(userId)!.push(convData.subtaskCompleted);
+								}
+							});
+						} catch (error) {
+							console.error(`Error loading conversations for group ${groupDoc.id}:`, error);
+						}
+					}
+				} catch (error) {
+					console.error(`Error loading groups for session ${sessionDoc.id}:`, error);
+				}
+			}
+
+			// Calculate average completion for each user and get displayName
+			const userPromises = Array.from(userSubtaskMap.entries()).map(
+				async ([userId, sessionData]) => {
+					if (sessionData.length > 0) {
+						// Find the maximum number of subtasks across all sessions
+						const maxSubtasks = Math.max(...sessionData.map((session) => session.length));
+
+						// Calculate average completion for each subtask position
+						const avgCompletion: boolean[] = [];
+						for (let i = 0; i < maxSubtasks; i++) {
+							const completionCount = sessionData.reduce((count, session) => {
+								return count + (session[i] ? 1 : 0);
+							}, 0);
+							avgCompletion.push(completionCount > sessionData.length / 2);
+						}
+
+						try {
+							const user = await getUser(userId);
+							return {
+								studentId: user.displayName,
+								subtaskCompleted: avgCompletion
+							};
+						} catch (error) {
+							console.error(`Error getting user ${userId}:`, error);
+							return {
+								studentId: userId, // Fallback to userId if getUser fails
+								subtaskCompleted: avgCompletion
+							};
+						}
+					}
+					return null;
+				}
+			);
+
+			const userResults = await Promise.all(userPromises);
+			subtaskCompletionData = userResults.filter((result) => result !== null) as Array<{
+				studentId: string;
+				subtaskCompleted: boolean[];
+			}>;
+		} catch (error) {
+			console.error('Error loading subtask completion data:', error);
+			notifications.error('載入子任務完成數據失敗');
+		} finally {
+			isLoadingSubtaskData = false;
+		}
+	}
+
+	// Load discussion participation data
+	async function loadDiscussionParticipationData() {
+		if (!browser) return;
+
+		try {
+			isLoadingDiscussionData = true;
+			const discussionData: Array<{ discussionName: string; participation: number }> = [];
+
+			// Get sessions to analyze
+			const sessionsToAnalyze = selectedClassId
+				? allSessions.filter((session) => session.data.classId === selectedClassId)
+				: allSessions;
+
+			// Filter by selected titles if any are selected
+			const filteredSessions =
+				selectedTitles.length > 0
+					? sessionsToAnalyze.filter((session) => selectedTitles.includes(session.data.title))
+					: sessionsToAnalyze;
+
+			console.log('Analyzing sessions for discussion data:', filteredSessions.length);
+
+			const titleParticipationMap = new Map<string, number[]>();
+
+			for (const session of filteredSessions) {
+				// Get group discussions for this session
+				const groupsQuery = query(collection(db, 'sessions', session.id, 'groups'));
+
+				try {
+					const groupsSnapshot = await getDocs(groupsQuery);
+					let sessionTotalWords = 0;
+					let participantCount = 0;
+
+					groupsSnapshot.docs.forEach((groupDoc) => {
+						const groupData = groupDoc.data();
+						if (groupData.discussions && Array.isArray(groupData.discussions)) {
+							groupData.discussions.forEach((discussion: GroupDiscussion) => {
+								if (discussion.content) {
+									sessionTotalWords += discussion.content.split(/\s+/).length;
+								}
+							});
+							if (groupData.participants && Array.isArray(groupData.participants)) {
+								participantCount += groupData.participants.length;
+							}
+						}
+					});
+
+					if (participantCount > 0) {
+						const avgParticipation = sessionTotalWords / participantCount;
+						if (!titleParticipationMap.has(session.data.title)) {
+							titleParticipationMap.set(session.data.title, []);
+						}
+						titleParticipationMap.get(session.data.title)!.push(avgParticipation);
+					}
+				} catch (error) {
+					console.error(`Error loading groups for session ${session.id}:`, error);
+				}
+			}
+
+			// Calculate average participation per discussion title
+			titleParticipationMap.forEach((participations, title) => {
+				const avgParticipation =
+					participations.reduce((sum, p) => sum + p, 0) / participations.length;
+				discussionData.push({
+					discussionName: title,
+					participation: Math.round(avgParticipation)
+				});
+			});
+
+			console.log('Discussion participation data:', discussionData);
+			discussionParticipationData = discussionData;
+		} catch (error) {
+			console.error('Error loading discussion participation data:', error);
+			notifications.error('載入討論參與度數據失敗');
+		} finally {
+			isLoadingDiscussionData = false;
 		}
 	}
 
@@ -1154,11 +1537,76 @@
 			{#if selectedClassId && selectedClass}
 				<div class="w-full space-y-6">
 					<!-- Student Participation Chart -->
-					<StudentParticipationChart sessions={mockStudentParticipationData} />
+					{#if isLoadingStudentParticipationData}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center">
+								<Spinner size="8" />
+								<p class="ml-2 text-gray-600">載入學生參與度數據中...</p>
+							</div>
+						</Card>
+					{:else if studentParticipationData.length > 0}
+						<StudentParticipationChart sessions={studentParticipationData} />
+					{:else}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center text-gray-500">
+								<p>沒有可用的學生參與度數據</p>
+							</div>
+						</Card>
+					{/if}
+
 					<!-- Subtask Completion Chart -->
-					<SubtaskCompletionChart data={mockSubtaskData} />
+					{#if isLoadingSubtaskData}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center">
+								<Spinner size="8" />
+								<p class="ml-2 text-gray-600">載入子任務數據中...</p>
+							</div>
+						</Card>
+					{:else if subtaskCompletionData.length > 0}
+						<SubtaskCompletionChart data={subtaskCompletionData} />
+					{:else}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center text-gray-500">
+								<p>沒有可用的子任務完成數據</p>
+							</div>
+						</Card>
+					{/if}
+
 					<!-- Discussion Participation Overview -->
-					<DiscussionParticipationChart data={mockDiscussionData} />
+					{#if isLoadingDiscussionData}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center">
+								<Spinner size="8" />
+								<p class="ml-2 text-gray-600">載入討論數據中...</p>
+							</div>
+						</Card>
+					{:else if selectedTitles.length === 0}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="mb-4">
+								<div class="mb-3 flex items-center gap-3">
+									<div class="rounded-full bg-primary-100 p-2">
+										<MessageSquare size={20} class="text-primary-600" />
+									</div>
+									<h3 class="text-lg font-semibold text-gray-900">
+										{m.chartDiscussionParticipation()}
+									</h3>
+								</div>
+								<p class="text-sm text-gray-600">{m.chartDiscussionParticipationDesc()}</p>
+							</div>
+							<div class="flex h-64 flex-col items-center justify-center text-gray-500">
+								<Info size={32} class="mb-2" />
+								<p>{m.selectCoursesPlaceholder()}</p>
+							</div>
+						</Card>
+					{:else if discussionParticipationData.length > 0}
+						<DiscussionParticipationChart data={discussionParticipationData} />
+					{:else}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center text-gray-500">
+								<p>沒有可用的討論參與度數據</p>
+							</div>
+						</Card>
+					{/if}
 					<!-- Class Groups -->
 					{#if selectedClass.groups.length > 0}
 						<Card padding="lg" class="w-full !max-w-none">
@@ -1283,65 +1731,101 @@
 					</Card>
 				</div>
 			{:else}
-				<!-- Participation Chart -->
-				<ParticipationChart data={mockParticipationData} />
-				<!-- Discussion Participation Overview -->
-				<DiscussionParticipationChart data={mockDiscussionData} />
-				<!-- Analytics Panel when no class is selected -->
 				<div class="w-full space-y-6">
-					<Card padding="lg" class="w-full !max-w-none">
-						<div class="mb-4">
-							<div class="mb-3 flex items-center gap-3">
-								<div class="rounded-full bg-primary-100 p-2">
-									<BarChart3 size={20} class="text-primary-600" />
-								</div>
-								<h3 class="text-lg font-semibold text-gray-900">{m.sessionAnalysis()}</h3>
+					<!-- Participation Chart -->
+					{#if isLoadingParticipationData}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center">
+								<Spinner size="8" />
+								<p class="ml-2 text-gray-600">載入參與度數據中...</p>
 							</div>
-							<p class="text-sm text-gray-600">{m.analyticsPanel()}</p>
-						</div>
-
-						<!-- Statistics Summary -->
-						<div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-							<div class="rounded-lg bg-blue-50 p-4">
-								<div class="flex items-center">
-									<div class="rounded-full bg-blue-100 p-2">
-										<Calendar size={20} class="text-blue-600" />
-									</div>
-									<div class="ml-3">
-										<p class="text-sm font-medium text-blue-900">{m.totalSessions()}</p>
-										<p class="text-2xl font-bold text-blue-600">{allSessions.length}</p>
-									</div>
-								</div>
-							</div>
-							<div class="rounded-lg bg-green-50 p-4">
-								<div class="flex items-center">
-									<div class="rounded-full bg-green-100 p-2">
-										<Check size={20} class="text-green-600" />
-									</div>
-									<div class="ml-3">
-										<p class="text-sm font-medium text-green-900">{m.selectedSessions()}</p>
-										<p class="text-2xl font-bold text-green-600">
-											{Object.values(sessionsByTitle()).reduce(
-												(total: number, sessions: Array<{ id: string; data: Session }>) =>
-													total + sessions.length,
-												0
-											)}
-										</p>
-									</div>
-								</div>
-							</div>
-						</div>
-
-						<!-- Sessions by Title -->
-						{#if Object.keys(sessionsByTitle()).length > 0}
+						</Card>
+					{:else if selectedTitles.length === 0}
+						<!-- No session titles selected placeholder -->
+						<Card padding="lg" class="w-full !max-w-none">
 							<div class="mb-4">
-								<h4 class="mb-3 font-semibold text-gray-900">{m.sessionsByTitle()}</h4>
+								<div class="mb-3 flex items-center gap-3">
+									<div class="rounded-full bg-primary-100 p-2">
+										<Activity size={20} class="text-primary-600" />
+									</div>
+									<h3 class="text-lg font-semibold text-gray-900">{m.chartClassParticipation()}</h3>
+								</div>
+								<p class="text-sm text-gray-600">{m.chartClassParticipationDesc()}</p>
+							</div>
+							<div class="flex h-64 flex-col items-center justify-center text-gray-500">
+								<Info size={32} class="mb-2" />
+								<p>{m.selectCoursesPlaceholder()}</p>
+							</div>
+						</Card>
+					{:else if participationData.length > 0}
+						<ParticipationChart data={participationData} />
+					{:else}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center text-gray-500">
+								<p>沒有可用的班級參與度數據</p>
+							</div>
+						</Card>
+					{/if}
 
+					<!-- Discussion Participation Overview -->
+					{#if isLoadingDiscussionData}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center">
+								<Spinner size="8" />
+								<p class="ml-2 text-gray-600">載入討論數據中...</p>
+							</div>
+						</Card>
+					{:else if selectedTitles.length === 0}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="mb-4">
+								<div class="mb-3 flex items-center gap-3">
+									<div class="rounded-full bg-primary-100 p-2">
+										<MessageSquare size={20} class="text-primary-600" />
+									</div>
+									<h3 class="text-lg font-semibold text-gray-900">
+										{m.chartDiscussionParticipation()}
+									</h3>
+								</div>
+								<p class="text-sm text-gray-600">{m.chartDiscussionParticipationDesc()}</p>
+							</div>
+							<div class="flex h-64 flex-col items-center justify-center text-gray-500">
+								<Info size={32} class="mb-2" />
+								<p>{m.selectCoursesPlaceholder()}</p>
+							</div>
+						</Card>
+					{:else if discussionParticipationData.length > 0}
+						<DiscussionParticipationChart data={discussionParticipationData} />
+					{:else}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center text-gray-500">
+								<p>沒有可用的討論參與度數據</p>
+							</div>
+						</Card>
+					{/if}
+
+					<!-- Analytics Panel when no class is selected -->
+					<div class="w-full space-y-6">
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="mb-4">
+								<div class="mb-3 flex items-center gap-3">
+									<div class="rounded-full bg-primary-100 p-2">
+										<BarChart3 size={20} class="text-primary-600" />
+									</div>
+									<h3 class="text-lg font-semibold text-gray-900">{m.keywordWordCloud()}</h3>
+								</div>
+								<p class="text-sm text-gray-600">{m.wordCloudDesc()}</p>
+							</div>
+							<!-- Sessions by Title -->
+							<div class="mb-4">
 								<!-- Word Cloud Section -->
 								<div class="mb-6">
-									<h5 class="mb-3 font-medium text-gray-700">{m.keywordWordCloud()}</h5>
 									<div class="rounded-lg border bg-gray-50 p-4">
-										{#if isLoadingKeywords}
+										{#if selectedTitles.length === 0}
+											<div class="flex h-64 flex-col items-center justify-center text-gray-500">
+												<Info size={32} class="mb-2" />
+												<p>{m.selectCoursesPlaceholder()}</p>
+											</div>
+										{:else if isLoadingKeywords}
 											<div class="flex h-64 items-center justify-center">
 												<Spinner size="8" />
 												<p class="ml-2 text-gray-600">{m.loadingKeywords()}</p>
@@ -1357,88 +1841,9 @@
 										{/if}
 									</div>
 								</div>
-
-								<div class="space-y-4">
-									{#each Object.entries(sessionsByTitle()) as [title, sessions]}
-										{@const typedSessions = sessions as Array<{ id: string; data: Session }>}
-										<Card class="!max-w-none">
-											<div class="mb-3 flex items-center justify-between">
-												<h5 class="font-medium text-gray-900">{title}</h5>
-												<span
-													class="rounded-full bg-primary-100 px-2 py-1 text-xs font-medium text-primary-600"
-												>
-													{typedSessions.length}
-													{typedSessions.length === 1 ? 'session' : 'sessions'}
-												</span>
-											</div>
-											<div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-												{#each typedSessions.slice(0, 3) as session}
-													<div class="rounded border p-3 text-sm {UI_CLASSES.PANEL_BG} shadow-sm">
-														<div class="mb-1 flex items-center justify-between">
-															<span class="font-medium"
-																>{session.data.task.substring(0, 30)}{session.data.task.length > 30
-																	? '...'
-																	: ''}</span
-															>
-															<span class="text-xs text-gray-500">
-																{(session.data.createdAt as Timestamp)
-																	.toDate()
-																	.toLocaleDateString()}
-															</span>
-														</div>
-														<div class="flex items-center gap-2">
-															<span
-																class="rounded px-1.5 py-0.5 text-xs {session.data.status ===
-																'ended'
-																	? 'bg-gray-100 text-gray-600'
-																	: session.data.status === 'group'
-																		? 'bg-green-100 text-green-600'
-																		: 'bg-blue-100 text-blue-600'}"
-															>
-																{session.data.status}
-															</span>
-															{#if session.data.labels?.length > 0}
-																<div class="flex gap-1">
-																	{#each session.data.labels.slice(0, 2) as label}
-																		<span
-																			class="rounded-full bg-primary-100 px-1.5 py-0.5 text-xs text-primary-600"
-																		>
-																			{label}
-																		</span>
-																	{/each}
-																</div>
-															{/if}
-														</div>
-													</div>
-												{/each}
-												{#if typedSessions.length > 3}
-													<div
-														class="flex items-center justify-center rounded border-2 border-dashed border-gray-300 p-3 text-sm text-gray-500"
-													>
-														+{typedSessions.length - 3} more sessions
-													</div>
-												{/if}
-											</div>
-										</Card>
-									{/each}
-								</div>
 							</div>
-						{:else}
-							<div class="py-8 text-center">
-								<div class="mb-4 inline-flex rounded-full bg-gray-100 p-4">
-									<BarChart3 size={32} class="text-gray-400" />
-								</div>
-								<p class="mb-2 text-lg font-medium text-gray-900">{m.chartArea()}</p>
-								<p class="mb-4 text-gray-600">{m.comingSoon()}</p>
-								{#if availableTitles().length > 0}
-									<p class="text-sm text-gray-500">
-										{m.selectAll()}
-										{m.sessionTitleFilter().toLowerCase()}
-									</p>
-								{/if}
-							</div>
-						{/if}
-					</Card>
+						</Card>
+					</div>
 				</div>
 			{/if}
 		</div>
