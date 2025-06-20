@@ -330,7 +330,6 @@
 	"classGroupingDesc": "Use predefined groups from the associated class",
 	"groupingMode": "Grouping Mode",
 	"selectClass": "Select Class",
-	"allClasses": "All Classes",
 	"startWithoutClass": "Start without selecting a class",
 	"noClassesFound": "No classes found!",
 	"failedLoadClasses": "Failed to load classes. Please try again.",
@@ -560,5 +559,6 @@
 	"chartSubtaskCompletion": "Issue Comprehension Level",
 	"chartSubtaskCompletionDesc": "Average completion rate of subtasks for each student",
 	"chartSubtaskCompletionRate": "Issue Comprehension Rate",
-	"chartCompletionRate": "Completion Rate"
+	"chartCompletionRate": "Completion Rate",
+	"allClasses": "All Classes"
 }
