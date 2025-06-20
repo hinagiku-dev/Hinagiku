@@ -11,7 +11,8 @@
 	// Define types for the data structure
 	type SubtaskData = {
 		studentId: string;
-		subtaskCompleted: boolean[];
+		completionRate: number;
+		seatNumber?: string | null;
 	};
 
 	// Props
@@ -20,12 +21,6 @@
 	// Chart instance
 	let chartInstance: Chart | null = null;
 	let chartCanvas: HTMLCanvasElement;
-
-	// Function to calculate completion rate
-	function calculateCompletionRate(completed: boolean[]): number {
-		if (completed.length === 0) return 0;
-		return (completed.filter(Boolean).length / completed.length) * 100;
-	}
 
 	// Function to update chart
 	function updateChart() {
@@ -36,24 +31,25 @@
 			chartInstance.destroy();
 		}
 
-		// Calculate completion rates
-		const completionRates = data.map((student) => ({
-			studentId: student.studentId,
-			rate: calculateCompletionRate(student.subtaskCompleted)
-		}));
-
-		// Sort by completion rate (descending)
-		completionRates.sort((a, b) => b.rate - a.rate);
+		// Sort by seat number
+		const studentData = [...data].sort((a, b) => {
+			const seatA = a.seatNumber ? parseInt(a.seatNumber, 10) : Infinity;
+			const seatB = b.seatNumber ? parseInt(b.seatNumber, 10) : Infinity;
+			if (isNaN(seatA) && isNaN(seatB)) return a.studentId.localeCompare(b.studentId);
+			if (isNaN(seatA)) return 1;
+			if (isNaN(seatB)) return -1;
+			return seatA - seatB;
+		});
 
 		// Create new chart
 		chartInstance = new Chart(chartCanvas, {
 			type: 'bar',
 			data: {
-				labels: completionRates.map((d) => d.studentId),
+				labels: studentData.map((d) => d.studentId),
 				datasets: [
 					{
 						label: m.chartSubtaskCompletionRate(),
-						data: completionRates.map((d) => d.rate),
+						data: studentData.map((d) => d.completionRate),
 						backgroundColor: 'rgba(99, 102, 241, 0.7)',
 						borderColor: 'rgba(99, 102, 241, 1)',
 						borderWidth: 1

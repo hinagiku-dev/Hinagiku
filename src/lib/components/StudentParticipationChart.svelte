@@ -9,14 +9,15 @@
 	Chart.register(...registerables);
 
 	// Define types for the data structure
+	type Participant = {
+		displayName: string;
+		words: number;
+		seatNumber?: string | null;
+	};
 	type SessionData = {
 		sessionId: string;
 		sessionTitle: string;
-		participants: {
-			[studentId: string]: {
-				words: number;
-			};
-		};
+		participants: Participant[];
 	};
 
 	// Props
@@ -46,18 +47,37 @@
 			chartInstance.destroy();
 		}
 
-		// Get all unique student IDs
-		const studentIds = new Set<string>();
+		// Get all unique student info, and sort them by seat number
+		const allParticipants = new Map<string, { displayName: string; seatNumber?: string | null }>();
 		sessions.forEach((session) => {
-			Object.keys(session.participants).forEach((studentId) => {
-				studentIds.add(studentId);
+			session.participants.forEach((p) => {
+				if (!allParticipants.has(p.displayName)) {
+					allParticipants.set(p.displayName, {
+						displayName: p.displayName,
+						seatNumber: p.seatNumber
+					});
+				}
 			});
 		});
+
+		const sortedParticipants = Array.from(allParticipants.values()).sort((a, b) => {
+			const seatA = a.seatNumber ? parseInt(a.seatNumber, 10) : Infinity;
+			const seatB = b.seatNumber ? parseInt(b.seatNumber, 10) : Infinity;
+			if (isNaN(seatA) && isNaN(seatB)) return a.displayName.localeCompare(b.displayName);
+			if (isNaN(seatA)) return 1;
+			if (isNaN(seatB)) return -1;
+			return seatA - seatB;
+		});
+
+		const studentLabels = sortedParticipants.map((p) => p.displayName);
 
 		// Prepare datasets
 		const datasets = sessions.map((session, index) => ({
 			label: session.sessionTitle,
-			data: Array.from(studentIds).map((studentId) => session.participants[studentId]?.words || 0),
+			data: studentLabels.map((displayName) => {
+				const participant = session.participants.find((p) => p.displayName === displayName);
+				return participant ? participant.words : 0;
+			}),
 			backgroundColor: generateColors(sessions.length)[index * 2],
 			borderColor: generateColors(sessions.length)[index * 2 + 1],
 			borderWidth: 1
@@ -67,7 +87,7 @@
 		chartInstance = new Chart(chartCanvas, {
 			type: 'bar',
 			data: {
-				labels: Array.from(studentIds),
+				labels: studentLabels,
 				datasets: datasets
 			},
 			options: {
