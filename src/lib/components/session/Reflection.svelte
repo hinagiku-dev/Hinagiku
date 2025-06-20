@@ -68,7 +68,7 @@
 		</p>
 		<Textarea
 			bind:value={learningRecordAnswer}
-			placeholder="Your reflection..."
+			placeholder={m.reflectionPlaceholder()}
 			rows={5}
 			maxlength={30000}
 			class="w-full rounded-lg border p-4 text-gray-700"
