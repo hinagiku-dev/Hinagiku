@@ -453,8 +453,9 @@
 							{/if}
 							<button
 								class="cursor-pointer text-sm font-semibold hover:text-primary-600"
-								onclick={(e) => handleGroupClick(e, group)}
-								onkeydown={(e) => handleGroupClick(e, group)}
+								onclick={() => $session?.status !== 'ended' && handleGroupClick(group)}
+								onkeydown={(e) =>
+									e.key === 'Enter' && $session?.status !== 'ended' && handleGroupClick(group)}
 							>
 								{m.groupVocabulary()} #{group.number}
 							</button>
@@ -476,9 +477,13 @@
 										<div class="flex flex-1 items-center gap-1.5">
 											<span
 												class="min-w-[60px] max-w-[60px] cursor-pointer truncate text-xs hover:text-primary-600"
-												onclick={() => handleParticipantClick(group.id, participant)}
+												onclick={() =>
+													$session?.status !== 'ended' &&
+													handleParticipantClick(group.id, participant)}
 												onkeydown={(e) =>
-													e.key === 'Enter' && handleParticipantClick(group.id, participant)}
+													e.key === 'Enter' &&
+													$session?.status !== 'ended' &&
+													handleParticipantClick(group.id, participant)}
 												role="button"
 												tabindex="0"
 											>
