@@ -14,6 +14,7 @@ export const TemplateSchema = z.object({
 	active_status: z.enum(['active', 'archived', 'deleted']).default('active'),
 	subtasks: z.array(z.string().min(1).max(200)).max(10),
 	backgroundImage: z.string().nullable().optional(),
+	reflectionQuestion: z.string().max(500).optional().default(''),
 	createdAt: Timestamp,
 	updatedAt: Timestamp
 });

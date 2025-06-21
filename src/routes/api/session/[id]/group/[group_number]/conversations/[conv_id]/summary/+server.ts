@@ -5,7 +5,7 @@ import {
 	getConversationsRef,
 	getGroupRef
 } from '$lib/server/firebase';
-import { summarizeConcepts, summarizeStudentChat } from '$lib/server/gemini';
+import { summarizeConcepts, summarizeStudentChat } from '$lib/server/llm';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';
 import { z } from 'zod';

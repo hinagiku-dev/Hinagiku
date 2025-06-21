@@ -5,7 +5,7 @@ import {
 	getSessionData,
 	getSessionRef
 } from '$lib/server/firebase';
-import { generateIntroduction } from '$lib/server/gemini';
+import { generateIntroduction } from '$lib/server/llm';
 import type { LLMChatMessage } from '$lib/server/types';
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, json, redirect } from '@sveltejs/kit';

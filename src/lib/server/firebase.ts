@@ -185,6 +185,31 @@ export async function getConversationsFromAllParticipantsData(
 	return flattenedConversations;
 }
 
+export async function getDiscussionsFromAllGroupsData(
+	id: string
+): Promise<Array<{ groupId: string; discussion: Group['discussions'] }>> {
+	const groupsRef = getGroupsRef(id);
+	const groups = await groupsRef.get();
+
+	if (groups.empty) {
+		// Return empty array if no groups found, as it might not be an error condition
+		return [];
+	}
+
+	const discussionsPromises = groups.docs.map(async (groupDoc) => {
+		const groupData = (await groupDoc.ref.get()).data() as Group;
+		return {
+			groupId: groupDoc.id,
+			discussion: groupData.discussions || [] // Ensure discussions is an array
+		};
+	});
+
+	const allDiscussions = await Promise.all(discussionsPromises);
+
+	// Filter out groups that have no discussion content
+	return allDiscussions.filter((d) => d.discussion.length > 0);
+}
+
 export async function checkRemoveParticipantPermission(
 	sessionId: string,
 	userId: string,
