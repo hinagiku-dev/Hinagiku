@@ -1,21 +1,22 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Chart, registerables } from 'chart.js';
-	import { Card } from 'flowbite-svelte';
-	import { Target } from 'lucide-svelte';
 	import * as m from '$lib/paraglide/messages.js';
 
 	// Register Chart.js components
 	Chart.register(...registerables);
 
 	// Define types for the data structure
-	type SubtaskData = {
-		studentId: string;
+	type SessionData = {
+		sessionId: string;
+		sessionTitle: string;
 		completionRate: number;
+		averageCompletionRate: number;
 	};
 
 	// Props
-	export let data: SubtaskData[] = [];
+	export let studentName: string = '';
+	export let sessions: SessionData[] = [];
 
 	// Chart instance
 	let chartInstance: Chart | null = null;
@@ -23,7 +24,7 @@
 
 	// Function to update chart
 	function updateChart() {
-		if (!chartCanvas || !data.length) return;
+		if (!chartCanvas || !sessions.length) return;
 
 		// Destroy existing chart if it exists
 		if (chartInstance) {
@@ -34,14 +35,25 @@
 		chartInstance = new Chart(chartCanvas, {
 			type: 'bar',
 			data: {
-				labels: data.map((d) => d.studentId),
+				labels: sessions.map((session) => session.sessionTitle),
 				datasets: [
 					{
 						label: m.chartSubtaskCompletionRate(),
-						data: data.map((d) => d.completionRate),
-						backgroundColor: 'rgba(99, 102, 241, 0.7)',
-						borderColor: 'rgba(99, 102, 241, 1)',
-						borderWidth: 1
+						data: sessions.map((session) => session.completionRate),
+						backgroundColor: 'rgba(168, 85, 247, 0.7)',
+						borderColor: 'rgba(168, 85, 247, 1)',
+						borderWidth: 1,
+						order: 1
+					},
+					{
+						type: 'line',
+						label: m.chartClassAverageSubtaskCompletionRate(),
+						data: sessions.map((session) => session.averageCompletionRate),
+						borderColor: 'rgba(234, 88, 12, 1)',
+						backgroundColor: 'rgba(234, 88, 12, 0.7)',
+						fill: false,
+						tension: 0.1,
+						order: 0
 					}
 				]
 			},
@@ -50,17 +62,15 @@
 				maintainAspectRatio: false,
 				plugins: {
 					title: {
-						display: true,
-						text: m.chartSubtaskCompletion(),
-						font: {
-							size: 16,
-							weight: 'bold'
-						}
+						display: false
 					},
 					tooltip: {
 						callbacks: {
 							label: function (context) {
-								return `${m.chartCompletionRate()}: ${context.parsed.y.toFixed(1)}%`;
+								if (context.dataset.type === 'line') {
+									return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+								}
+								return `${studentName}: ${context.parsed.y.toFixed(1)}%`;
 							}
 						}
 					}
@@ -69,7 +79,7 @@
 					x: {
 						title: {
 							display: true,
-							text: m.chartStudents(),
+							text: m.chartSession(),
 							font: {
 								weight: 'bold'
 							}
@@ -92,7 +102,7 @@
 	}
 
 	// Update chart when data changes
-	$: if (data) {
+	$: if (sessions) {
 		updateChart();
 	}
 
@@ -101,18 +111,6 @@
 	});
 </script>
 
-<Card padding="lg" class="w-full !max-w-none">
-	<div class="mb-4">
-		<div class="mb-3 flex items-center gap-3">
-			<div class="rounded-full bg-primary-100 p-2">
-				<Target size={20} class="text-primary-600" />
-			</div>
-			<h3 class="text-lg font-semibold text-gray-900">{m.chartSubtaskCompletion()}</h3>
-		</div>
-		<p class="text-sm text-gray-600">{m.chartSubtaskCompletionDesc()}</p>
-	</div>
-
-	<div class="h-[400px] w-full">
-		<canvas bind:this={chartCanvas}></canvas>
-	</div>
-</Card>
+<div class="h-[400px] w-full">
+	<canvas bind:this={chartCanvas}></canvas>
+</div>

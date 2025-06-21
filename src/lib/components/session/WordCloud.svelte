@@ -2,7 +2,11 @@
 	import * as echarts from 'echarts';
 	import { onMount } from 'svelte';
 
-	let { words = {} }: { words?: Record<string, number> } = $props();
+	let {
+		words = {},
+		minFontSize = 10,
+		maxFontSize = 40
+	}: { words?: Record<string, number>; minFontSize?: number; maxFontSize?: number } = $props();
 
 	let chart: echarts.ECharts | null = $state(null);
 	let container: HTMLDivElement | null = $state(null);
@@ -46,6 +50,7 @@
 					top: 'center',
 					width: '90%',
 					height: '90%',
+					sizeRange: [minFontSize, maxFontSize],
 					rotationRange: [-20, 20],
 					rotationStep: 15,
 					gridSize: 8,
