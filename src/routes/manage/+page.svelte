@@ -2064,9 +2064,6 @@
 													color="primary"
 												/>
 												<span class="text-sm">{title}</span>
-												<span class="ml-auto text-xs text-gray-500">
-													({allSessions.filter((s) => s.data.title === title).length})
-												</span>
 											</label>
 										{/each}
 									</div>
@@ -2101,6 +2098,53 @@
 								{/if}
 							</Card>
 						</div>
+
+						<!-- Session Summaries (Only show when single title selected) -->
+						{#if selectedTitles.length === 1}
+							{@const sessionsWithSummary =
+								$filteredClassSessions?.filter(
+									([, s]) => s.summary && s.title === selectedTitles[0]
+								) || []}
+							{#if sessionsWithSummary.length > 0}
+								<Card padding="lg" class="w-full !max-w-none">
+									<div class="mb-4">
+										<div class="mb-3 flex items-center gap-3">
+											<div class="rounded-full bg-primary-100 p-2">
+												<MessageSquare size={20} class="text-primary-600" />
+											</div>
+											<h3 class="text-lg font-semibold text-gray-900">{m.sessionSummaries()}</h3>
+										</div>
+									</div>
+									<div class="space-y-4">
+										{#each sessionsWithSummary as [sessionId, session] (sessionId)}
+											<div class="rounded-lg border bg-gray-50 p-4 dark:bg-gray-800">
+												<h4 class="font-semibold">{session.title}</h4>
+												<div class="prose prose-sm mt-2 max-w-none dark:prose-invert">
+													{#if session.summary}
+														<div>
+															<h5 class="font-medium">{m.integratedViewpoint()}</h5>
+															<p>{session.summary.integratedViewpoint}</p>
+														</div>
+														<div class="mt-2">
+															<h5 class="font-medium">{m.differences()}</h5>
+															<p>{session.summary.differences}</p>
+														</div>
+														<div class="mt-2">
+															<h5 class="font-medium">{m.learningProgress()}</h5>
+															<p>{session.summary.learningProgress}</p>
+														</div>
+														<div class="mt-2">
+															<h5 class="font-medium">{m.finalConclusion()}</h5>
+															<p>{session.summary.finalConclusion}</p>
+														</div>
+													{/if}
+												</div>
+											</div>
+										{/each}
+									</div>
+								</Card>
+							{/if}
+						{/if}
 
 						<!-- Charts -->
 						<div class="space-y-8">

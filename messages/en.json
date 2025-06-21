@@ -562,5 +562,8 @@
 	"chartCompletionRate": "Completion Rate",
 	"allClasses": "All Classes",
 	"selectCoursesPlaceholder": "Please select course titles on the left",
-	"loadingStudentSubtaskData": "Loading student subtask data..."
+	"loadingStudentSubtaskData": "Loading student subtask data...",
+	"saveQuestion": "Save Question",
+	"sessionSummaries": "Session Summaries",
+	"noSessionSummaries": "No session summaries available for the selected sessions."
 }
