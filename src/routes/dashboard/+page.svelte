@@ -212,20 +212,6 @@
 						/>
 					{/if}
 				{/each}
-				{#each $publicTemplates as [doc, template]}
-					{#if template.active_status === 'archived'}
-						<TemplateCard
-							id={doc.id}
-							title={template.title}
-							task={template.task}
-							subtaskSize={template.subtasks.length}
-							resourceSize={template.resources.length}
-							owner={template.owner}
-							labels={template.labels}
-							archived={true}
-						/>
-					{/if}
-				{/each}
 			{:else}
 				<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 				{#each Array(3) as _}
@@ -263,20 +249,6 @@
 							resourceSize={template.resources.length}
 							owner={template.owner}
 							labels={template.labels}
-						/>
-					{/if}
-				{/each}
-				{#each $templates as [doc, template]}
-					{#if template.active_status === 'archived'}
-						<TemplateCard
-							id={doc.id}
-							title={template.title}
-							task={template.task}
-							subtaskSize={template.subtasks.length}
-							resourceSize={template.resources.length}
-							owner={template.owner}
-							labels={template.labels}
-							archived={true}
 						/>
 					{/if}
 				{/each}
@@ -318,21 +290,6 @@
 							host={session.host}
 							createdAt={(session.createdAt as Timestamp).toDate()}
 							classId={session.classId}
-						/>
-					{/if}
-				{/each}
-				{#each $filteredHostSessions as [doc, session]}
-					{#if session.active_status === 'archived'}
-						<SessionCard
-							id={doc.id}
-							title={session.title}
-							status={session.status}
-							labels={session.labels}
-							task={session.task}
-							host={session.host}
-							createdAt={(session.createdAt as Timestamp).toDate()}
-							classId={session.classId}
-							archived={true}
 						/>
 					{/if}
 				{/each}
