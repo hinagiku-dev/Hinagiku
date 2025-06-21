@@ -32,6 +32,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			task: templateData.task,
 			subtasks: templateData.subtasks,
 			backgroundImage: templateData.backgroundImage || null,
+			reflectionQuestion: templateData.reflectionQuestion || '',
 			createdAt: Timestamp.now(),
 			active_status: 'active',
 			status: 'preparing',

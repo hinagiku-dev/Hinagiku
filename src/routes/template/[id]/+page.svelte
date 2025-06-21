@@ -18,6 +18,7 @@
 
 	let title = '';
 	let task = '';
+	let reflectionQuestion = '';
 	let isPublic = false;
 	let labels: string[] = [];
 	let subtasks: string[] = [];
@@ -28,7 +29,13 @@
 	let backgroundPreview: string | null = null; // Permanent URL from Cloud Storage
 	let localPreviewUrl: string | null = null; // Temporary blob URL for local preview
 	let showClassSelectionModal = false;
-	let classes: { id: string; className: string; schoolName: string; academicYear: string }[] = [];
+	let classes: {
+		id: string;
+		className: string;
+		schoolName: string;
+		academicYear: string;
+		active_status: string;
+	}[] = [];
 	let loadingClasses = false;
 	let selectedClassId: string | null = null;
 
@@ -39,6 +46,7 @@
 		if (t) {
 			title = t.title;
 			task = t.task;
+			reflectionQuestion = t.reflectionQuestion || '';
 			isPublic = t.public;
 			subtasks = [...t.subtasks];
 			labels = t.labels ? [...t.labels] : [];
@@ -52,6 +60,7 @@
 			unsavedChanges =
 				title.trim() !== $template.title ||
 				task.trim() !== $template.task ||
+				(reflectionQuestion?.trim() ?? '') !== ($template.reflectionQuestion || '') ||
 				isPublic !== $template.public ||
 				subtasks.join() !== $template.subtasks.join() ||
 				backgroundPreview !== $template.backgroundImage;
@@ -141,6 +150,7 @@
 				body: JSON.stringify({
 					title: title.trim(),
 					task: task.trim(),
+					reflectionQuestion: reflectionQuestion.trim(),
 					public: isPublic,
 					subtasks: subtasks.filter((subtask) => subtask.trim()),
 					labels,
@@ -193,7 +203,8 @@
 						id: doc.id,
 						className: doc.data().className,
 						schoolName: doc.data().schoolName,
-						academicYear: doc.data().academicYear
+						academicYear: doc.data().academicYear,
+						active_status: doc.data().active_status || 'active'
 					}));
 				}
 			}
@@ -297,6 +308,15 @@
 					maxlength={200}
 					rows={3}
 					placeholder={m.mainTaskDesc()}
+				/>
+			</div>
+
+			<div>
+				<label for="reflectionQuestion" class="mb-2 block">{m.reflectionQuestion()}</label>
+				<Textarea
+					id="reflectionQuestion"
+					bind:value={reflectionQuestion}
+					placeholder={m.reflectionQuestionPlaceholder()}
 				/>
 			</div>
 
@@ -492,7 +512,9 @@
 				>
 					<option value="">{m.startWithoutClass()}</option>
 					{#each classes as cls}
-						<option value={cls.id}>{cls.className} - {cls.schoolName}({cls.academicYear})</option>
+						{#if cls.active_status === 'active' || !cls.active_status}
+							<option value={cls.id}>{cls.className} - {cls.schoolName}({cls.academicYear})</option>
+						{/if}
 					{/each}
 				</select>
 			</div>
