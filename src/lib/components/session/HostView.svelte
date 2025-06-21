@@ -3,7 +3,7 @@
 	import type { Session } from '$lib/schema/session';
 	import type { Readable } from 'svelte/store';
 	import QRCode from '$lib/components/QRCode.svelte';
-	import { Button, Tooltip, Modal } from 'flowbite-svelte';
+	import { Button, Tooltip, Modal, Spinner } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -474,6 +474,43 @@
 		if ($session?.status === 'ended') {
 			loadConversationsData();
 			loadKeywordData();
+			if (!$session.summary && !isSummarizing) {
+				generateSummary();
+			}
+		}
+	});
+
+	let isSummarizing = $state(false);
+
+	async function generateSummary() {
+		if (isSummarizing) {
+			return;
+		}
+		isSummarizing = true;
+		try {
+			const response = await fetch(`/api/session/summarize`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ sessionId: $page.params.id })
+			});
+			if (!response.ok) {
+				const data = await response.json();
+				notifications.error(data.error || 'Failed to generate summary.');
+			}
+			// The summary will be updated in the session store automatically via snapshot listener.
+		} catch (error) {
+			console.error('Error generating summary:', error);
+			notifications.error('Failed to generate summary.');
+		} finally {
+			isSummarizing = false;
+		}
+	}
+
+	$effect(() => {
+		if ($session?.status === 'ended') {
+			if (!$session.summary) {
+				generateSummary();
+			}
 		}
 	});
 
@@ -686,20 +723,78 @@
 		{/if}
 
 		{#if $session?.status === 'ended'}
-			<div class="col-span-4 rounded-lg border p-6 {UI_CLASSES.PANEL_BG}">
-				<h2 class="mb-4 text-xl font-semibold">
-					{m.finalSummary()}
-				</h2>
-				<div class="flex w-full flex-col gap-4">
-					<div class="h-96">
-						<WordCloud words={keywordData} />
-					</div>
-					<div class="flex w-full gap-4">
-						<div class="h-96 flex-1">
-							<MostActiveParticipants conversations={conversationsData} />
+			<div class="col-span-4 space-y-8">
+				<div class="rounded-lg border p-6 {UI_CLASSES.PANEL_BG}">
+					<h2 class="mb-4 text-xl font-semibold">{m.finalSummary()}</h2>
+
+					<div class="mb-6 rounded-lg border bg-gray-50/80 p-4 dark:bg-gray-800">
+						<div class="flex items-center justify-between">
+							<h3 class="text-lg font-medium">{m.sessionSummary()}</h3>
+							<Button size="xs" on:click={generateSummary} disabled={isSummarizing}>
+								{#if isSummarizing}
+									<Spinner class="mr-2" size="4" />
+								{/if}
+								{m.regenerate()}
+							</Button>
 						</div>
-						<div class="h-96 flex-1">
-							<MostActiveGroups groups={$groups} />
+						<div class="mt-2">
+							{#if isSummarizing}
+								<div class="flex items-center justify-center py-4">
+									<p>{m.generatingSummary()}</p>
+								</div>
+							{:else if $session.summary && typeof $session.summary === 'object'}
+								<div class="prose prose-hina max-w-none space-y-4 dark:prose-invert">
+									<div>
+										<h4 class="font-semibold">{m.integratedViewpoint()}</h4>
+										<p>{$session.summary.integratedViewpoint}</p>
+									</div>
+									<div>
+										<h4 class="font-semibold">{m.differences()}</h4>
+										<p>{$session.summary.differences}</p>
+									</div>
+									<div>
+										<h4 class="font-semibold">{m.learningProgress()}</h4>
+										<p>{$session.summary.learningProgress}</p>
+									</div>
+									<div>
+										<h4 class="font-semibold">{m.finalConclusion()}</h4>
+										<p>{$session.summary.finalConclusion}</p>
+									</div>
+								</div>
+							{:else if $session.summary}
+								{#if typeof $session.summary === 'string'}
+									<p class="prose prose-hina max-w-none dark:prose-invert">{$session.summary}</p>
+								{:else if typeof $session.summary === 'object' && $session.summary}
+									<div class="prose prose-hina max-w-none dark:prose-invert">
+										<h4 class="font-semibold">{m.integratedViewpoint()}</h4>
+										<p>{$session.summary.integratedViewpoint}</p>
+										<h4 class="mt-4 font-semibold">{m.differences()}</h4>
+										<p>{$session.summary.differences}</p>
+										<h4 class="mt-4 font-semibold">{m.learningProgress()}</h4>
+										<p>{$session.summary.learningProgress}</p>
+										<h4 class="mt-4 font-semibold">{m.finalConclusion()}</h4>
+										<p>{$session.summary.finalConclusion}</p>
+									</div>
+								{/if}
+							{:else}
+								<div class="flex flex-col items-center justify-center py-4">
+									<p>{m.noSummaryAvailable()}</p>
+								</div>
+							{/if}
+						</div>
+					</div>
+
+					<div class="flex w-full flex-col gap-4">
+						<div class="h-96">
+							<WordCloud words={keywordData} />
+						</div>
+						<div class="flex w-full gap-4">
+							<div class="h-96 flex-1">
+								<MostActiveParticipants conversations={conversationsData} />
+							</div>
+							<div class="h-96 flex-1">
+								<MostActiveGroups groups={$groups} />
+							</div>
 						</div>
 					</div>
 				</div>

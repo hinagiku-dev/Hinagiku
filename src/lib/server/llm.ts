@@ -13,6 +13,7 @@ import {
 	HISTORY_PROMPT,
 	INTRODUCTION_PROMPT,
 	OFF_TOPIC_DETECTION_PROMPT,
+	SESSION_SUMMARY_PROMPT,
 	SUBTASKS_COMPLETED_PROMPT,
 	SUBTASK_PREFIX_PROMPT
 } from './prompt';
@@ -678,6 +679,88 @@ export async function getHeyHelpMessage(
 			success: false,
 			response: '',
 			error: 'Error in chatWithLLMByDocs'
+		};
+	}
+}
+
+export async function summarizeSession(
+	individualRecords: { studentId: string; history: LLMChatMessage[] }[],
+	groupRecords: { groupId: string; discussion: Discussion[] }[]
+) {
+	const individualDiscussions = individualRecords
+		.map(
+			(record) =>
+				`### 學生 ${record.studentId} 的個人學習紀錄:\n` +
+				record.history.map((msg) => `${msg.name || msg.role}: ${msg.content}`).join('\n')
+		)
+		.join('\n\n');
+
+	const groupDiscussions = groupRecords
+		.map(
+			(record) =>
+				`### 小組 ${record.groupId} 的討論紀錄:\n` +
+				record.discussion.map((msg) => `${msg.speaker}: ${msg.content}`).join('\n')
+		)
+		.join('\n\n');
+
+	const fullDiscussion = `## 個人學習紀錄\n${individualDiscussions}\n\n## 小組討論紀錄\n${groupDiscussions}`;
+
+	const system_prompt = SESSION_SUMMARY_PROMPT;
+	const history_prompt = [
+		{
+			role: 'user' as const,
+			content: fullDiscussion
+		}
+	];
+
+	try {
+		const schema = z.object({
+			integratedViewpoint: z.string(),
+			differences: z.string(),
+			learningProgress: z.string(),
+			finalConclusion: z.string()
+		});
+
+		const { result } = await requestLLM(system_prompt, history_prompt, schema, 0.7);
+		if (!result) {
+			throw new Error('Failed to get result from LLM');
+		}
+		const parsed_result = schema.parse(result);
+
+		// Normalize and clean the output for each field
+		const summary = {
+			integratedViewpoint: normalizeText(parsed_result.integratedViewpoint),
+			differences: normalizeText(parsed_result.differences),
+			learningProgress: normalizeText(parsed_result.learningProgress),
+			finalConclusion: normalizeText(parsed_result.finalConclusion)
+		};
+
+		const fields = Object.values(summary);
+		const checkedFields = await Promise.all(
+			fields.map(async (field) => {
+				const check = await cleanForeignLanguage(field);
+				return check.success && check.containsForeignLanguage ? check.revisedText : field;
+			})
+		);
+
+		const cleanedSummary = {
+			integratedViewpoint: checkedFields[0],
+			differences: checkedFields[1],
+			learningProgress: checkedFields[2],
+			finalConclusion: checkedFields[3]
+		};
+
+		return {
+			success: true,
+			summary: cleanedSummary,
+			error: ''
+		};
+	} catch (error) {
+		console.error('Error in summarizeSession:', error);
+		return {
+			success: false,
+			summary: null,
+			error: 'Error in summarizeSession'
 		};
 	}
 }

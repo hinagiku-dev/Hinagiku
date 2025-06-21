@@ -581,5 +581,16 @@
 	"chartSubtaskCompletionRate": "掌握率",
 	"chartCompletionRate": "完成率",
 	"reflectionPlaceholder": "輸入你的反思...",
-	"saveQuestion": "儲存問題"
+	"saveQuestion": "儲存問題",
+	"sessionSummary": "討論總結",
+	"summary": "總結",
+	"keyMoments": "關鍵時刻",
+	"suggestions": "建議",
+	"noSummaryAvailable": "尚無總結",
+	"generateSummary": "生成總結",
+	"regenerate": "重新生成",
+	"integratedViewpoint": "綜合觀點",
+	"differences": "差異與分歧",
+	"learningProgress": "學習進程",
+	"finalConclusion": "最終結論"
 }
