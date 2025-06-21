@@ -580,5 +580,6 @@
 	"chartSubtaskCompletionDesc": "每位學生的子目標平均完成率",
 	"chartSubtaskCompletionRate": "掌握率",
 	"chartCompletionRate": "完成率",
-	"reflectionPlaceholder": "輸入你的反思..."
+	"reflectionPlaceholder": "輸入你的反思...",
+	"saveQuestion": "儲存問題"
 }

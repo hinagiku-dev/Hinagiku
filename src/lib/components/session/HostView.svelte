@@ -875,7 +875,7 @@
 				class="w-full"
 			/>
 			<Button class="mt-4" on:click={saveReflectionQuestion} disabled={isSavingReflectionQuestion}>
-				{isSavingReflectionQuestion ? m.saving() : 'Save Question'}
+				{isSavingReflectionQuestion ? m.saving() : m.saveQuestion()}
 			</Button>
 		</div>
 	</div>

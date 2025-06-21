@@ -569,5 +569,6 @@
 	"chartSubtaskCompletionDesc": "Average completion rate of subtasks for each student",
 	"chartSubtaskCompletionRate": "Issue Comprehension Rate",
 	"chartCompletionRate": "Completion Rate",
-	"reflectionPlaceholder": "Enter your reflection here..."
+	"reflectionPlaceholder": "Enter your reflection here...",
+	"saveQuestion": "Save Question"
 }
