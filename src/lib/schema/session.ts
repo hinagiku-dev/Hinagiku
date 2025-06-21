@@ -49,7 +49,8 @@ export const SessionSchema = z.object({
 			finalConclusion: z.string()
 		})
 		.nullable()
-		.optional()
+		.optional(),
+	reflectionQuestion: z.string().max(500).optional().default('')
 });
 
 export type Session = z.infer<typeof SessionSchema>;
