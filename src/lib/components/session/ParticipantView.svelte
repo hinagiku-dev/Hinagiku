@@ -23,6 +23,7 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { deploymentConfig } from '$lib/config/deployment';
 	import { UI_CLASSES } from '$lib/config/ui';
+	import Reflection from '$lib/components/session/Reflection.svelte';
 
 	interface ChatroomConversation {
 		name: string;
@@ -916,7 +917,18 @@
 					{/if}
 				</div>
 			{:else if $session?.status === 'ended'}
-				<EndedView {conversationDoc} {groupDoc} {user} />
+				<div>
+					<EndedView {conversationDoc} {groupDoc} {user} />
+					{#if groupDoc}
+						<div class="mt-8 rounded-lg border {UI_CLASSES.PANEL_BG} p-6 shadow-sm">
+							<Reflection
+								sessionId={$page.params.id}
+								groupId={groupDoc.id}
+								reflectionQuestion={$session?.reflectionQuestion}
+							/>
+						</div>
+					{/if}
+				</div>
 			{/if}
 		</div>
 	</div>
