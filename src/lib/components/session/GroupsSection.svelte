@@ -453,8 +453,8 @@
 							{/if}
 							<button
 								class="cursor-pointer text-sm font-semibold hover:text-primary-600"
-								onclick={() => handleGroupClick(group)}
-								onkeydown={(e) => e.key === 'Enter' && handleGroupClick(group)}
+								onclick={(e) => handleGroupInteraction(e, group)}
+								onkeydown={(e) => handleGroupInteraction(e, group)}
 							>
 								{m.groupVocabulary()} #{group.number}
 							</button>
