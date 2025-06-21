@@ -9,19 +9,19 @@
 	Chart.register(...registerables);
 
 	// Define types for the data structure
-	type Participant = {
-		displayName: string;
-		words: number;
-		seatNumber?: string | null;
-	};
 	type SessionData = {
 		sessionId: string;
 		sessionTitle: string;
-		participants: Participant[];
+		participants: {
+			[studentId: string]: {
+				words: number;
+			};
+		};
 	};
 
 	// Props
 	export let sessions: SessionData[] = [];
+	export let studentNames: string[] = [];
 
 	// Chart instance
 	let chartInstance: Chart | null = null;
@@ -47,35 +47,11 @@
 			chartInstance.destroy();
 		}
 
-		// Get all unique student info, and sort them by seat number
-		const allParticipants = new Map<string, { displayName: string; seatNumber?: string | null }>();
-		sessions.forEach((session) => {
-			session.participants.forEach((p) => {
-				if (!allParticipants.has(p.displayName)) {
-					allParticipants.set(p.displayName, {
-						displayName: p.displayName,
-						seatNumber: p.seatNumber
-					});
-				}
-			});
-		});
-
-		const sortedParticipants = Array.from(allParticipants.values()).sort((a, b) => {
-			const seatA = a.seatNumber ? parseInt(a.seatNumber, 10) : Infinity;
-			const seatB = b.seatNumber ? parseInt(b.seatNumber, 10) : Infinity;
-			if (isNaN(seatA) && isNaN(seatB)) return a.displayName.localeCompare(b.displayName);
-			if (isNaN(seatA)) return 1;
-			if (isNaN(seatB)) return -1;
-			return seatA - seatB;
-		});
-
-		const studentLabels = sortedParticipants.map((p) => p.displayName);
-
 		// Prepare datasets
 		const datasets = sessions.map((session, index) => ({
 			label: session.sessionTitle,
-			data: studentLabels.map((displayName) => {
-				const participant = session.participants.find((p) => p.displayName === displayName);
+			data: studentNames.map((displayName) => {
+				const participant = session.participants[displayName];
 				return participant ? participant.words : 0;
 			}),
 			backgroundColor: generateColors(sessions.length)[index * 2],
@@ -87,7 +63,7 @@
 		chartInstance = new Chart(chartCanvas, {
 			type: 'bar',
 			data: {
-				labels: studentLabels,
+				labels: studentNames,
 				datasets: datasets
 			},
 			options: {

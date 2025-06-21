@@ -145,18 +145,18 @@
 		Array<{
 			sessionId: string;
 			sessionTitle: string;
-			participants: Array<{
-				displayName: string;
-				words: number;
-				seatNumber: string | null | undefined;
-			}>;
+			participants: {
+				[displayName: string]: {
+					words: number;
+				};
+			};
 		}>
 	>([]);
+	let studentParticipationNames = $state<string[]>([]);
 	let subtaskCompletionData = $state<
 		Array<{
 			studentId: string;
 			completionRate: number;
-			seatNumber: string | null | undefined;
 		}>
 	>([]);
 	let discussionParticipationData = $state<
@@ -645,21 +645,35 @@
 
 	// Load student participation data for selected class
 	async function loadStudentParticipationData() {
-		if (!selectedClassId || !browser) {
+		if (!selectedClassId || !browser || !selectedClass) {
 			studentParticipationData = [];
 			return;
 		}
 
 		try {
 			isLoadingStudentParticipationData = true;
+
+			// Get all students for the class and sort them by seat number
+			const studentDetailsPromises = (selectedClass.students || []).map((id) => getUser(id));
+			const studentDetails = await Promise.all(studentDetailsPromises);
+			studentDetails.sort((a, b) => {
+				const seatA = a.seatNumber ? parseInt(a.seatNumber, 10) : Infinity;
+				const seatB = b.seatNumber ? parseInt(b.seatNumber, 10) : Infinity;
+				if (isNaN(seatA) && isNaN(seatB)) {
+					return a.displayName.localeCompare(b.displayName);
+				}
+				if (isNaN(seatA)) return 1;
+				if (isNaN(seatB)) return -1;
+				return seatA - seatB;
+			});
+
+			studentParticipationNames = studentDetails.map((s) => s.displayName);
+			const userMap = new Map(studentDetails.map((s) => [s.uid, s.displayName]));
+
 			const sessionParticipationData: Array<{
 				sessionId: string;
 				sessionTitle: string;
-				participants: Array<{
-					displayName: string;
-					words: number;
-					seatNumber: string | null | undefined;
-				}>;
+				participants: { [displayName: string]: { words: number } };
 			}> = [];
 
 			const sessionsQuery = query(
@@ -713,26 +727,18 @@
 				}
 
 				if (Object.keys(userWordCounts).length > 0) {
-					const userPromises = Object.entries(userWordCounts).map(async ([userId, words]) => {
-						try {
-							const user = await getUser(userId);
-							return {
-								displayName: user.displayName,
-								words,
-								seatNumber: user.seatNumber
-							};
-						} catch (error) {
-							console.error(`Error getting user ${userId}:`, error);
-							return { displayName: userId, words, seatNumber: null };
+					const participantsForSession: { [displayName: string]: { words: number } } = {};
+					for (const [userId, words] of Object.entries(userWordCounts)) {
+						const displayName = userMap.get(userId);
+						if (displayName) {
+							participantsForSession[displayName] = { words };
 						}
-					});
-
-					const userResults = await Promise.all(userPromises);
+					}
 
 					sessionParticipationData.push({
 						sessionId: sessionDoc.id,
 						sessionTitle: sessionData.title,
-						participants: userResults
+						participants: participantsForSession
 					});
 				}
 			}
@@ -852,13 +858,27 @@
 				}
 			);
 
-			const userResults = await Promise.all(userPromises);
-
-			subtaskCompletionData = userResults.filter((result) => result !== null) as Array<{
+			const promisedResults = await Promise.all(userPromises);
+			const userResults = promisedResults.filter((result) => result !== null) as Array<{
 				studentId: string;
 				completionRate: number;
 				seatNumber: string | null | undefined;
 			}>;
+
+			// Sort by seat number
+			userResults.sort((a, b) => {
+				const seatA = a.seatNumber ? parseInt(a.seatNumber, 10) : Infinity;
+				const seatB = b.seatNumber ? parseInt(b.seatNumber, 10) : Infinity;
+				if (isNaN(seatA) && isNaN(seatB)) return a.studentId.localeCompare(b.studentId);
+				if (isNaN(seatA)) return 1;
+				if (isNaN(seatB)) return -1;
+				return seatA - seatB;
+			});
+
+			subtaskCompletionData = userResults.map(({ studentId, completionRate }) => ({
+				studentId,
+				completionRate
+			}));
 		} catch (error) {
 			console.error('Error loading subtask completion data:', error);
 			notifications.error(m.failedToLoadSubtaskCompletionData());
@@ -2141,7 +2161,10 @@
 										<p class="ml-2 text-gray-600">{m.loadingStudentParticipationData()}</p>
 									</div>
 								{:else if studentParticipationData.length > 0}
-									<StudentParticipationChart sessions={studentParticipationData} />
+									<StudentParticipationChart
+										sessions={studentParticipationData}
+										studentNames={studentParticipationNames}
+									/>
 								{:else}
 									<div class="flex h-64 items-center justify-center text-gray-500">
 										<p>{m.noStudentParticipationData()}</p>

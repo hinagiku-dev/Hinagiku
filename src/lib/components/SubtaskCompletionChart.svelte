@@ -12,7 +12,6 @@
 	type SubtaskData = {
 		studentId: string;
 		completionRate: number;
-		seatNumber?: string | null;
 	};
 
 	// Props
@@ -31,25 +30,15 @@
 			chartInstance.destroy();
 		}
 
-		// Sort by seat number
-		const studentData = [...data].sort((a, b) => {
-			const seatA = a.seatNumber ? parseInt(a.seatNumber, 10) : Infinity;
-			const seatB = b.seatNumber ? parseInt(b.seatNumber, 10) : Infinity;
-			if (isNaN(seatA) && isNaN(seatB)) return a.studentId.localeCompare(b.studentId);
-			if (isNaN(seatA)) return 1;
-			if (isNaN(seatB)) return -1;
-			return seatA - seatB;
-		});
-
 		// Create new chart
 		chartInstance = new Chart(chartCanvas, {
 			type: 'bar',
 			data: {
-				labels: studentData.map((d) => d.studentId),
+				labels: data.map((d) => d.studentId),
 				datasets: [
 					{
 						label: m.chartSubtaskCompletionRate(),
-						data: studentData.map((d) => d.completionRate),
+						data: data.map((d) => d.completionRate),
 						backgroundColor: 'rgba(99, 102, 241, 0.7)',
 						borderColor: 'rgba(99, 102, 241, 1)',
 						borderWidth: 1
