@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Chart, registerables } from 'chart.js';
+	import { Chart, registerables, type ChartDataset } from 'chart.js';
 	import * as m from '$lib/paraglide/messages.js';
 
 	// Register Chart.js components
@@ -11,7 +11,7 @@
 		sessionId: string;
 		sessionTitle: string;
 		completionRate: number;
-		averageCompletionRate: number;
+		averageCompletionRate: number | null;
 	};
 
 	// Props
@@ -31,31 +31,36 @@
 			chartInstance.destroy();
 		}
 
+		const chartDatasets: ChartDataset[] = [
+			{
+				label: m.chartSubtaskCompletionRate(),
+				data: sessions.map((session) => session.completionRate),
+				backgroundColor: 'rgba(168, 85, 247, 0.7)',
+				borderColor: 'rgba(168, 85, 247, 1)',
+				borderWidth: 1,
+				order: 1
+			}
+		];
+
+		if (sessions.some((s) => s.averageCompletionRate !== null && s.averageCompletionRate !== 0)) {
+			chartDatasets.push({
+				type: 'line',
+				label: m.chartClassAverageSubtaskCompletionRate(),
+				data: sessions.map((session) => session.averageCompletionRate),
+				borderColor: 'rgba(234, 88, 12, 1)',
+				backgroundColor: 'rgba(234, 88, 12, 0.7)',
+				fill: false,
+				tension: 0.1,
+				order: 0
+			});
+		}
+
 		// Create new chart
 		chartInstance = new Chart(chartCanvas, {
 			type: 'bar',
 			data: {
 				labels: sessions.map((session) => session.sessionTitle),
-				datasets: [
-					{
-						label: m.chartSubtaskCompletionRate(),
-						data: sessions.map((session) => session.completionRate),
-						backgroundColor: 'rgba(168, 85, 247, 0.7)',
-						borderColor: 'rgba(168, 85, 247, 1)',
-						borderWidth: 1,
-						order: 1
-					},
-					{
-						type: 'line',
-						label: m.chartClassAverageSubtaskCompletionRate(),
-						data: sessions.map((session) => session.averageCompletionRate),
-						borderColor: 'rgba(234, 88, 12, 1)',
-						backgroundColor: 'rgba(234, 88, 12, 0.7)',
-						fill: false,
-						tension: 0.1,
-						order: 0
-					}
-				]
+				datasets: chartDatasets
 			},
 			options: {
 				responsive: true,
@@ -67,7 +72,8 @@
 					tooltip: {
 						callbacks: {
 							label: function (context) {
-								if (context.dataset.type === 'line') {
+								if (context.parsed.y === null) return '';
+								if (context.datasetIndex === 1) {
 									return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
 								}
 								return `${studentName}: ${context.parsed.y.toFixed(1)}%`;
