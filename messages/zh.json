@@ -588,7 +588,7 @@
 	"loadingKeywords": "載入關鍵字中...",
 	"noKeywordData": "沒有關鍵字資料",
 	"sessionSummary": "討論總結",
-	"summary": "總結",
+	"summary": "摘要",
 	"keyMoments": "關鍵時刻",
 	"suggestions": "建議",
 	"noSummaryAvailable": "尚無總結",
@@ -646,6 +646,14 @@
 	"noClassParticipationData": "沒有可用的班級參與度資料",
 	"noStudentSubtaskData": "沒有可用的學生子任務資料",
 	"loadingStudentSubtaskData": "載入學生子任務資料中...",
-	"sessionSummaries": "班級討論總結",
-	"noSessionSummaries": "選定的課程沒有可用的課程總結。"
+	"sessionSummaries": "全班討論摘要",
+	"allIndividualSummaries": "歷次個人討論紀錄",
+	"noSessionSummaries": "選定的課程沒有可用的課程總結。",
+	"userSubtaskMasteryInDiscussions": "以下是「{studentName}」在不同討論中的子任務掌握情況圖表。您可以藉此了解他們的學習進度。",
+	"viewAllSummaries": "查看歷次討論紀錄",
+	"failedToLoadData": "讀取資料失敗。",
+	"noDataAvailable": "沒有可用的資料。",
+	"backToClassAnalysis": "返回班級分析",
+	"keywords": "關鍵詞",
+	"notAnswered": "未回答"
 }

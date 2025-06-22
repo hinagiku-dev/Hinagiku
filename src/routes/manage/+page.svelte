@@ -2093,14 +2093,26 @@
 											</option>
 										{/each}
 									</Select>
+									{#if selectedStudent}
+										<div class="mt-4">
+											<Button
+												href="/manage/{selectedClassId}/{selectedStudent}/allSummary"
+												color="primary"
+												class="w-full"
+											>
+												<MessageSquare class="mr-2 h-4 w-4" />
+												{m.viewAllSummaries()}
+											</Button>
+										</div>
+									{/if}
 								{:else}
 									<div class="py-4 text-center text-gray-500">{m.noStudentListAvailable()}</div>
 								{/if}
 							</Card>
 						</div>
 
-						<!-- Session Summaries (Only show when single title selected) -->
-						{#if selectedTitles.length === 1}
+						<!-- Session Summaries (Only show when single title selected and no student selected) -->
+						{#if selectedTitles.length === 1 && !selectedStudent}
 							{@const sessionsWithSummary =
 								$filteredClassSessions?.filter(
 									([, s]) => s.summary && s.title === selectedTitles[0]
@@ -2274,9 +2286,11 @@
 													</h3>
 												</div>
 												<p class="text-sm text-gray-600">
-													{m.studentParticipationInDiscussions({
-														studentName: selectedStudentName
-													})}
+													{#if typeof selectedStudentName === 'string'}
+														{m.studentParticipationInDiscussions({
+															studentName: selectedStudentName
+														})}
+													{/if}
 												</p>
 											</div>
 											<SingleStudentParticipationChart
@@ -2286,9 +2300,29 @@
 										</Card>
 									{/if}
 								{:else}
-									<div class="flex h-64 items-center justify-center text-gray-500">
-										<p>{m.noStudentParticipationData()}</p>
-									</div>
+									<Card padding="lg" class="w-full !max-w-none">
+										<div class="mb-4">
+											<div class="mb-3 flex items-center gap-3">
+												<div class="rounded-full bg-primary-100 p-2">
+													<Activity size={20} class="text-primary-600" />
+												</div>
+												<h3 class="text-lg font-semibold text-gray-900">
+													{selectedStudentName} - {m.chartParticipation()}
+												</h3>
+											</div>
+											<p class="text-sm text-gray-600">
+												{#if typeof selectedStudentName === 'string'}
+													{m.studentParticipationInDiscussions({
+														studentName: selectedStudentName
+													})}
+												{/if}
+											</p>
+										</div>
+										<div class="flex h-64 items-center justify-center text-gray-500">
+											<Info size={32} class="mr-2" />
+											<p>{m.noStudentParticipationData()}</p>
+										</div>
+									</Card>
 								{/if}
 
 								<!-- Single Student Subtask Chart -->
@@ -2310,9 +2344,11 @@
 													</h3>
 												</div>
 												<p class="text-sm text-gray-600">
-													{m.studentSubtaskMasteryInDiscussions({
-														studentName: selectedStudentName
-													})}
+													{#if typeof selectedStudentName === 'string'}
+														{m.studentSubtaskMasteryInDiscussions({
+															studentName: selectedStudentName
+														})}
+													{/if}
 												</p>
 											</div>
 											<SingleStudentSubtaskChart
@@ -2322,9 +2358,29 @@
 										</Card>
 									{/if}
 								{:else}
-									<div class="flex h-64 items-center justify-center text-gray-500">
-										<p>{m.noStudentSubtaskData()}</p>
-									</div>
+									<Card padding="lg" class="w-full !max-w-none">
+										<div class="mb-4">
+											<div class="mb-3 flex items-center gap-3">
+												<div class="rounded-full bg-primary-100 p-2">
+													<Target size={20} class="text-primary-600" />
+												</div>
+												<h3 class="text-lg font-semibold text-gray-900">
+													{selectedStudentName} - {m.chartSubtaskCompletion()}
+												</h3>
+											</div>
+											<p class="text-sm text-gray-600">
+												{#if typeof selectedStudentName === 'string'}
+													{m.studentSubtaskMasteryInDiscussions({
+														studentName: selectedStudentName
+													})}
+												{/if}
+											</p>
+										</div>
+										<div class="flex h-64 items-center justify-center text-gray-500">
+											<Info size={32} class="mr-2" />
+											<p>{m.noStudentSubtaskData()}</p>
+										</div>
+									</Card>
 								{/if}
 							{/if}
 						</div>

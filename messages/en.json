@@ -565,5 +565,14 @@
 	"loadingStudentSubtaskData": "Loading student subtask data...",
 	"saveQuestion": "Save Question",
 	"sessionSummaries": "Session Summaries",
-	"noSessionSummaries": "No session summaries available for the selected sessions."
+	"noSessionSummaries": "No session summaries available for the selected sessions.",
+	"userSubtaskMasteryInDiscussions": "Below is a chart showing {studentName}'s subtask mastery in different discussions. You can use this to understand their learning progress.",
+	"viewAllSummaries": "View All Summaries",
+	"failedToLoadData": "Failed to load data.",
+	"noDataAvailable": "No data available.",
+	"backToClassAnalysis": "Back to Class Analysis",
+	"summary": "Summary",
+	"reflectionQuestion": "Reflection Question",
+	"keywords": "Keywords",
+	"notAnswered": "Not Answered"
 }
