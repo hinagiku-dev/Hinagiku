@@ -101,10 +101,10 @@ async function handleTeacherUpdateStudentGroup(
 
 		// Extract the new group value for the target student
 		const targetStudentData = studentUidToDataMap.get(studentUid);
-		if (!targetStudentData || !targetStudentData.group) {
-			throw error(400, 'New group value not found for target student');
+		if (!targetStudentData) {
+			throw error(400, 'Target student not found in the provided data');
 		}
-		const newGroup = targetStudentData.group;
+		const newGroup = targetStudentData.group; // Allow null/empty for "no group"
 
 		// 4. Reconstruct groups following the exact pattern from import-student
 		const studentGroupMap = new Map<string, number>();
