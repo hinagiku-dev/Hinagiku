@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';
-	import { Card, Button } from 'flowbite-svelte';
+	import { Card, Button, Spinner } from 'flowbite-svelte';
 	import { UserPlus, UserCog } from 'lucide-svelte';
+	import WordCloud from '$lib/components/session/WordCloud.svelte';
 	import {
 		orderBy,
 		limit,
@@ -11,7 +12,9 @@
 		Timestamp,
 		collectionGroup,
 		getDoc,
-		getDocs
+		getDocs,
+		doc,
+		collection
 	} from 'firebase/firestore';
 	import { profile } from '$lib/stores/profile';
 	import { db } from '$lib/firebase';
@@ -19,11 +22,13 @@
 	import { user } from '$lib/stores/auth';
 	import SessionCard from '$lib/components/SessionCard.svelte';
 	import Title from '$lib/components/Title.svelte';
+	import type { Conversation } from '$lib/schema/conversation';
 
 	import * as m from '$lib/paraglide/messages.js';
+	import SingleStudentParticipationChart from '$lib/components/SingleStudentParticipationChart.svelte';
+	import SingleStudentSubtaskChart from '$lib/components/SingleStudentSubtaskChart.svelte';
 
 	let { data } = $props();
-
 	let sessions = writable<[string, Session][]>([]);
 
 	async function getSessions() {
@@ -50,8 +55,145 @@
 		sessions.set(await Promise.all(sess));
 	}
 
+	let isLoadingAnalysis = $state(false);
+	let personalSummary = writable('');
+	let groupSummaryMap = writable<Record<string, string>>({});
+	let personalSummaryMap = writable<Record<string, string>>({});
+	let sessionTitleMap = writable<Record<string, string>>({});
+	let selectedSummarySessionId = writable<string>('');
+	let personalKeywords = writable<Record<string, number>>({});
+	let personalParticipation = writable<
+		Array<{ sessionId: string; sessionTitle: string; words: number; averageWords: number }>
+	>([]);
+	let personalSubtask = writable<
+		Array<{
+			sessionId: string;
+			sessionTitle: string;
+			completionRate: number;
+			averageCompletionRate: number;
+		}>
+	>([]);
+
+	async function loadPersonalAnalysis() {
+		isLoadingAnalysis = true;
+		const uid = data.user.uid;
+		const groupQuery = query(
+			collectionGroup(db, 'groups'),
+			where('participants', 'array-contains', uid),
+			orderBy('createdAt', 'desc')
+		);
+		const groupSnapshot = await getDocs(groupQuery);
+
+		const groupSummary: Record<string, string> = {};
+		const personalSummary: Record<string, string> = {};
+		const keywordMap: Record<string, number> = {};
+		let participationArr: Array<{
+			sessionId: string;
+			sessionTitle: string;
+			words: number;
+			averageWords: number;
+		}> = [];
+		let subtaskArr: Array<{
+			sessionId: string;
+			sessionTitle: string;
+			completionRate: number;
+			averageCompletionRate: number;
+		}> = [];
+
+		for (const groupDoc of groupSnapshot.docs) {
+			const convQuery1 = query(
+				collection(groupDoc.ref, 'conversations'),
+				where('userId', '==', uid)
+			);
+			const convSnapshot1 = await getDocs(convQuery1);
+			const convData = convSnapshot1.docs[0]?.data();
+
+			const groupData = groupDoc.data() as {
+				summary?: string;
+				discussions?: Array<{ speaker: string; content: string }>;
+			};
+			const sessionId = groupDoc.ref.parent.parent?.id ?? '';
+			const sessionDoc = sessionId ? await getDoc(doc(db, 'sessions', sessionId)) : null;
+			const sessionTitle = sessionDoc?.data()?.title ?? '';
+
+			if (groupData.summary) {
+				groupSummary[sessionId] = groupData.summary;
+				sessionTitleMap.update((map) => {
+					map[sessionId] = sessionTitle;
+					return map;
+				});
+			}
+			if (convData?.summary) {
+				personalSummary[sessionId] = convData.summary;
+			}
+
+			let words = 0;
+			if (Array.isArray(groupData.discussions)) {
+				groupData.discussions.forEach((d: { speaker: string; content: string }) => {
+					if (d.speaker === uid && d.content) {
+						words += d.content.length;
+					}
+				});
+			}
+
+			const convQuery = query(
+				collection(groupDoc.ref, 'conversations'),
+				where('userId', '==', uid)
+			);
+			const convSnapshot = await getDocs(convQuery);
+			let completionRate = 0,
+				convCount = 0;
+
+			for (const convDoc of convSnapshot.docs) {
+				const convData = convDoc.data() as Conversation;
+
+				if (Array.isArray(convData.keyPoints)) {
+					convData.keyPoints.forEach((k: string) => {
+						if (k) keywordMap[k] = (keywordMap[k] || 0) + 1;
+					});
+				}
+
+				if (Array.isArray(convData.history)) {
+					convData.history.forEach((msg: { role: string; content: string }) => {
+						if (msg.role === 'user' && msg.content) words += msg.content.length;
+					});
+				}
+
+				if (Array.isArray(convData.subtaskCompleted) && convData.subtaskCompleted.length) {
+					const completed = convData.subtaskCompleted.filter(Boolean).length;
+					const total = convData.subtaskCompleted.length;
+					completionRate += (completed / total) * 100;
+					convCount++;
+				}
+			}
+
+			participationArr.push({
+				sessionId,
+				sessionTitle,
+				words,
+				averageWords: 0
+			});
+			subtaskArr.push({
+				sessionId,
+				sessionTitle,
+				completionRate: convCount ? completionRate / convCount : 0,
+				averageCompletionRate: 0
+			});
+		}
+
+		personalSummaryMap.set(personalSummary);
+		groupSummaryMap.set(groupSummary);
+		personalKeywords.set(keywordMap);
+		personalParticipation.set(participationArr);
+		personalSubtask.set(subtaskArr);
+		const sessionIds = Object.keys(groupSummary);
+		if (sessionIds.length > 0) selectedSummarySessionId.set(sessionIds[0]);
+		isLoadingAnalysis = false;
+	}
+
 	onMount(() => {
 		getSessions();
+		loadPersonalAnalysis();
 	});
 </script>
 
@@ -65,7 +207,6 @@
 		</p>
 	</div>
 
-	<!-- Main Actions -->
 	<div class="mb-16 grid gap-6 md:grid-cols-3 lg:grid-cols-4">
 		<Card padding="xl" class="text-center transition-all hover:border-primary-500">
 			<a href="/join" class="flex flex-col items-center">
@@ -117,4 +258,70 @@
 			</div>
 		</div>
 	{/if}
+
+	<div class="mb-12 mt-16 rounded bg-gray-50 p-6 shadow">
+		<h2 class="mb-4 text-2xl font-bold">{m.personal_analysis()}</h2>
+		{#if isLoadingAnalysis}
+			<Spinner />
+		{:else}
+			<div class="mb-4">
+				<h3 class="mb-2 text-xl font-semibold">{m.session_summary()}</h3>
+				{#if Object.keys($groupSummaryMap).length > 0}
+					<select
+						id="summary-session-select"
+						bind:value={$selectedSummarySessionId}
+						class="mb-2 rounded border px-2 py-1"
+					>
+						{#each Object.keys($groupSummaryMap) as sid}
+							<option value={sid}>{$sessionTitleMap[sid]}</option>
+						{/each}
+					</select>
+					<p class="text-m mb-1 mt-2 font-semibold">{m.personal_summary()}</p>
+					<p class="mt-2">{$personalSummaryMap[$selectedSummarySessionId]}</p>
+					<p class="text-m mb-1 mt-2 font-semibold">{m.group_summary()}</p>
+					<p class="mt-2">{$groupSummaryMap[$selectedSummarySessionId]}</p>
+				{:else}
+					<p>{$personalSummary}</p>
+				{/if}
+			</div>
+			<div class="mb-4">
+				<h3 class="mb-2 text-xl font-semibold">{m.personal_participation_chart()}</h3>
+				<SingleStudentParticipationChart
+					studentName={$profile?.displayName || $user?.displayName || undefined}
+					sessions={$personalParticipation}
+				/>
+			</div>
+			<div class="mb-4">
+				<h3 class="mb-2 text-xl font-semibold">{m.personal_subtask_chart()}</h3>
+				<SingleStudentSubtaskChart
+					studentName={$profile?.displayName || $user?.displayName || undefined}
+					sessions={$personalSubtask}
+				/>
+			</div>
+			<div class="mb-4">
+				<h3 class="mb-2 text-xl font-semibold">{m.personal_keywords()}</h3>
+				{#if Object.keys($personalKeywords).length === 0}
+					<span class="text-gray-500">{m.no_keywords()}</span>
+				{:else}
+					<div class="flex flex-wrap gap-2">
+						{#each Object.entries($personalKeywords) as [kw, count]}
+							<span class="rounded-full bg-primary-100 px-3 py-1 text-primary-700"
+								>{kw} <span class="ml-1 text-xs text-gray-500">x{count}</span></span
+							>
+						{/each}
+					</div>
+				{/if}
+			</div>
+			<div class="mb-4">
+				<h3 class="mb-2 text-xl font-semibold">{m.personal_wordcloud()}</h3>
+				{#if Object.keys($personalKeywords).length === 0}
+					<span class="text-gray-500">{m.no_keywords()}</span>
+				{:else}
+					<div class="h-64 w-full">
+						<WordCloud words={$personalKeywords} minFontSize={16} maxFontSize={48} />
+					</div>
+				{/if}
+			</div>
+		{/if}
+	</div>
 </main>
