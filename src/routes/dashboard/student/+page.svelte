@@ -110,7 +110,6 @@
 				discussions?: Array<{ speaker: string; content: string }>;
 			};
 			const sessionId = groupDoc.ref.parent.parent?.id ?? '';
-			const groupId = groupDoc.id;
 			const sessionDoc = sessionId ? await getDoc(doc(db, 'sessions', sessionId)) : null;
 			const sessionTitle = sessionDoc?.data()?.title ?? '';
 
@@ -118,18 +117,14 @@
 				sessionDoc?.data()?.reflectionProblem || sessionDoc?.data()?.reflectionQuestion || '';
 			if (reflectionField) reflectionMap[sessionId] = reflectionField;
 
-			try {
-				const lrQuery = query(
-					collection(db, 'sessions', sessionId, 'groups', groupId, 'learningRecords'),
-					where('userId', '==', uid)
-				);
-				const lrSnapshot = await getDocs(lrQuery);
-				if (!lrSnapshot.empty) {
-					const lrData = lrSnapshot.docs[0].data();
-					if (lrData?.answer) learningMap[sessionId] = lrData.answer;
-				}
-			} catch (e) {
-				console.error('Failed to load learningRecord', e);
+			const lrQuery = query(
+				collection(groupDoc.ref, 'learningRecords'),
+				where('userId', '==', uid)
+			);
+			const lrSnapshot = await getDocs(lrQuery);
+			if (!lrSnapshot.empty) {
+				const lrData = lrSnapshot.docs[0].data();
+				if (lrData?.answer) learningMap[sessionId] = lrData.answer;
 			}
 
 			if (groupData.summary) {
@@ -392,6 +387,8 @@
 							<p class="mt-2 whitespace-pre-line">
 								{$learningRecordMap[$selectedSummarySessionId]}
 							</p>
+						{:else}
+							<p class="text-gray-500">{m.no_reflectionAnswer()}</p>
 						{/if}
 					{/if}
 				{/if}
