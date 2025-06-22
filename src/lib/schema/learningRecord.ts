@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { Timestamp } from './utils';
 
 export const LEARNING_RECORDS_COLLECTION = 'learningRecords';
+export const route = (session: string, group: string, record: string) =>
+	`/sessions/${session}/groups/${group}/learningRecords/${record}`;
 
 export const LearningRecordSchema = z.object({
 	userId: z.string(),
