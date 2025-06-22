@@ -683,5 +683,17 @@
 	"noDataAvailable": "沒有可用的資料。",
 	"backToClassAnalysis": "返回班級分析",
 	"keywords": "關鍵詞",
-	"notAnswered": "未回答"
+	"notAnswered": "未回答",
+	"personal_analysis": "個人分析",
+	"personal_summary": "個人總結",
+	"personal_participation_chart": "參與度圖表",
+	"personal_subtask_chart": "議題掌握度圖表",
+	"personal_keywords": "累積關鍵字",
+	"personal_wordcloud": "文字雲",
+	"no_keywords": "尚無關鍵字",
+	"group_summary": "小組總結",
+	"session_summary": "討論總結",
+	"reflectionAnswer": "我的反思",
+	"showAll": "顯示全部",
+	"no_reflectionAnswer": "尚未填寫反思"
 }
