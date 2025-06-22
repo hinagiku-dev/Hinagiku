@@ -27,6 +27,7 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import SingleStudentParticipationChart from '$lib/components/SingleStudentParticipationChart.svelte';
 	import SingleStudentSubtaskChart from '$lib/components/SingleStudentSubtaskChart.svelte';
+	import { countWords } from '$lib/utils/countWords';
 
 	let { data } = $props();
 	let sessions = writable<[string, Session][]>([]);
@@ -56,7 +57,6 @@
 	}
 
 	let isLoadingAnalysis = $state(false);
-	let personalSummary = writable('');
 	let groupSummaryMap = writable<Record<string, string>>({});
 	let personalSummaryMap = writable<Record<string, string>>({});
 	let sessionTitleMap = writable<Record<string, string>>({});
@@ -73,6 +73,8 @@
 			averageCompletionRate: number;
 		}>
 	>([]);
+	let reflectionProblemMap = writable<Record<string, string>>({});
+	let learningRecordMap = writable<Record<string, string>>({});
 
 	async function loadPersonalAnalysis() {
 		isLoadingAnalysis = true;
@@ -99,20 +101,45 @@
 			completionRate: number;
 			averageCompletionRate: number;
 		}> = [];
+		const reflectionMap: Record<string, string> = {};
+		const learningMap: Record<string, string> = {};
 
-		for (const groupDoc of groupSnapshot.docs) {
+		for (const groupDoc of groupSnapshot.docs.reverse()) {
 			const groupData = groupDoc.data() as {
 				summary?: string;
 				discussions?: Array<{ speaker: string; content: string }>;
 			};
 			const sessionId = groupDoc.ref.parent.parent?.id ?? '';
+			const groupId = groupDoc.id;
 			const sessionDoc = sessionId ? await getDoc(doc(db, 'sessions', sessionId)) : null;
 			const sessionTitle = sessionDoc?.data()?.title ?? '';
+
+			const reflectionField =
+				sessionDoc?.data()?.reflectionProblem || sessionDoc?.data()?.reflectionQuestion || '';
+			if (reflectionField) reflectionMap[sessionId] = reflectionField;
+
+			try {
+				const lrQuery = query(
+					collection(db, 'sessions', sessionId, 'groups', groupId, 'learningRecords'),
+					where('userId', '==', uid)
+				);
+				const lrSnapshot = await getDocs(lrQuery);
+				if (!lrSnapshot.empty) {
+					const lrData = lrSnapshot.docs[0].data();
+					if (lrData?.answer) learningMap[sessionId] = lrData.answer;
+				}
+			} catch (e) {
+				console.error('Failed to load learningRecord', e);
+			}
 
 			if (groupData.summary) {
 				groupSummary[sessionId] = groupData.summary;
 				sessionTitleMap.update((map) => {
 					map[sessionId] = sessionTitle;
+					return map;
+				});
+				sessionTitleMap.update((map) => {
+					map[sessionId + '_createdAt'] = sessionDoc?.data()?.createdAt?.toDate?.() ?? '';
 					return map;
 				});
 			}
@@ -121,7 +148,7 @@
 			if (Array.isArray(groupData.discussions)) {
 				groupData.discussions.forEach((d: { speaker: string; content: string }) => {
 					if (d.speaker === uid && d.content) {
-						words += d.content.length;
+						words += countWords(d.content);
 					}
 				});
 			}
@@ -133,26 +160,21 @@
 			const convSnapshot = await getDocs(convQuery);
 			let completionRate = 0,
 				convCount = 0;
-
 			for (const convDoc of convSnapshot.docs) {
 				const convData = convDoc.data() as Conversation;
-
 				if (convData?.summary) {
 					personalSummary[sessionId] = convData.summary;
 				}
-
 				if (Array.isArray(convData.keyPoints)) {
 					convData.keyPoints.forEach((k: string) => {
 						if (k) keywordMap[k] = (keywordMap[k] || 0) + 1;
 					});
 				}
-
 				if (Array.isArray(convData.history)) {
 					convData.history.forEach((msg: { role: string; content: string }) => {
-						if (msg.role === 'user' && msg.content) words += msg.content.length;
+						if (msg.role === 'user' && msg.content) words += countWords(msg.content);
 					});
 				}
-
 				if (Array.isArray(convData.subtaskCompleted) && convData.subtaskCompleted.length) {
 					const completed = convData.subtaskCompleted.filter(Boolean).length;
 					const total = convData.subtaskCompleted.length;
@@ -160,18 +182,19 @@
 					convCount++;
 				}
 			}
-
+			let avgWords = 0;
+			let avgCompletion = 0;
 			participationArr.push({
 				sessionId,
 				sessionTitle,
 				words,
-				averageWords: 0
+				averageWords: avgWords
 			});
 			subtaskArr.push({
 				sessionId,
 				sessionTitle,
 				completionRate: convCount ? completionRate / convCount : 0,
-				averageCompletionRate: 0
+				averageCompletionRate: avgCompletion
 			});
 		}
 
@@ -180,6 +203,8 @@
 		personalKeywords.set(keywordMap);
 		personalParticipation.set(participationArr);
 		personalSubtask.set(subtaskArr);
+		reflectionProblemMap.set(reflectionMap);
+		learningRecordMap.set(learningMap);
 		const sessionIds = Object.keys(groupSummary);
 		if (sessionIds.length > 0) selectedSummarySessionId.set(sessionIds[0]);
 		isLoadingAnalysis = false;
@@ -259,26 +284,6 @@
 			<Spinner />
 		{:else}
 			<div class="mb-4">
-				<h3 class="mb-2 text-xl font-semibold">{m.session_summary()}</h3>
-				{#if Object.keys($groupSummaryMap).length > 0}
-					<select
-						id="summary-session-select"
-						bind:value={$selectedSummarySessionId}
-						class="mb-2 rounded border px-2 py-1"
-					>
-						{#each Object.keys($groupSummaryMap) as sid}
-							<option value={sid}>{$sessionTitleMap[sid]}</option>
-						{/each}
-					</select>
-					<p class="text-m mb-1 mt-2 font-semibold">{m.personal_summary()}</p>
-					<p class="mt-2">{$personalSummaryMap[$selectedSummarySessionId]}</p>
-					<p class="text-m mb-1 mt-2 font-semibold">{m.group_summary()}</p>
-					<p class="mt-2">{$groupSummaryMap[$selectedSummarySessionId]}</p>
-				{:else}
-					<p>{$personalSummary}</p>
-				{/if}
-			</div>
-			<div class="mb-4">
 				<h3 class="mb-2 text-xl font-semibold">{m.personal_participation_chart()}</h3>
 				<SingleStudentParticipationChart
 					studentName={$profile?.displayName || $user?.displayName || undefined}
@@ -314,6 +319,81 @@
 					<div class="h-64 w-full">
 						<WordCloud words={$personalKeywords} minFontSize={16} maxFontSize={48} />
 					</div>
+				{/if}
+			</div>
+			<div class="mb-4">
+				<h3 class="mb-2 text-xl font-semibold">{m.session_summary()}</h3>
+				{#if Object.keys($groupSummaryMap).length > 0}
+					<select
+						id="summary-session-select"
+						bind:value={$selectedSummarySessionId}
+						class="mb-2 rounded border px-2 py-1"
+					>
+						<option value="__ALL__">{m.showAll()}</option>
+						{#each Object.keys($groupSummaryMap) as sid}
+							<option value={sid}>
+								{$sessionTitleMap[sid]}
+								{#if $sessionTitleMap[sid + '_createdAt']}
+									(
+									{new Date($sessionTitleMap[sid + '_createdAt']).toLocaleString('zh-TW', {
+										year: 'numeric',
+										month: '2-digit',
+										day: '2-digit',
+										hour: '2-digit',
+										minute: '2-digit'
+									})}
+									)
+								{/if}
+							</option>
+						{/each}
+					</select>
+					{#if $selectedSummarySessionId === '__ALL__'}
+						{#each Object.keys($groupSummaryMap) as sid}
+							<div class="mb-6 border-b pb-4 last:border-b-0 last:pb-0">
+								<p class="text-lg font-semibold">
+									{$sessionTitleMap[sid]}
+									{#if $sessionTitleMap[sid + '_createdAt']}
+										(
+										{new Date($sessionTitleMap[sid + '_createdAt']).toLocaleString('zh-TW', {
+											year: 'numeric',
+											month: '2-digit',
+											day: '2-digit',
+											hour: '2-digit',
+											minute: '2-digit'
+										})}
+										)
+									{/if}
+								</p>
+								<p class="text-m mb-1 mt-2 font-semibold">{m.personal_summary()}</p>
+								<p class="mt-2">{$personalSummaryMap[sid]}</p>
+								<p class="text-m mb-1 mt-2 font-semibold">{m.group_summary()}</p>
+								<p class="mt-2">{$groupSummaryMap[sid]}</p>
+								{#if $reflectionProblemMap[sid]}
+									<p class="text-m mb-1 mt-2 font-semibold">{m.reflectionQuestion()}</p>
+									<p class="mt-2">{$reflectionProblemMap[sid]}</p>
+								{/if}
+								{#if $learningRecordMap[sid]}
+									<p class="text-m mb-1 mt-2 font-semibold">{m.reflectionAnswer()}</p>
+									<p class="mt-2 whitespace-pre-line">{$learningRecordMap[sid]}</p>
+								{/if}
+							</div>
+						{/each}
+					{:else}
+						<p class="text-m mb-1 mt-2 font-semibold">{m.personal_summary()}</p>
+						<p class="mt-2">{$personalSummaryMap[$selectedSummarySessionId]}</p>
+						<p class="text-m mb-1 mt-2 font-semibold">{m.group_summary()}</p>
+						<p class="mt-2">{$groupSummaryMap[$selectedSummarySessionId]}</p>
+						{#if $reflectionProblemMap[$selectedSummarySessionId]}
+							<p class="text-m mb-1 mt-2 font-semibold">{m.reflectionQuestion()}</p>
+							<p class="mt-2">{$reflectionProblemMap[$selectedSummarySessionId]}</p>
+						{/if}
+						{#if $learningRecordMap[$selectedSummarySessionId]}
+							<p class="text-m mb-1 mt-2 font-semibold">{m.reflectionAnswer()}</p>
+							<p class="mt-2 whitespace-pre-line">
+								{$learningRecordMap[$selectedSummarySessionId]}
+							</p>
+						{/if}
+					{/if}
 				{/if}
 			</div>
 		{/if}
