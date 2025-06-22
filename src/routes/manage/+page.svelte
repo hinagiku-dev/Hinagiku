@@ -36,6 +36,8 @@
 	import DiscussionParticipationChart from '$lib/components/DiscussionParticipationChart.svelte';
 	import SingleStudentParticipationChart from '$lib/components/SingleStudentParticipationChart.svelte';
 	import SingleStudentSubtaskChart from '$lib/components/SingleStudentSubtaskChart.svelte';
+	import ClassSubtaskCompletionChart from '$lib/components/ClassSubtaskCompletionChart.svelte';
+	import DiscussionSubtaskCompletionChart from '$lib/components/DiscussionSubtaskCompletionChart.svelte';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -163,6 +165,22 @@
 		Array<{ discussionName: string; participation: number }>
 	>([]);
 
+	// Class and discussion subtask completion data
+	let classSubtaskCompletionData = $state<
+		Array<{
+			className: string;
+			averageCompletionRate: number;
+			sessionCount: number;
+		}>
+	>([]);
+	let discussionSubtaskCompletionData = $state<
+		Array<{
+			discussionName: string;
+			averageCompletionRate: number;
+			sessionCount: number;
+		}>
+	>([]);
+
 	// Single student chart data
 	let singleStudentParticipationData = $state<
 		Array<{ sessionId: string; sessionTitle: string; words: number; averageWords: number }>
@@ -181,6 +199,8 @@
 	let isLoadingStudentParticipationData = $state(false);
 	let isLoadingSubtaskData = $state(false);
 	let isLoadingDiscussionData = $state(false);
+	let isLoadingClassSubtaskData = $state(false);
+	let isLoadingDiscussionSubtaskData = $state(false);
 	let isLoadingSingleStudentParticipation = $state(false);
 	let isLoadingSingleStudentSubtask = $state(false);
 
@@ -237,6 +257,8 @@
 			console.log('Reloading all chart data due to title change');
 			loadParticipationData();
 			loadDiscussionParticipationData();
+			loadClassSubtaskCompletionData();
+			loadDiscussionSubtaskCompletionData();
 			if (selectedClassId) {
 				loadStudentParticipationData();
 				loadSubtaskCompletionData();
@@ -249,6 +271,8 @@
 		if (classes.length > 0 && hasInitialized) {
 			loadParticipationData();
 			loadDiscussionParticipationData();
+			loadClassSubtaskCompletionData();
+			loadDiscussionSubtaskCompletionData();
 		}
 	});
 
@@ -271,6 +295,8 @@
 		if (hasInitialized && browser) {
 			console.log('Reloading participation data...');
 			loadParticipationData();
+			loadClassSubtaskCompletionData();
+			loadDiscussionSubtaskCompletionData();
 			if (selectedClassId) {
 				console.log('Reloading student participation data...');
 				loadStudentParticipationData();
@@ -986,6 +1012,165 @@
 		}
 	}
 
+	// Load class subtask completion data
+	async function loadClassSubtaskCompletionData() {
+		if (!browser) return;
+
+		try {
+			isLoadingClassSubtaskData = true;
+			const classSubtaskData: Array<{
+				className: string;
+				averageCompletionRate: number;
+				sessionCount: number;
+			}> = [];
+
+			for (const cls of classes) {
+				if (cls.data.active_status === 'archived') continue;
+
+				const sessionsQuery = query(
+					collection(db, 'sessions'),
+					where('classId', '==', cls.id),
+					where('status', '==', 'ended'),
+					orderBy('createdAt', 'asc')
+				);
+
+				const snapshot = await getDocs(sessionsQuery);
+				const filteredSessions =
+					selectedTitles.length > 0
+						? snapshot.docs.filter((doc) => selectedTitles.includes((doc.data() as Session).title))
+						: snapshot.docs;
+
+				if (filteredSessions.length === 0) continue;
+
+				let totalCompletionRate = 0;
+				let validSessionCount = 0;
+
+				for (const sessionDoc of filteredSessions) {
+					const groupsQuery = query(collection(db, 'sessions', sessionDoc.id, 'groups'));
+					const groupsSnapshot = await getDocs(groupsQuery);
+
+					let sessionTotalCompleted = 0;
+					let sessionTotalSubtasks = 0;
+
+					for (const groupDoc of groupsSnapshot.docs) {
+						const conversationsQuery = query(
+							collection(db, 'sessions', sessionDoc.id, 'groups', groupDoc.id, 'conversations')
+						);
+						const conversationsSnapshot = await getDocs(conversationsQuery);
+
+						conversationsSnapshot.forEach((convDoc) => {
+							const convData = convDoc.data();
+							if (convData.subtaskCompleted && Array.isArray(convData.subtaskCompleted)) {
+								sessionTotalSubtasks += convData.subtaskCompleted.length;
+								sessionTotalCompleted += convData.subtaskCompleted.filter(Boolean).length;
+							}
+						});
+					}
+
+					if (sessionTotalSubtasks > 0) {
+						totalCompletionRate += (sessionTotalCompleted / sessionTotalSubtasks) * 100;
+						validSessionCount++;
+					}
+				}
+
+				if (validSessionCount > 0) {
+					classSubtaskData.push({
+						className: cls.data.className,
+						averageCompletionRate: totalCompletionRate / validSessionCount,
+						sessionCount: validSessionCount
+					});
+				}
+			}
+
+			classSubtaskCompletionData = classSubtaskData;
+		} catch (error) {
+			console.error('Error loading class subtask completion data:', error);
+			notifications.error(m.failedToLoadClassSubtaskData());
+		} finally {
+			isLoadingClassSubtaskData = false;
+		}
+	}
+
+	// Load discussion subtask completion data
+	async function loadDiscussionSubtaskCompletionData() {
+		if (!browser) return;
+
+		try {
+			isLoadingDiscussionSubtaskData = true;
+			const discussionSubtaskData: Array<{
+				discussionName: string;
+				averageCompletionRate: number;
+				sessionCount: number;
+			}> = [];
+
+			// Get sessions to analyze
+			const sessionsToAnalyze = selectedClassId
+				? allSessions.filter((session) => session.data.classId === selectedClassId)
+				: allSessions;
+
+			// Filter by selected titles if any are selected
+			const filteredSessions =
+				selectedTitles.length > 0
+					? sessionsToAnalyze.filter((session) => selectedTitles.includes(session.data.title))
+					: sessionsToAnalyze;
+
+			const titleCompletionMap = new Map<string, number[]>();
+
+			for (const session of filteredSessions) {
+				const groupsQuery = query(collection(db, 'sessions', session.id, 'groups'));
+
+				try {
+					const groupsSnapshot = await getDocs(groupsQuery);
+					let sessionTotalCompleted = 0;
+					let sessionTotalSubtasks = 0;
+
+					for (const groupDoc of groupsSnapshot.docs) {
+						const conversationsQuery = query(
+							collection(db, 'sessions', session.id, 'groups', groupDoc.id, 'conversations')
+						);
+						const conversationsSnapshot = await getDocs(conversationsQuery);
+
+						conversationsSnapshot.forEach((convDoc) => {
+							const convData = convDoc.data();
+							if (convData.subtaskCompleted && Array.isArray(convData.subtaskCompleted)) {
+								sessionTotalSubtasks += convData.subtaskCompleted.length;
+								sessionTotalCompleted += convData.subtaskCompleted.filter(Boolean).length;
+							}
+						});
+					}
+
+					if (sessionTotalSubtasks > 0) {
+						const completionRate = (sessionTotalCompleted / sessionTotalSubtasks) * 100;
+						if (!titleCompletionMap.has(session.data.title)) {
+							titleCompletionMap.set(session.data.title, []);
+						}
+						titleCompletionMap.get(session.data.title)!.push(completionRate);
+					}
+				} catch (error) {
+					console.error(`Error loading groups for session ${session.id}:`, error);
+				}
+			}
+
+			// Calculate average completion rate per discussion title
+			titleCompletionMap.forEach((completionRates, title) => {
+				const avgCompletionRate =
+					completionRates.reduce((sum, rate) => sum + rate, 0) / completionRates.length;
+				discussionSubtaskData.push({
+					discussionName: title,
+					averageCompletionRate: avgCompletionRate,
+					sessionCount: completionRates.length
+				});
+			});
+
+			discussionSubtaskCompletionData = discussionSubtaskData;
+		} catch (error) {
+			console.error('Error loading discussion subtask completion data:', error);
+			notifications.error(m.failedToLoadDiscussionSubtaskData());
+		} finally {
+			isLoadingDiscussionSubtaskData = false;
+		}
+	}
+
 	// Load selected class data
 	async function loadSelectedClass(classId: string) {
 		if (!classId || !browser) return;
@@ -1545,12 +1730,12 @@
 
 <main class="px-4 py-16">
 	<div class="mx-auto mb-8 max-w-6xl">
-		<div class="flex items-center justify-between">
-			<div class="flex-1 text-center">
+		<div class="relative">
+			<div class="text-center">
 				<h1 class="text-3xl font-bold text-gray-900">{m.managementDashboard()}</h1>
 				<p class="mt-2 text-gray-600">{m.manageClassesDesc()}</p>
 			</div>
-			<div class="flex-shrink-0">
+			<div class="absolute right-0 top-1/2 -translate-y-1/2">
 				<Button href="/dashboard" color="alternative">
 					{m.backToDashboard()}
 				</Button>
@@ -2064,9 +2249,6 @@
 													color="primary"
 												/>
 												<span class="text-sm">{title}</span>
-												<span class="ml-auto text-xs text-gray-500">
-													({allSessions.filter((s) => s.data.title === title).length})
-												</span>
 											</label>
 										{/each}
 									</div>
@@ -2084,23 +2266,91 @@
 										</div>
 										<h3 class="text-lg font-semibold text-gray-900">{m.studentFilter()}</h3>
 									</div>
-									<p class="text-sm text-gray-600">{m.chartStudentParticipationDesc()}</p>
+									<p class="text-sm text-gray-600">{m.studentFilterDescription()}</p>
 								</div>
 
 								{#if availableStudents().length > 0}
 									<Select class="w-full" bind:value={selectedStudent} placeholder={m.allStudents()}>
 										<option value={null}>{m.allStudents()}</option>
-										{#each availableStudents() as studentId}
-											<option value={studentId}>
-												<ResolveUsername id={studentId} />
-											</option>
-										{/each}
+										{#await Promise.all(availableStudents().map( (studentId) => getUser(studentId) )) then students}
+											{#each students.sort((a, b) => {
+												const seatA = a.seatNumber ? parseInt(a.seatNumber, 10) : Infinity;
+												const seatB = b.seatNumber ? parseInt(b.seatNumber, 10) : Infinity;
+												if (isNaN(seatA) && isNaN(seatB)) return a.displayName.localeCompare(b.displayName);
+												if (isNaN(seatA)) return 1;
+												if (isNaN(seatB)) return -1;
+												return seatA - seatB;
+											}) as student}
+												<option value={student.uid}>
+													{student.displayName}
+												</option>
+											{/each}
+										{/await}
 									</Select>
+									{#if selectedStudent}
+										<div class="mt-4">
+											<Button
+												href="/manage/{selectedClassId}/{selectedStudent}/allSummary"
+												color="primary"
+												class="w-full"
+											>
+												<MessageSquare class="mr-2 h-4 w-4" />
+												{m.viewAllSummaries()}
+											</Button>
+										</div>
+									{/if}
 								{:else}
 									<div class="py-4 text-center text-gray-500">{m.noStudentListAvailable()}</div>
 								{/if}
 							</Card>
 						</div>
+
+						<!-- Session Summaries (Only show when single title selected and no student selected) -->
+						{#if selectedTitles.length === 1 && !selectedStudent}
+							{@const sessionsWithSummary =
+								$filteredClassSessions?.filter(
+									([, s]) => s.summary && s.title === selectedTitles[0]
+								) || []}
+							{#if sessionsWithSummary.length > 0}
+								<Card padding="lg" class="w-full !max-w-none">
+									<div class="mb-4">
+										<div class="mb-3 flex items-center gap-3">
+											<div class="rounded-full bg-primary-100 p-2">
+												<MessageSquare size={20} class="text-primary-600" />
+											</div>
+											<h3 class="text-lg font-semibold text-gray-900">{m.sessionSummaries()}</h3>
+										</div>
+									</div>
+									<div class="space-y-4">
+										{#each sessionsWithSummary as [sessionId, session] (sessionId)}
+											<div class="rounded-lg border bg-gray-50 p-4 dark:bg-gray-800">
+												<h4 class="font-semibold">{session.title}</h4>
+												<div class="prose prose-sm mt-2 max-w-none dark:prose-invert">
+													{#if session.summary}
+														<div>
+															<h5 class="font-semibold">{m.integratedViewpoint()}</h5>
+															<p>{session.summary.integratedViewpoint}</p>
+														</div>
+														<div class="mt-2">
+															<h5 class="font-semibold">{m.differences()}</h5>
+															<p>{session.summary.differences}</p>
+														</div>
+														<div class="mt-2">
+															<h5 class="font-semibold">{m.learningProgress()}</h5>
+															<p>{session.summary.learningProgress}</p>
+														</div>
+														<div class="mt-2">
+															<h5 class="font-semibold">{m.finalConclusion()}</h5>
+															<p>{session.summary.finalConclusion}</p>
+														</div>
+													{/if}
+												</div>
+											</div>
+										{/each}
+									</div>
+								</Card>
+							{/if}
+						{/if}
 
 						<!-- Charts -->
 						<div class="space-y-8">
@@ -2230,9 +2480,11 @@
 													</h3>
 												</div>
 												<p class="text-sm text-gray-600">
-													{m.studentParticipationInDiscussions({
-														studentName: selectedStudentName
-													})}
+													{#if typeof selectedStudentName === 'string'}
+														{m.studentParticipationInDiscussions({
+															studentName: selectedStudentName
+														})}
+													{/if}
 												</p>
 											</div>
 											<SingleStudentParticipationChart
@@ -2242,9 +2494,29 @@
 										</Card>
 									{/if}
 								{:else}
-									<div class="flex h-64 items-center justify-center text-gray-500">
-										<p>{m.noStudentParticipationData()}</p>
-									</div>
+									<Card padding="lg" class="w-full !max-w-none">
+										<div class="mb-4">
+											<div class="mb-3 flex items-center gap-3">
+												<div class="rounded-full bg-primary-100 p-2">
+													<Activity size={20} class="text-primary-600" />
+												</div>
+												<h3 class="text-lg font-semibold text-gray-900">
+													{selectedStudentName} - {m.chartParticipation()}
+												</h3>
+											</div>
+											<p class="text-sm text-gray-600">
+												{#if typeof selectedStudentName === 'string'}
+													{m.studentParticipationInDiscussions({
+														studentName: selectedStudentName
+													})}
+												{/if}
+											</p>
+										</div>
+										<div class="flex h-64 items-center justify-center text-gray-500">
+											<Info size={32} class="mr-2" />
+											<p>{m.noStudentParticipationData()}</p>
+										</div>
+									</Card>
 								{/if}
 
 								<!-- Single Student Subtask Chart -->
@@ -2266,9 +2538,11 @@
 													</h3>
 												</div>
 												<p class="text-sm text-gray-600">
-													{m.studentSubtaskMasteryInDiscussions({
-														studentName: selectedStudentName
-													})}
+													{#if typeof selectedStudentName === 'string'}
+														{m.studentSubtaskMasteryInDiscussions({
+															studentName: selectedStudentName
+														})}
+													{/if}
 												</p>
 											</div>
 											<SingleStudentSubtaskChart
@@ -2278,9 +2552,29 @@
 										</Card>
 									{/if}
 								{:else}
-									<div class="flex h-64 items-center justify-center text-gray-500">
-										<p>{m.noStudentSubtaskData()}</p>
-									</div>
+									<Card padding="lg" class="w-full !max-w-none">
+										<div class="mb-4">
+											<div class="mb-3 flex items-center gap-3">
+												<div class="rounded-full bg-primary-100 p-2">
+													<Target size={20} class="text-primary-600" />
+												</div>
+												<h3 class="text-lg font-semibold text-gray-900">
+													{selectedStudentName} - {m.chartSubtaskCompletion()}
+												</h3>
+											</div>
+											<p class="text-sm text-gray-600">
+												{#if typeof selectedStudentName === 'string'}
+													{m.studentSubtaskMasteryInDiscussions({
+														studentName: selectedStudentName
+													})}
+												{/if}
+											</p>
+										</div>
+										<div class="flex h-64 items-center justify-center text-gray-500">
+											<Info size={32} class="mr-2" />
+											<p>{m.noStudentSubtaskData()}</p>
+										</div>
+									</Card>
 								{/if}
 							{/if}
 						</div>
@@ -2392,6 +2686,78 @@
 							{/if}
 						</div>
 					</Card>
+
+					<!-- Class Subtask Completion Chart -->
+					{#if isLoadingClassSubtaskData}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center">
+								<Spinner size="8" />
+								<p class="ml-2 text-gray-600">{m.loadingClassSubtaskData()}</p>
+							</div>
+						</Card>
+					{:else if selectedTitles.length === 0}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="mb-4">
+								<div class="mb-3 flex items-center gap-3">
+									<div class="rounded-full bg-primary-100 p-2">
+										<Target size={20} class="text-primary-600" />
+									</div>
+									<h3 class="text-lg font-semibold text-gray-900">
+										{m.chartClassSubtaskCompletion()}
+									</h3>
+								</div>
+								<p class="text-sm text-gray-600">{m.chartClassSubtaskCompletionDesc()}</p>
+							</div>
+							<div class="flex h-64 flex-col items-center justify-center text-gray-500">
+								<Info size={32} class="mb-2" />
+								<p>{m.selectCoursesPlaceholder()}</p>
+							</div>
+						</Card>
+					{:else if classSubtaskCompletionData.length > 0}
+						<ClassSubtaskCompletionChart data={classSubtaskCompletionData} />
+					{:else}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center text-gray-500">
+								<p>{m.noClassSubtaskData()}</p>
+							</div>
+						</Card>
+					{/if}
+
+					<!-- Discussion Subtask Completion Chart -->
+					{#if isLoadingDiscussionSubtaskData}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center">
+								<Spinner size="8" />
+								<p class="ml-2 text-gray-600">{m.loadingDiscussionSubtaskData()}</p>
+							</div>
+						</Card>
+					{:else if selectedTitles.length === 0}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="mb-4">
+								<div class="mb-3 flex items-center gap-3">
+									<div class="rounded-full bg-primary-100 p-2">
+										<Target size={20} class="text-primary-600" />
+									</div>
+									<h3 class="text-lg font-semibold text-gray-900">
+										{m.chartDiscussionSubtaskCompletion()}
+									</h3>
+								</div>
+								<p class="text-sm text-gray-600">{m.chartDiscussionSubtaskCompletionDesc()}</p>
+							</div>
+							<div class="flex h-64 flex-col items-center justify-center text-gray-500">
+								<Info size={32} class="mb-2" />
+								<p>{m.selectCoursesPlaceholder()}</p>
+							</div>
+						</Card>
+					{:else if discussionSubtaskCompletionData.length > 0}
+						<DiscussionSubtaskCompletionChart data={discussionSubtaskCompletionData} />
+					{:else}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center text-gray-500">
+								<p>{m.noDiscussionSubtaskData()}</p>
+							</div>
+						</Card>
+					{/if}
 
 					<!-- Analytics Panel when no class is selected -->
 					<!-- THIS SECTION HAS BEEN MOVED INTO THE CLASS ANALYSIS VIEW -->
