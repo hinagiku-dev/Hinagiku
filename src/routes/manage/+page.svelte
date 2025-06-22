@@ -1730,12 +1730,12 @@
 
 <main class="px-4 py-16">
 	<div class="mx-auto mb-8 max-w-6xl">
-		<div class="flex items-center justify-between">
-			<div class="flex-1 text-center">
+		<div class="relative">
+			<div class="text-center">
 				<h1 class="text-3xl font-bold text-gray-900">{m.managementDashboard()}</h1>
 				<p class="mt-2 text-gray-600">{m.manageClassesDesc()}</p>
 			</div>
-			<div class="flex-shrink-0">
+			<div class="absolute right-0 top-1/2 -translate-y-1/2">
 				<Button href="/dashboard" color="alternative">
 					{m.backToDashboard()}
 				</Button>
@@ -2272,11 +2272,20 @@
 								{#if availableStudents().length > 0}
 									<Select class="w-full" bind:value={selectedStudent} placeholder={m.allStudents()}>
 										<option value={null}>{m.allStudents()}</option>
-										{#each availableStudents() as studentId}
-											<option value={studentId}>
-												<ResolveUsername id={studentId} />
-											</option>
-										{/each}
+										{#await Promise.all(availableStudents().map( (studentId) => getUser(studentId) )) then students}
+											{#each students.sort((a, b) => {
+												const seatA = a.seatNumber ? parseInt(a.seatNumber, 10) : Infinity;
+												const seatB = b.seatNumber ? parseInt(b.seatNumber, 10) : Infinity;
+												if (isNaN(seatA) && isNaN(seatB)) return a.displayName.localeCompare(b.displayName);
+												if (isNaN(seatA)) return 1;
+												if (isNaN(seatB)) return -1;
+												return seatA - seatB;
+											}) as student}
+												<option value={student.uid}>
+													{student.displayName}
+												</option>
+											{/each}
+										{/await}
 									</Select>
 									{#if selectedStudent}
 										<div class="mt-4">
