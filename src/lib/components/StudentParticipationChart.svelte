@@ -21,6 +21,7 @@
 
 	// Props
 	export let sessions: SessionData[] = [];
+	export let studentNames: string[] = [];
 
 	// Chart instance
 	let chartInstance: Chart | null = null;
@@ -46,18 +47,13 @@
 			chartInstance.destroy();
 		}
 
-		// Get all unique student IDs
-		const studentIds = new Set<string>();
-		sessions.forEach((session) => {
-			Object.keys(session.participants).forEach((studentId) => {
-				studentIds.add(studentId);
-			});
-		});
-
 		// Prepare datasets
 		const datasets = sessions.map((session, index) => ({
 			label: session.sessionTitle,
-			data: Array.from(studentIds).map((studentId) => session.participants[studentId]?.words || 0),
+			data: studentNames.map((displayName) => {
+				const participant = session.participants[displayName];
+				return participant ? participant.words : 0;
+			}),
 			backgroundColor: generateColors(sessions.length)[index * 2],
 			borderColor: generateColors(sessions.length)[index * 2 + 1],
 			borderWidth: 1
@@ -67,7 +63,7 @@
 		chartInstance = new Chart(chartCanvas, {
 			type: 'bar',
 			data: {
-				labels: Array.from(studentIds),
+				labels: studentNames,
 				datasets: datasets
 			},
 			options: {
