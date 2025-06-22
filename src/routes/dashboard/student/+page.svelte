@@ -101,13 +101,6 @@
 		}> = [];
 
 		for (const groupDoc of groupSnapshot.docs) {
-			const convQuery1 = query(
-				collection(groupDoc.ref, 'conversations'),
-				where('userId', '==', uid)
-			);
-			const convSnapshot1 = await getDocs(convQuery1);
-			const convData = convSnapshot1.docs[0]?.data();
-
 			const groupData = groupDoc.data() as {
 				summary?: string;
 				discussions?: Array<{ speaker: string; content: string }>;
@@ -122,9 +115,6 @@
 					map[sessionId] = sessionTitle;
 					return map;
 				});
-			}
-			if (convData?.summary) {
-				personalSummary[sessionId] = convData.summary;
 			}
 
 			let words = 0;
@@ -146,6 +136,10 @@
 
 			for (const convDoc of convSnapshot.docs) {
 				const convData = convDoc.data() as Conversation;
+
+				if (convData?.summary) {
+					personalSummary[sessionId] = convData.summary;
+				}
 
 				if (Array.isArray(convData.keyPoints)) {
 					convData.keyPoints.forEach((k: string) => {
