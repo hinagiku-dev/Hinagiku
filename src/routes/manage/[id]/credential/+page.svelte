@@ -154,15 +154,18 @@
 		groupValue = '';
 	}
 
-	// Validate group value - must be a number >= 1
+	// Validate group value - must be a number >= 1 or empty for no group
 	function isValidGroup(value: string): boolean {
-		const num = parseInt(value.trim());
+		const trimmedValue = value.trim();
+		// Allow empty value for "no group"
+		if (trimmedValue === '') return true;
+		const num = parseInt(trimmedValue);
 		return !isNaN(num) && num >= 1;
 	}
 
 	// Update group - call API with new group
 	async function updateGroup(studentId: string) {
-		if (!groupValue.trim() || !isValidGroup(groupValue)) {
+		if (!isValidGroup(groupValue)) {
 			notifications.error(m.groupMustBeNumber());
 			return;
 		}
@@ -174,11 +177,12 @@
 		});
 
 		if (!studentUid) {
-			notifications.error('Student UID not found');
+			notifications.error(m.studentUidNotFound());
 			return;
 		}
 
 		try {
+			const finalGroupValue = groupValue.trim() || null; // Convert empty string to null
 			const res = await fetch('/api/auth/update-group', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -189,7 +193,7 @@
 						displayName: student.displayName,
 						studentId: student.studentId,
 						seatNumber: student.seatNumber,
-						group: student.studentId === studentId ? groupValue.trim() : student.group
+						group: student.studentId === studentId ? finalGroupValue : student.group
 					}))
 				})
 			});
@@ -200,10 +204,13 @@
 
 				// Update the local student list
 				student_list = student_list.map((student) =>
-					student.studentId === studentId ? { ...student, group: groupValue.trim() } : student
+					student.studentId === studentId ? { ...student, group: finalGroupValue } : student
 				);
 
-				notifications.success(`${studentId} ${m.classUpdateGroupSuccess()}`);
+				const successMessage = finalGroupValue
+					? `${studentId} ${m.classUpdateGroupSuccess()}`
+					: `${studentId} ${m.setToNoGroup()}`;
+				notifications.success(successMessage);
 			} else {
 				const errorData = await res.json();
 				console.error('Update group error:', errorData);
@@ -211,7 +218,7 @@
 			}
 		} catch (e) {
 			console.error(e);
-			notifications.error('Error updating group');
+			notifications.error(m.errorUpdatingGroup());
 		} finally {
 			editingGroupId = null;
 			groupValue = '';
@@ -221,7 +228,7 @@
 	// Reset password - call API with custom password
 	async function resetPassword(studentId: string) {
 		if (!resetPasswordValue.trim()) {
-			notifications.error('Password cannot be empty');
+			notifications.error(m.passwordCannotBeEmpty());
 			return;
 		}
 
@@ -280,11 +287,27 @@
 				{
 					keys: ['name', 'student name', '姓名', 'displayname', 'display name'],
 					found: false,
-					index: -1
+					index: -1,
+					required: true
 				},
-				{ keys: ['seat', 'seatnumber', 'seat number', '座號'], found: false, index: -1 },
-				{ keys: ['id', 'studentid', 'student id', '學號'], found: false, index: -1 },
-				{ keys: ['group', 'groupnumber', 'group number', '組別'], found: false, index: -1 }
+				{
+					keys: ['seat', 'seatnumber', 'seat number', '座號'],
+					found: false,
+					index: -1,
+					required: true
+				},
+				{
+					keys: ['id', 'studentid', 'student id', '學號'],
+					found: false,
+					index: -1,
+					required: true
+				},
+				{
+					keys: ['group', 'groupnumber', 'group number', '組別'],
+					found: false,
+					index: -1,
+					required: false
+				}
 			];
 			let headers: string[] = [];
 			let rows: (string | number | boolean | null)[][] = [];
@@ -371,13 +394,13 @@
 			// Check each required field
 			let missingFields = [];
 			for (const field of requiredFields) {
-				if (!field.found) {
+				if (!field.found && field.required) {
 					missingFields.push(field.keys[0]);
 				}
 			}
 
 			if (missingFields.length > 0) {
-				throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+				throw new Error(m.missingRequiredFields({ fields: missingFields.join(', ') }));
 			}
 
 			// Extract student data directly from parsed rows and validate with StudentSchema
@@ -395,13 +418,10 @@
 				const displayName = String(row[requiredFields[0].index] || '').trim();
 				const studentIdValue = String(row[requiredFields[2].index] || '').trim();
 				const seatNumberValue = String(row[requiredFields[1].index] || '').trim();
-				const groupValue = String(row[requiredFields[3].index] || '').trim();
 
-				// Validate required fields are not empty
-				if (!displayName || !studentIdValue || !seatNumberValue || !groupValue) {
-					validationErrors.push(
-						`Row ${idx + 2}: All fields (name, student ID, seat number, group) are required and cannot be empty`
-					);
+				// Validate required fields are not empty (except group which is optional)
+				if (!displayName || !studentIdValue || !seatNumberValue) {
+					validationErrors.push(m.rowRequiredFieldsCannotBeEmpty({ row: idx + 2 }));
 					continue;
 				}
 
@@ -415,7 +435,9 @@
 
 				// Check for duplicate student ID
 				if (seenStudentIds.has(studentIdValue)) {
-					validationErrors.push(`Duplicate student ID "${studentIdValue}" found at row ${idx + 2}`);
+					validationErrors.push(
+						m.rowDuplicateStudentId({ row: idx + 2, studentId: studentIdValue })
+					);
 					hasDuplicates = true;
 				} else {
 					seenStudentIds.add(studentIdValue);
@@ -424,7 +446,7 @@
 				// Check for duplicate seat number
 				if (seenSeatNumbers.has(seatNumberValue)) {
 					validationErrors.push(
-						`Duplicate seat number "${seatNumberValue}" found at row ${idx + 2}`
+						m.rowDuplicateSeatNumber({ row: idx + 2, seatNumber: seatNumberValue })
 					);
 					hasDuplicates = true;
 				} else {
@@ -434,7 +456,7 @@
 
 			// If there are any validation errors or duplicates, reject the entire file
 			if (validationErrors.length > 0 || hasDuplicates) {
-				throw new Error('File contains duplicate or invalid data');
+				throw new Error(m.fileContainsDuplicateOrInvalidData());
 			}
 
 			// Second pass: Process valid data only if no duplicates found
@@ -444,14 +466,16 @@
 					const displayName = String(row[requiredFields[0].index] || '').trim();
 					const studentIdValue = String(row[requiredFields[2].index] || '').trim();
 					const seatNumberValue = String(row[requiredFields[1].index] || '').trim();
-					const groupValue = String(row[requiredFields[3].index] || '').trim();
+					const groupValue = requiredFields[3].found
+						? String(row[requiredFields[3].index] || '').trim()
+						: '';
 
 					// Create a student object according to schema
 					const studentData = {
 						displayName: displayName,
 						studentId: studentIdValue,
 						seatNumber: seatNumberValue,
-						group: groupValue
+						group: groupValue || null // Convert empty string to null for schema compliance
 					};
 
 					// Validate with Zod schema
@@ -475,7 +499,7 @@
 					`${m.importStdentListSuccess1()} ${student_list.length} ${m.importStdentListSuccess2()}`
 				);
 			} else {
-				throw new Error('Cannot find any valid student data in the file');
+				throw new Error(m.cannotFindValidStudentData());
 			}
 
 			// Send to server in the format expected by the API
@@ -505,8 +529,8 @@
 		} catch (error) {
 			console.error('File validation error:', error);
 			let errorMessage = m.classStudentFormatErrorInclude();
-			if (error instanceof Error && error.message.includes('Missing required fields')) {
-				errorMessage = error.message;
+			if (error instanceof Error && error.message.includes(m.missingRequiredFieldsKeyword())) {
+				errorMessage = error.message + ' ' + m.noteGroupColumnOptional();
 			}
 			notifications.error(errorMessage);
 		} finally {
@@ -599,8 +623,8 @@
 														<Input
 															type="text"
 															bind:value={groupValue}
-															placeholder={m.enterGroup()}
-															class="w-20"
+															placeholder={m.enterGroupNumberOrLeaveEmpty()}
+															class="w-32"
 															size="sm"
 														/>
 														{#if groupValue.trim() && !isValidGroup(groupValue)}
@@ -614,7 +638,7 @@
 													<Button
 														size="xs"
 														color="blue"
-														disabled={!groupValue.trim() || !isValidGroup(groupValue)}
+														disabled={!isValidGroup(groupValue)}
 														onclick={() => updateGroup(s.studentId)}
 													>
 														{m.classGroupEditConfirm()}
@@ -628,8 +652,8 @@
 													<Input
 														type="text"
 														value={s.group || ''}
-														placeholder={m.noGroup()}
-														class="w-20"
+														placeholder={s.group ? '' : m.noGroupPlaceholder()}
+														class="w-32"
 														size="sm"
 														disabled
 													/>
