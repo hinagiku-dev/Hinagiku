@@ -36,6 +36,8 @@
 	import DiscussionParticipationChart from '$lib/components/DiscussionParticipationChart.svelte';
 	import SingleStudentParticipationChart from '$lib/components/SingleStudentParticipationChart.svelte';
 	import SingleStudentSubtaskChart from '$lib/components/SingleStudentSubtaskChart.svelte';
+	import ClassSubtaskCompletionChart from '$lib/components/ClassSubtaskCompletionChart.svelte';
+	import DiscussionSubtaskCompletionChart from '$lib/components/DiscussionSubtaskCompletionChart.svelte';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -163,6 +165,22 @@
 		Array<{ discussionName: string; participation: number }>
 	>([]);
 
+	// Class and discussion subtask completion data
+	let classSubtaskCompletionData = $state<
+		Array<{
+			className: string;
+			averageCompletionRate: number;
+			sessionCount: number;
+		}>
+	>([]);
+	let discussionSubtaskCompletionData = $state<
+		Array<{
+			discussionName: string;
+			averageCompletionRate: number;
+			sessionCount: number;
+		}>
+	>([]);
+
 	// Single student chart data
 	let singleStudentParticipationData = $state<
 		Array<{ sessionId: string; sessionTitle: string; words: number; averageWords: number }>
@@ -181,6 +199,8 @@
 	let isLoadingStudentParticipationData = $state(false);
 	let isLoadingSubtaskData = $state(false);
 	let isLoadingDiscussionData = $state(false);
+	let isLoadingClassSubtaskData = $state(false);
+	let isLoadingDiscussionSubtaskData = $state(false);
 	let isLoadingSingleStudentParticipation = $state(false);
 	let isLoadingSingleStudentSubtask = $state(false);
 
@@ -237,6 +257,8 @@
 			console.log('Reloading all chart data due to title change');
 			loadParticipationData();
 			loadDiscussionParticipationData();
+			loadClassSubtaskCompletionData();
+			loadDiscussionSubtaskCompletionData();
 			if (selectedClassId) {
 				loadStudentParticipationData();
 				loadSubtaskCompletionData();
@@ -249,6 +271,8 @@
 		if (classes.length > 0 && hasInitialized) {
 			loadParticipationData();
 			loadDiscussionParticipationData();
+			loadClassSubtaskCompletionData();
+			loadDiscussionSubtaskCompletionData();
 		}
 	});
 
@@ -271,6 +295,8 @@
 		if (hasInitialized && browser) {
 			console.log('Reloading participation data...');
 			loadParticipationData();
+			loadClassSubtaskCompletionData();
+			loadDiscussionSubtaskCompletionData();
 			if (selectedClassId) {
 				console.log('Reloading student participation data...');
 				loadStudentParticipationData();
@@ -983,6 +1009,165 @@
 			notifications.error(m.failedToLoadDiscussionParticipationData());
 		} finally {
 			isLoadingDiscussionData = false;
+		}
+	}
+
+	// Load class subtask completion data
+	async function loadClassSubtaskCompletionData() {
+		if (!browser) return;
+
+		try {
+			isLoadingClassSubtaskData = true;
+			const classSubtaskData: Array<{
+				className: string;
+				averageCompletionRate: number;
+				sessionCount: number;
+			}> = [];
+
+			for (const cls of classes) {
+				if (cls.data.active_status === 'archived') continue;
+
+				const sessionsQuery = query(
+					collection(db, 'sessions'),
+					where('classId', '==', cls.id),
+					where('status', '==', 'ended'),
+					orderBy('createdAt', 'asc')
+				);
+
+				const snapshot = await getDocs(sessionsQuery);
+				const filteredSessions =
+					selectedTitles.length > 0
+						? snapshot.docs.filter((doc) => selectedTitles.includes((doc.data() as Session).title))
+						: snapshot.docs;
+
+				if (filteredSessions.length === 0) continue;
+
+				let totalCompletionRate = 0;
+				let validSessionCount = 0;
+
+				for (const sessionDoc of filteredSessions) {
+					const groupsQuery = query(collection(db, 'sessions', sessionDoc.id, 'groups'));
+					const groupsSnapshot = await getDocs(groupsQuery);
+
+					let sessionTotalCompleted = 0;
+					let sessionTotalSubtasks = 0;
+
+					for (const groupDoc of groupsSnapshot.docs) {
+						const conversationsQuery = query(
+							collection(db, 'sessions', sessionDoc.id, 'groups', groupDoc.id, 'conversations')
+						);
+						const conversationsSnapshot = await getDocs(conversationsQuery);
+
+						conversationsSnapshot.forEach((convDoc) => {
+							const convData = convDoc.data();
+							if (convData.subtaskCompleted && Array.isArray(convData.subtaskCompleted)) {
+								sessionTotalSubtasks += convData.subtaskCompleted.length;
+								sessionTotalCompleted += convData.subtaskCompleted.filter(Boolean).length;
+							}
+						});
+					}
+
+					if (sessionTotalSubtasks > 0) {
+						totalCompletionRate += (sessionTotalCompleted / sessionTotalSubtasks) * 100;
+						validSessionCount++;
+					}
+				}
+
+				if (validSessionCount > 0) {
+					classSubtaskData.push({
+						className: cls.data.className,
+						averageCompletionRate: totalCompletionRate / validSessionCount,
+						sessionCount: validSessionCount
+					});
+				}
+			}
+
+			classSubtaskCompletionData = classSubtaskData;
+		} catch (error) {
+			console.error('Error loading class subtask completion data:', error);
+			notifications.error(m.failedToLoadClassSubtaskData());
+		} finally {
+			isLoadingClassSubtaskData = false;
+		}
+	}
+
+	// Load discussion subtask completion data
+	async function loadDiscussionSubtaskCompletionData() {
+		if (!browser) return;
+
+		try {
+			isLoadingDiscussionSubtaskData = true;
+			const discussionSubtaskData: Array<{
+				discussionName: string;
+				averageCompletionRate: number;
+				sessionCount: number;
+			}> = [];
+
+			// Get sessions to analyze
+			const sessionsToAnalyze = selectedClassId
+				? allSessions.filter((session) => session.data.classId === selectedClassId)
+				: allSessions;
+
+			// Filter by selected titles if any are selected
+			const filteredSessions =
+				selectedTitles.length > 0
+					? sessionsToAnalyze.filter((session) => selectedTitles.includes(session.data.title))
+					: sessionsToAnalyze;
+
+			const titleCompletionMap = new Map<string, number[]>();
+
+			for (const session of filteredSessions) {
+				const groupsQuery = query(collection(db, 'sessions', session.id, 'groups'));
+
+				try {
+					const groupsSnapshot = await getDocs(groupsQuery);
+					let sessionTotalCompleted = 0;
+					let sessionTotalSubtasks = 0;
+
+					for (const groupDoc of groupsSnapshot.docs) {
+						const conversationsQuery = query(
+							collection(db, 'sessions', session.id, 'groups', groupDoc.id, 'conversations')
+						);
+						const conversationsSnapshot = await getDocs(conversationsQuery);
+
+						conversationsSnapshot.forEach((convDoc) => {
+							const convData = convDoc.data();
+							if (convData.subtaskCompleted && Array.isArray(convData.subtaskCompleted)) {
+								sessionTotalSubtasks += convData.subtaskCompleted.length;
+								sessionTotalCompleted += convData.subtaskCompleted.filter(Boolean).length;
+							}
+						});
+					}
+
+					if (sessionTotalSubtasks > 0) {
+						const completionRate = (sessionTotalCompleted / sessionTotalSubtasks) * 100;
+						if (!titleCompletionMap.has(session.data.title)) {
+							titleCompletionMap.set(session.data.title, []);
+						}
+						titleCompletionMap.get(session.data.title)!.push(completionRate);
+					}
+				} catch (error) {
+					console.error(`Error loading groups for session ${session.id}:`, error);
+				}
+			}
+
+			// Calculate average completion rate per discussion title
+			titleCompletionMap.forEach((completionRates, title) => {
+				const avgCompletionRate =
+					completionRates.reduce((sum, rate) => sum + rate, 0) / completionRates.length;
+				discussionSubtaskData.push({
+					discussionName: title,
+					averageCompletionRate: avgCompletionRate,
+					sessionCount: completionRates.length
+				});
+			});
+
+			discussionSubtaskCompletionData = discussionSubtaskData;
+		} catch (error) {
+			console.error('Error loading discussion subtask completion data:', error);
+			notifications.error(m.failedToLoadDiscussionSubtaskData());
+		} finally {
+			isLoadingDiscussionSubtaskData = false;
 		}
 	}
 
@@ -2081,7 +2266,7 @@
 										</div>
 										<h3 class="text-lg font-semibold text-gray-900">{m.studentFilter()}</h3>
 									</div>
-									<p class="text-sm text-gray-600">{m.chartStudentParticipationDesc()}</p>
+									<p class="text-sm text-gray-600">{m.studentFilterDescription()}</p>
 								</div>
 
 								{#if availableStudents().length > 0}
@@ -2492,6 +2677,78 @@
 							{/if}
 						</div>
 					</Card>
+
+					<!-- Class Subtask Completion Chart -->
+					{#if isLoadingClassSubtaskData}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center">
+								<Spinner size="8" />
+								<p class="ml-2 text-gray-600">{m.loadingClassSubtaskData()}</p>
+							</div>
+						</Card>
+					{:else if selectedTitles.length === 0}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="mb-4">
+								<div class="mb-3 flex items-center gap-3">
+									<div class="rounded-full bg-primary-100 p-2">
+										<Target size={20} class="text-primary-600" />
+									</div>
+									<h3 class="text-lg font-semibold text-gray-900">
+										{m.chartClassSubtaskCompletion()}
+									</h3>
+								</div>
+								<p class="text-sm text-gray-600">{m.chartClassSubtaskCompletionDesc()}</p>
+							</div>
+							<div class="flex h-64 flex-col items-center justify-center text-gray-500">
+								<Info size={32} class="mb-2" />
+								<p>{m.selectCoursesPlaceholder()}</p>
+							</div>
+						</Card>
+					{:else if classSubtaskCompletionData.length > 0}
+						<ClassSubtaskCompletionChart data={classSubtaskCompletionData} />
+					{:else}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center text-gray-500">
+								<p>{m.noClassSubtaskData()}</p>
+							</div>
+						</Card>
+					{/if}
+
+					<!-- Discussion Subtask Completion Chart -->
+					{#if isLoadingDiscussionSubtaskData}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center">
+								<Spinner size="8" />
+								<p class="ml-2 text-gray-600">{m.loadingDiscussionSubtaskData()}</p>
+							</div>
+						</Card>
+					{:else if selectedTitles.length === 0}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="mb-4">
+								<div class="mb-3 flex items-center gap-3">
+									<div class="rounded-full bg-primary-100 p-2">
+										<Target size={20} class="text-primary-600" />
+									</div>
+									<h3 class="text-lg font-semibold text-gray-900">
+										{m.chartDiscussionSubtaskCompletion()}
+									</h3>
+								</div>
+								<p class="text-sm text-gray-600">{m.chartDiscussionSubtaskCompletionDesc()}</p>
+							</div>
+							<div class="flex h-64 flex-col items-center justify-center text-gray-500">
+								<Info size={32} class="mb-2" />
+								<p>{m.selectCoursesPlaceholder()}</p>
+							</div>
+						</Card>
+					{:else if discussionSubtaskCompletionData.length > 0}
+						<DiscussionSubtaskCompletionChart data={discussionSubtaskCompletionData} />
+					{:else}
+						<Card padding="lg" class="w-full !max-w-none">
+							<div class="flex h-64 items-center justify-center text-gray-500">
+								<p>{m.noDiscussionSubtaskData()}</p>
+							</div>
+						</Card>
+					{/if}
 
 					<!-- Analytics Panel when no class is selected -->
 					<!-- THIS SECTION HAS BEEN MOVED INTO THE CLASS ANALYSIS VIEW -->
