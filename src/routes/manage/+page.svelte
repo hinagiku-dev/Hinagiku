@@ -2134,19 +2134,19 @@
 												<div class="prose prose-sm mt-2 max-w-none dark:prose-invert">
 													{#if session.summary}
 														<div>
-															<h5 class="font-medium">{m.integratedViewpoint()}</h5>
+															<h5 class="font-semibold">{m.integratedViewpoint()}</h5>
 															<p>{session.summary.integratedViewpoint}</p>
 														</div>
 														<div class="mt-2">
-															<h5 class="font-medium">{m.differences()}</h5>
+															<h5 class="font-semibold">{m.differences()}</h5>
 															<p>{session.summary.differences}</p>
 														</div>
 														<div class="mt-2">
-															<h5 class="font-medium">{m.learningProgress()}</h5>
+															<h5 class="font-semibold">{m.learningProgress()}</h5>
 															<p>{session.summary.learningProgress}</p>
 														</div>
 														<div class="mt-2">
-															<h5 class="font-medium">{m.finalConclusion()}</h5>
+															<h5 class="font-semibold">{m.finalConclusion()}</h5>
 															<p>{session.summary.finalConclusion}</p>
 														</div>
 													{/if}
