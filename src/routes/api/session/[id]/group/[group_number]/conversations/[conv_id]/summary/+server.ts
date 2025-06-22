@@ -38,7 +38,7 @@ export const GET: RequestHandler = async ({ params, locals, url }) => {
 			// If there are no messages to summarize, return a success response
 			console.log('No messages to summarize');
 			await conversation_ref.update({
-				summary: 'No messages to summarize',
+				summary: '沒有可總結的內容',
 				keyPoints: []
 			});
 			return new Response(JSON.stringify({ success: true }), { status: 200 });
