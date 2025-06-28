@@ -609,5 +609,7 @@
 	"saveReflection": "Save Reflection",
 	"reflectionQuestion": "Reflection Question",
 	"reflectionQuestionPlaceholder": "Enter a question to guide students to reflect on the group summary.",
-	"reflectionQuestionMaxLength": "Reflection question must be {limit} characters or less"
+	"reflectionQuestionMaxLength": "Reflection question must be {limit} characters or less",
+	"reflectionQuestionUpdated": "Reflection question updated successfully",
+	"failedToUpdateReflectionQuestion": "Failed to update reflection question"
 }

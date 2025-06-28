@@ -615,9 +615,9 @@
 				body: JSON.stringify({ reflectionQuestion })
 			});
 			if (response.ok) {
-				notifications.success('Reflection question updated');
+				notifications.success(m.reflectionQuestionUpdated());
 			} else {
-				notifications.error('Failed to update reflection question');
+				notifications.error(m.failedToUpdateReflectionQuestion());
 			}
 		} catch (error) {
 			console.error('Failed to save reflection question', error);

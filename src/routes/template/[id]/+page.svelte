@@ -41,14 +41,20 @@
 
 	const templateRef = doc(db, 'templates', $page.params.id);
 	const [template, { unsubscribe }] = subscribe<Template>(templateRef);
+	let isInitialized = false;
 
 	template.subscribe((t) => {
 		if (t) {
-			title = t.title;
-			task = t.task;
-			reflectionQuestion = t.reflectionQuestion || '';
-			isPublic = t.public;
-			subtasks = [...t.subtasks];
+			// Only set initial values, to prevent unsaved changes from being overwritten by db updates
+			if (!isInitialized) {
+				title = t.title;
+				task = t.task;
+				reflectionQuestion = t.reflectionQuestion || '';
+				isPublic = t.public;
+				subtasks = [...t.subtasks];
+				isInitialized = true;
+			}
+			// Always update labels and background image from db, as they can be updated by child components or background uploads
 			labels = t.labels ? [...t.labels] : [];
 			backgroundPreview = t.backgroundImage || null;
 		}
@@ -78,7 +84,7 @@
 	});
 
 	// Handle file input change
-	function handleFileInput(event: Event) {
+	async function handleFileInput(event: Event) {
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
 			// Revoke previous blob URL if it exists
@@ -89,6 +95,12 @@
 			backgroundImage = input.files[0];
 			// Create a local preview URL
 			localPreviewUrl = URL.createObjectURL(backgroundImage);
+
+			// Automatically save any pending changes, then upload the image
+			if (unsavedChanges) {
+				await saveTemplate();
+			}
+			await uploadBackgroundImage();
 		}
 	}
 
@@ -112,9 +124,6 @@
 				return;
 			}
 
-			const data = await res.json();
-			// Update with permanent URL from Cloud Storage
-			backgroundPreview = data.imageUrl;
 			notifications.success(m.backgroundImageUploaded());
 
 			// Clean up local preview
@@ -426,23 +435,14 @@
 								class="flex cursor-pointer items-center justify-center rounded-lg bg-gray-100 p-3 hover:bg-gray-200"
 							>
 								<Upload class="mr-2 h-4 w-4" />
-								{backgroundImage ? m.changeImage() : m.selectImage()}
+								{backgroundImage || uploadingBackground ? m.changeImage() : m.selectImage()}
 							</label>
 
-							{#if backgroundImage}
-								<Button
-									color="primary"
-									on:click={uploadBackgroundImage}
-									disabled={uploadingBackground}
-								>
-									{#if uploadingBackground}
-										<Spinner class="mr-2" size="4" color="white" />
-										{m.uploading()}
-									{:else}
-										<Save class="mr-2 h-4 w-4" />
-										{m.uploadImage()}
-									{/if}
-								</Button>
+							{#if uploadingBackground}
+								<div class="flex items-center gap-2">
+									<Spinner class="mr-2" size="4" color="white" />
+									{m.uploading()}
+								</div>
 							{/if}
 						</div>
 					{/if}
