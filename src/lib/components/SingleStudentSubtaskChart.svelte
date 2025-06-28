@@ -123,7 +123,7 @@
 	<div class="absolute right-0 top-0 z-10 flex items-center gap-2">
 		<div class="relative inline-block">
 			<HelpCircle size={16} class="cursor-help text-gray-400" />
-			<Tooltip placement="right">（AI判定學生達成的子任務數／該主題子任務數）x 100%</Tooltip>
+			<Tooltip placement="right">{m.subtaskCompletionFormula()}</Tooltip>
 		</div>
 	</div>
 	<div class="h-[400px] w-full">

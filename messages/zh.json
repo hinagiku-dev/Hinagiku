@@ -695,5 +695,6 @@
 	"session_summary": "討論總結",
 	"reflectionAnswer": "我的反思",
 	"showAll": "顯示全部",
-	"no_reflectionAnswer": "尚未填寫反思"
+	"no_reflectionAnswer": "尚未填寫反思",
+	"subtaskCompletionFormula": "（AI判定學生達成的子任務數／該主題子任務數）x 100%"
 }

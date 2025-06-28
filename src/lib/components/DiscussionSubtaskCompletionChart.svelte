@@ -106,8 +106,7 @@
 			<h3 class="text-lg font-semibold text-gray-900">{m.chartDiscussionSubtaskCompletion()}</h3>
 			<div class="relative inline-block">
 				<HelpCircle size={16} class="cursor-help text-gray-400" />
-				<Tooltip placement="right" class="w-[300px] text-sm"
-					>（AI判定學生達成的子任務數／該主題子任務數）x 100%</Tooltip
+				<Tooltip placement="right" class="w-[300px] text-sm">{m.subtaskCompletionFormula()}</Tooltip
 				>
 			</div>
 		</div>
