@@ -60,6 +60,8 @@
 		};
 	};
 	let participantProgress = $state(new SvelteMap<string, ParticipantProgress>());
+	// 匯出格式狀態
+	let exportFormat = $state<'pdf' | 'docx'>('pdf');
 	let conversationsMap = $state(new SvelteMap<string, Conversation>());
 	let groupsMap = $state(new SvelteMap<string, GroupWithId>());
 	let showChatHistory = $state(false);
@@ -897,6 +899,19 @@
 
 					<!-- Export Options (conditionally shown) -->
 					{#if showExportOptions}
+						<div class="mb-2 flex items-center gap-4">
+							<label for="exportFormatSelect" class="text-sm font-medium">
+								{m.exportFormat ? m.exportFormat() : '匯出格式'}
+							</label>
+							<select
+								id="exportFormatSelect"
+								class="rounded border-gray-300 px-2 py-1 text-sm"
+								bind:value={exportFormat}
+							>
+								<option value="pdf">PDF</option>
+								<option value="docx">DOCX</option>
+							</select>
+						</div>
 						<TranscriptExporter
 							session={$session}
 							{selectedParticipants}
@@ -905,6 +920,7 @@
 							{groupsMap}
 							{participantProgress}
 							onSelectionChange={handleSelectionChange}
+							{exportFormat}
 						/>
 					{/if}
 				</div>
