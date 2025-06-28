@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Chart, registerables } from 'chart.js';
-	import { Card } from 'flowbite-svelte';
-	import { Target } from 'lucide-svelte';
+	import { Card, Tooltip } from 'flowbite-svelte';
+	import { Target, HelpCircle } from 'lucide-svelte';
 	import * as m from '$lib/paraglide/messages.js';
 
 	// Register Chart.js components
@@ -50,12 +50,7 @@
 				maintainAspectRatio: false,
 				plugins: {
 					title: {
-						display: true,
-						text: m.chartSubtaskCompletion(),
-						font: {
-							size: 16,
-							weight: 'bold'
-						}
+						display: false
 					},
 					tooltip: {
 						callbacks: {
@@ -108,6 +103,12 @@
 				<Target size={20} class="text-primary-600" />
 			</div>
 			<h3 class="text-lg font-semibold text-gray-900">{m.chartSubtaskCompletion()}</h3>
+			<div class="relative inline-block">
+				<HelpCircle size={16} class="cursor-help text-gray-400" />
+				<Tooltip placement="right" class="w-[300px] text-sm"
+					>（AI判定學生達成的子任務數／該主題子任務數）x 100%</Tooltip
+				>
+			</div>
 		</div>
 		<p class="text-sm text-gray-600">{m.chartSubtaskCompletionDesc()}</p>
 	</div>
