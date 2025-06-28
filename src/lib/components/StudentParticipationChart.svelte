@@ -71,12 +71,7 @@
 				maintainAspectRatio: false,
 				plugins: {
 					title: {
-						display: true,
-						text: m.chartStudentParticipation(),
-						font: {
-							size: 16,
-							weight: 'bold'
-						}
+						display: false
 					},
 					tooltip: {
 						callbacks: {
