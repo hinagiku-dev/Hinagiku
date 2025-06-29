@@ -192,7 +192,9 @@
 								status={session.status}
 								labels={session.labels}
 								task={session.task}
+								host={session.host}
 								createdAt={(session.createdAt as Timestamp).toDate()}
+								classId={session.classId}
 							/>
 						</div>
 					{/if}
@@ -221,7 +223,9 @@
 								status={session.status}
 								labels={session.labels}
 								task={session.task}
+								host={session.host}
 								createdAt={(session.createdAt as Timestamp).toDate()}
+								classId={session.classId}
 								archived={true}
 							/>
 						</div>
