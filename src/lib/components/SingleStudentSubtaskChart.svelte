@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Chart, registerables, type ChartDataset } from 'chart.js';
+	import { Tooltip } from 'flowbite-svelte';
+	import { HelpCircle } from 'lucide-svelte';
 	import * as m from '$lib/paraglide/messages.js';
 
 	// Register Chart.js components
@@ -117,6 +119,14 @@
 	});
 </script>
 
-<div class="h-[400px] w-full">
-	<canvas bind:this={chartCanvas}></canvas>
+<div class="relative">
+	<div class="absolute right-0 top-0 z-10 flex items-center gap-2">
+		<div class="relative inline-block">
+			<HelpCircle size={16} class="cursor-help text-gray-400" />
+			<Tooltip placement="right">{m.subtaskCompletionFormula()}</Tooltip>
+		</div>
+	</div>
+	<div class="h-[400px] w-full">
+		<canvas bind:this={chartCanvas}></canvas>
+	</div>
 </div>

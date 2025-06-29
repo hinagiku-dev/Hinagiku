@@ -50,12 +50,7 @@
 				maintainAspectRatio: false,
 				plugins: {
 					title: {
-						display: true,
-						text: m.chartDiscussionParticipation(),
-						font: {
-							size: 16,
-							weight: 'bold'
-						}
+						display: false
 					},
 					tooltip: {
 						callbacks: {
