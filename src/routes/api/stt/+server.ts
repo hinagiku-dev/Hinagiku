@@ -1,5 +1,5 @@
 import { upload_object } from '$lib/server/object-storage';
-import { transcribe } from '$lib/stt/gemini';
+import { transcribe } from '$lib/stt/openai';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
