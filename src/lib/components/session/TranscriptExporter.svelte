@@ -11,6 +11,7 @@
 	import JSZip from 'jszip';
 	import html2canvas from 'html2canvas';
 	import { Timestamp } from 'firebase/firestore';
+	import { Document, Packer, Paragraph, TextRun } from 'docx';
 
 	type GroupWithId = Group & {
 		id: string;
@@ -35,6 +36,7 @@
 		groupsMap: SvelteMap<string, GroupWithId>;
 		participantProgress: SvelteMap<string, ParticipantProgress>;
 		onSelectionChange: (participants: Set<string>, groups: Set<string>) => void;
+		exportFormat: 'pdf' | 'docx';
 	}
 
 	let {
@@ -44,7 +46,8 @@
 		conversationsMap,
 		groupsMap,
 		participantProgress,
-		onSelectionChange
+		onSelectionChange,
+		exportFormat
 	}: TranscriptExporterProps = $props();
 
 	let isExporting = $state(false);
@@ -222,6 +225,115 @@
 		onSelectionChange(new Set(), new Set());
 	}
 
+	// 產生 DOCX 檔案
+	function createPersonalTranscriptDocx(
+		sessionTitle: string,
+		userName: string,
+		conversation: Conversation,
+		session: Session | undefined
+	): Document {
+		const metaInfo = [`${m.pdfStudent()}: ${userName}`];
+		const taskContent = session?.task || m.pdfNoTaskDescription();
+		const children = [
+			new Paragraph({
+				text: m.pdfPersonalTranscriptTitle(),
+				heading: 'Heading1',
+				spacing: { after: 200 }
+			}),
+			new Paragraph({
+				children: [new TextRun({ text: `${m.pdfSession()}: ${sessionTitle}`, bold: true })],
+				spacing: { after: 100 }
+			}),
+			...metaInfo.map((info) => new Paragraph({ text: info, spacing: { after: 100 } })),
+			new Paragraph({
+				children: [
+					new TextRun({ text: `${m.pdfTaskContent()}: `, bold: true }),
+					new TextRun(taskContent)
+				],
+				spacing: { after: 200 }
+			}),
+			new Paragraph({
+				children: [new TextRun({ text: m.pdfConversationContent() + ':', bold: true })],
+				spacing: { after: 100 }
+			}),
+			// 對話內容
+			...(conversation.history?.map(
+				(message) =>
+					new Paragraph({
+						children: [
+							new TextRun({
+								text: `${message.role === 'user' ? userName : m.pdfAISpeaker()}: `,
+								bold: true,
+								color: '2E74B5'
+							}),
+							new TextRun({ text: message.content || '', break: 1 })
+						],
+						spacing: { after: 120 },
+						border: { left: { color: 'CCCCCC', space: 1, size: 6, style: 'single' } }
+					})
+			) || [new Paragraph(m.pdfNoConversationRecord())])
+		];
+		return new Document({
+			sections: [{ children }]
+		});
+	}
+
+	function createGroupTranscriptDocx(
+		sessionTitle: string,
+		group: GroupWithId,
+		session: Session | undefined
+	): Document {
+		const metaInfo = [
+			`${m.pdfGroup()}: ${m.pdfGroupNumber({ number: group.number })}`,
+			`${m.pdfMemberCount()}: ${m.pdfMemberCountValue({ count: group.participants.length })}`
+		];
+		const taskContent = session?.task || m.pdfNoTaskDescription();
+		const children = [
+			new Paragraph({
+				text: m.pdfGroupTranscriptTitle(),
+				heading: 'Heading1',
+				spacing: { after: 200 }
+			}),
+			new Paragraph({
+				children: [new TextRun({ text: `${m.pdfSession()}: ${sessionTitle}`, bold: true })],
+				spacing: { after: 100 }
+			}),
+			...metaInfo.map((info) => new Paragraph({ text: info, spacing: { after: 100 } })),
+			new Paragraph({
+				children: [
+					new TextRun({ text: `${m.pdfTaskContent()}: `, bold: true }),
+					new TextRun(taskContent)
+				],
+				spacing: { after: 200 }
+			}),
+			new Paragraph({
+				children: [new TextRun({ text: m.pdfDiscussionContent() + ':', bold: true })],
+				spacing: { after: 100 }
+			}),
+			// 討論內容
+			...(group.discussions && group.discussions.length > 0
+				? group.discussions.map(
+						(discussion) =>
+							new Paragraph({
+								children: [
+									new TextRun({
+										text: `${discussion.speaker || m.pdfUnknownSpeaker()}: `,
+										bold: true,
+										color: '2E74B5'
+									}),
+									new TextRun({ text: discussion.content || '', break: 1 })
+								],
+								spacing: { after: 120 },
+								border: { left: { color: 'CCCCCC', space: 1, size: 6, style: 'single' } }
+							})
+					)
+				: [new Paragraph(m.pdfNoDiscussionRecord())])
+		];
+		return new Document({
+			sections: [{ children }]
+		});
+	}
+
 	async function exportSelectedTranscripts() {
 		if (selectedParticipants.size === 0 && selectedGroups.size === 0) {
 			notifications.warning(m.exportSelectAtLeastOne());
@@ -230,41 +342,69 @@
 
 		try {
 			isExporting = true;
-			notifications.info(m.exportGeneratingPDF());
+			notifications.info(exportFormat === 'pdf' ? m.exportGeneratingPDF() : '產生 DOCX 中...');
 
 			const zip = new JSZip();
 			const sessionTitle = session?.title || 'Session';
 
-			// 處理個人參與者匯出（僅個人階段對話）
-			const participantPromises = Array.from(selectedParticipants).map(async (participantId) => {
-				const conversation = conversationsMap.get(participantId);
-				const participantData = participantProgress.get(participantId);
+			if (exportFormat === 'pdf') {
+				// 處理個人參與者匯出（僅個人階段對話）
+				const participantPromises = Array.from(selectedParticipants).map(async (participantId) => {
+					const conversation = conversationsMap.get(participantId);
+					const participantData = participantProgress.get(participantId);
 
-				if (conversation && participantData) {
-					const pdf = await createPersonalTranscriptPDF(
-						sessionTitle,
-						participantData.displayName,
-						conversation,
-						session
-					);
+					if (conversation && participantData) {
+						const pdf = await createPersonalTranscriptPDF(
+							sessionTitle,
+							participantData.displayName,
+							conversation,
+							session
+						);
 
-					const filename = m.pdfPersonalTranscriptFilename({ name: participantData.displayName });
-					zip.file(filename, pdf.output('arraybuffer'));
+						const filename = m.pdfPersonalTranscriptFilename({ name: participantData.displayName });
+						zip.file(filename, pdf.output('arraybuffer'));
+					}
+				});
+
+				// 等待所有個人 PDF 完成
+				await Promise.all(participantPromises);
+
+				// 處理小組匯出（僅小組討論階段）
+				for (const groupId of selectedGroups) {
+					const group = groupsMap.get(groupId);
+
+					if (group) {
+						const pdf = await createGroupTranscriptPDF(sessionTitle, group, session);
+
+						const filename = m.pdfGroupTranscriptFilename({ number: group.number });
+						zip.file(filename, pdf.output('arraybuffer'));
+					}
 				}
-			});
-
-			// 等待所有個人 PDF 完成
-			await Promise.all(participantPromises);
-
-			// 處理小組匯出（僅小組討論階段）
-			for (const groupId of selectedGroups) {
-				const group = groupsMap.get(groupId);
-
-				if (group) {
-					const pdf = await createGroupTranscriptPDF(sessionTitle, group, session);
-
-					const filename = m.pdfGroupTranscriptFilename({ number: group.number });
-					zip.file(filename, pdf.output('arraybuffer'));
+			} else {
+				// DOCX 處理
+				for (const participantId of selectedParticipants) {
+					const conversation = conversationsMap.get(participantId);
+					const participantData = participantProgress.get(participantId);
+					if (conversation && participantData) {
+						const doc = createPersonalTranscriptDocx(
+							sessionTitle,
+							participantData.displayName,
+							conversation,
+							session
+						);
+						const buffer = await Packer.toBlob(doc);
+						const filename = `${participantData.displayName}.docx`;
+						zip.file(filename, buffer);
+					}
+				}
+				for (const groupId of selectedGroups) {
+					const group = groupsMap.get(groupId);
+					if (group) {
+						const doc = createGroupTranscriptDocx(sessionTitle, group, session);
+						const buffer = await Packer.toBlob(doc);
+						const filename = `${m.pdfGroupTranscriptFilename({ number: group.number }).replace(/\.pdf$/, '.docx')}`;
+						zip.file(filename, buffer);
+					}
 				}
 			}
 
