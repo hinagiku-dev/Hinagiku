@@ -6,6 +6,7 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { deploymentConfig } from '$lib/config/deployment';
 	import { UI_CLASSES } from '$lib/config/ui';
+	import { onDestroy } from 'svelte';
 
 	interface Conversation {
 		name: string;
@@ -49,6 +50,13 @@
 			latestMessageMarker?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		});
 	}
+
+	onDestroy(() => {
+		if (stopRecording) {
+			stopRecording().catch(console.error);
+			stopRecording = undefined;
+		}
+	});
 
 	$effect(() => {
 		if (conversations.length > 0) {
