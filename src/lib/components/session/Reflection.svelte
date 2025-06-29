@@ -22,7 +22,7 @@
 			return;
 		}
 		try {
-			const res = await fetch(`/api/session/${sessionId}/group/${groupId}/learning-records`);
+			const res = await fetch(`/api/session/${sessionId}/group/${groupId}/learningRecords`);
 			if (res.ok) {
 				const record: LearningRecord = await res.json();
 				if (record && record.answer) {
@@ -40,7 +40,7 @@
 	async function handleSaveLearningRecord() {
 		isSavingLearningRecord = true;
 		try {
-			const res = await fetch(`/api/session/${sessionId}/group/${groupId}/learning-records`, {
+			const res = await fetch(`/api/session/${sessionId}/group/${groupId}/learningRecords`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ answer: learningRecordAnswer })

@@ -600,5 +600,14 @@
 	"rowDuplicateSeatNumber": "Duplicate seat number \"{seatNumber}\" found at row {row}",
 	"noteGroupColumnOptional": "(Note: Group column is optional)",
 	"missingRequiredFields": "Missing required fields: {fields}",
-	"missingRequiredFieldsKeyword": "Missing required fields"
+	"missingRequiredFieldsKeyword": "Missing required fields",
+	"learningRecordSaved": "Learning record saved successfully",
+	"failedToSaveLearningRecord": "Failed to save learning record",
+	"learningRecord": "Learning Record",
+	"reflectionPlaceholder": "Enter your reflection here...",
+	"updateReflection": "Update Reflection",
+	"saveReflection": "Save Reflection",
+	"reflectionQuestion": "Reflection Question",
+	"reflectionQuestionPlaceholder": "Enter a question to guide students to reflect on the group summary.",
+	"reflectionQuestionMaxLength": "Reflection question must be {limit} characters or less"
 }
