@@ -56,7 +56,7 @@ export const POST: RequestHandler = async ({ request, params, locals }) => {
 		});
 
 		const pattern =
-			/(?=.*(?:哈[\p{P}\p{Z}\p{So}]*囉|hello))(?=.*[小曉筱簫][\p{P}\p{Z}\p{So}]*[菊橘局巨豬居竹吉桔逐集及急])/iu;
+			/(?=.*(?:哈[\p{P}\p{Z}\p{So}]*囉|hello))(?=.*[小曉筱簫][\p{P}\p{Z}\p{So}]*[菊橘局巨豬居竹吉桔逐集及急雞迪地弟帝狄])/iu;
 		if (content.match(pattern)) {
 			await adminDb.runTransaction(async (t) => {
 				const doc = await t.get(group_ref);
