@@ -49,14 +49,15 @@ export function subscribeAll<T = unknown>(
 export function subscribe<T = unknown>(
 	ref: DocumentReference,
 	store = writable<T | null>(null),
-	schema?: z.ZodType<T>
+	schema?: z.ZodType<T>,
+	fallback: T | null = null
 ): DocumentStore<T> {
 	log('subscribe', ref.path);
 
 	const unsubscribe = onSnapshot(
 		ref,
 		(snapshot) => {
-			const data = (snapshot.data() as T) ?? null;
+			const data = (snapshot.data() as T) ?? fallback;
 			log('onSnapshot', ref.path, data);
 			if (schema) {
 				const parseResult = schema.safeParse(data);
