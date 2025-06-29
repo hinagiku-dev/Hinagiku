@@ -2,12 +2,12 @@
 
 Hinagiku (雛菊), or Daisy in English, is an intelligent system designed to support discussions in educational environments. One of Hinagiku's key features is its real-time voice transcription and analysis, which helps hosts provide timely and insightful feedback, setting it apart from other educational tools. We chose the name Hinagiku because it reflects our core values: resilience, simplicity, and growth—much like the daisy flower itself, which flourishes in diverse conditions. Our mission is to help participants and hosts connect meaningfully by providing tools that facilitate better communication and collaboration in classrooms.
 
-### Key Technologies
+## Key Technologies
 
 - **SvelteKit** for the front-end framework
 - **Firebase** (Firestore and Auth) on Google Cloud Platform
 - **Object storage** via Google Cloud Storage or Cloudflare R2
-- **OpenAI** models via Genkit for language understanding and generation, with support for Google Gemini and others
+- **LLM** via Genkit for language understanding and generation, with support for Google, OpenAI, and others
 
 For deployment-specific settings such as custom colors or titles, see [`DEPLOYMENT-CONFIG.md`](DEPLOYMENT-CONFIG.md).
 
@@ -21,7 +21,7 @@ To set up the development environment for Hinagiku, please follow these steps:
 
 ### Install dependencies
 
-Ensure you have **Node.js 18+** and `pnpm` installed. If not, you can install pnpm using the script:
+Ensure you have **Node.js 20+** and `pnpm` installed. If not, you can install pnpm using the script:
 
 ```sh
 curl -fsSL https://get.pnpm.io/install.sh | sh -
