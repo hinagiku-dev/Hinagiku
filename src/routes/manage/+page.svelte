@@ -2175,16 +2175,18 @@
 								style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));"
 							>
 								{#each $filteredClassSessions as [sessionId, session]}
-									<div class="w-full !max-w-none">
-										<SessionCard
-											id={sessionId}
-											title={session.title}
-											status={session.status}
-											labels={session.labels}
-											task={session.task}
-											createdAt={(session.createdAt as Timestamp).toDate()}
-										/>
-									</div>
+									{#if session.active_status === 'active'}
+										<div class="w-full !max-w-none">
+											<SessionCard
+												id={sessionId}
+												title={session.title}
+												status={session.status}
+												labels={session.labels}
+												task={session.task}
+												createdAt={(session.createdAt as Timestamp).toDate()}
+											/>
+										</div>
+									{/if}
 								{/each}
 							</div>
 						{:else}
