@@ -17,7 +17,8 @@
 		"pdf": "pnpm tsx scripts/pdf2text.ts",
 		"tsx": "tsx --tsconfig tsconfig.tsx.json",
 		"student": "pnpm tsx scripts/createTestStudent.ts",
-		"conversation": "pnpm tsx scripts/createTestConversation.ts"
+		"conversation": "pnpm tsx scripts/createTestConversation.ts",
+		"firebase:deploy": "firebase --project $FIREBASE_PROJECT_ID deploy --only firestore:rules,firestore:indexes"
 	},
 	"devDependencies": {
 		"@aws-sdk/client-s3": "^3.758.0",
@@ -56,6 +57,7 @@
 		"eslint-plugin-svelte": "^2.46.1",
 		"firebase": "^11.4.0",
 		"firebase-admin": "^12.7.0",
+		"firebase-tools": "^14.9.0",
 		"flowbite": "^2.5.2",
 		"flowbite-svelte": "^0.47.4",
 		"genkit": "^0.9.12",
