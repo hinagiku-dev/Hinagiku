@@ -18,7 +18,7 @@
 		"tsx": "tsx --tsconfig tsconfig.tsx.json",
 		"student": "pnpm tsx scripts/createTestStudent.ts",
 		"conversation": "pnpm tsx scripts/createTestConversation.ts",
-		"firebase:deply": "firebase --project $FIREBASE_PROJECT_ID deploy --only firestore:rules,firestore:indexes"
+		"firebase:deploy": "firebase --project $FIREBASE_PROJECT_ID deploy --only firestore:rules,firestore:indexes"
 	},
 	"devDependencies": {
 		"@aws-sdk/client-s3": "^3.758.0",
