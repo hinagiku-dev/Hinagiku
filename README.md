@@ -49,6 +49,16 @@ Ensure that the `GOOGLE_APPLICATION_CREDENTIALS` file exists in the root directo
 
 By following these steps, you will be able to set up and run the Hinagiku project locally for development purposes.
 
+### Setup Firebase
+
+To set up indexes and security rules for Firestore, run the following command:
+
+```sh
+FIREBASE_PROJECT_ID=your-project-id pnpm firebase:deploy
+```
+
+Also, ensure that both the Email/Password and Google sign-in methods are enabled in the Firebase console under Authentication > Sign-in method.
+
 ### Run the development server
 
 Start the development server using the following command:

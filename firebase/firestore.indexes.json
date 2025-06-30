@@ -1,0 +1,157 @@
+{
+	"indexes": [
+		{
+			"collectionGroup": "classes",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "teacherId",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "createdAt",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "groups",
+			"queryScope": "COLLECTION_GROUP",
+			"fields": [
+				{
+					"fieldPath": "participants",
+					"arrayConfig": "CONTAINS"
+				},
+				{
+					"fieldPath": "createdAt",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "sessions",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "classId",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "createdAt",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "sessions",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "classId",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "host",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "status",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "createdAt",
+					"order": "DESCENDING"
+				},
+				{
+					"fieldPath": "active_status",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "sessions",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "classId",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "status",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "createdAt",
+					"order": "ASCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "sessions",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "host",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "createdAt",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "templates",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "owner",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "createdAt",
+					"order": "DESCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "templates",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{
+					"fieldPath": "public",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "createdAt",
+					"order": "DESCENDING"
+				}
+			]
+		}
+	],
+	"fieldOverrides": [
+		{
+			"collectionGroup": "groups",
+			"fieldPath": "participants",
+			"ttl": false,
+			"indexes": [
+				{
+					"order": "ASCENDING",
+					"queryScope": "COLLECTION"
+				},
+				{
+					"order": "DESCENDING",
+					"queryScope": "COLLECTION"
+				},
+				{
+					"arrayConfig": "CONTAINS",
+					"queryScope": "COLLECTION"
+				},
+				{
+					"arrayConfig": "CONTAINS",
+					"queryScope": "COLLECTION_GROUP"
+				}
+			]
+		}
+	]
+}
