@@ -55,6 +55,7 @@
 				newPassword = '';
 				confirmNewPassword = '';
 				if (classCode) {
+					classCode = classCode.toUpperCase();
 					await goto('/login?classCode=' + classCode);
 				}
 				await goto('/login');
