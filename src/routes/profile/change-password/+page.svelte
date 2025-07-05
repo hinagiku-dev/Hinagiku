@@ -57,8 +57,9 @@
 				if (classCode) {
 					classCode = classCode.toUpperCase();
 					await goto('/login?classCode=' + classCode);
+				} else {
+					await goto('/login');
 				}
-				await goto('/login');
 			} else {
 				// Handle specific error messages from the API
 				if (response.status === 400 && result.error) {
