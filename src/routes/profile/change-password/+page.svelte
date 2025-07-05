@@ -3,13 +3,25 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import Title from '$lib/components/Title.svelte';
 	import { notifications } from '$lib/stores/notifications';
+	import { onMount } from 'svelte';
 	import { user } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
+	import { getUser } from '$lib/utils/getUser';
 
 	let currentPassword = '';
 	let newPassword = '';
 	let confirmNewPassword = '';
 	let isLoading = false;
+	let classCode = '';
+
+	onMount(async () => {
+		if ($user) {
+			const profile = await getUser($user.uid);
+			if (profile.studentId) {
+				classCode = $user.email?.split('@')[1].split('.')[0] || '';
+			}
+		}
+	});
 
 	async function handleChangePassword() {
 		if (newPassword !== confirmNewPassword) {
@@ -42,7 +54,12 @@
 				currentPassword = '';
 				newPassword = '';
 				confirmNewPassword = '';
-				await goto('/login');
+				if (classCode) {
+					classCode = classCode.toUpperCase();
+					await goto('/login?classCode=' + classCode);
+				} else {
+					await goto('/login');
+				}
 			} else {
 				// Handle specific error messages from the API
 				if (response.status === 400 && result.error) {
