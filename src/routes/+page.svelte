@@ -1,3 +1,28 @@
+<!--
+@fileoverview
+Home page for the Hinagiku educational platform.
+
+This page serves as the main landing page for users, providing an overview
+of the platform's capabilities and directing users to appropriate actions
+based on their authentication status. The page features:
+
+- Dynamic title animation with character highlighting
+- Feature showcase highlighting key platform capabilities
+- Call-to-action buttons for different user types
+- Responsive design optimized for educational institutions
+- Integration with deployment-specific branding
+
+The page adapts its content based on user authentication state,
+showing login prompts for unauthenticated users and dashboard
+navigation for authenticated users.
+
+Key features highlighted:
+- Real-time collaboration tools
+- AI-powered educational assistance
+- Multi-language support for diverse learning environments
+- Voice interaction capabilities for immersive learning
+-->
+
 <script lang="ts">
 	import { user } from '$lib/stores/auth';
 	import { Button, Card } from 'flowbite-svelte';
@@ -8,9 +33,15 @@
 	import { deploymentConfig } from '$lib/config/deployment';
 	import Title from '$lib/components/Title.svelte';
 
+	// Reactive state for dynamic title highlighting
 	let title = $state(deploymentConfig.siteTitle);
 	let highlight = $state(0);
 
+	/**
+	 * Initializes animated title highlighting on component mount.
+	 * Creates a periodic animation that highlights different characters
+	 * in the platform title to create visual interest.
+	 */
 	onMount(() => {
 		const interval = setInterval(() => {
 			let newHighlight;
