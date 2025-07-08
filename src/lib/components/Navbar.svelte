@@ -1,3 +1,28 @@
+<!--
+@fileoverview
+Main navigation component for the Hinagiku educational platform.
+
+This component provides the primary navigation interface across all pages,
+featuring:
+- Responsive design with mobile and desktop layouts
+- User authentication state management and profile access
+- Multi-language support with dynamic language switching
+- Role-based navigation items (dashboard, settings, profile)
+- Deployment-specific branding and customization
+- Dropdown menus for user actions and language selection
+
+The navbar integrates with the authentication system to show appropriate
+navigation options based on user login status and provides seamless
+language switching using Paraglide internationalization.
+
+Key features:
+- Dynamic site title from deployment configuration
+- Internationalized navigation labels and messages
+- User avatar with profile dropdown menu
+- Language switcher for English/Chinese support
+- Responsive design with proper mobile behavior
+-->
+
 <script lang="ts">
 	import { Navbar, NavBrand, Avatar, Dropdown, DropdownItem, Button } from 'flowbite-svelte';
 	import { LogOut, User, Settings, LayoutDashboard, Globe, KeyRound } from 'lucide-svelte';
@@ -12,11 +37,15 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 
+	// Reactive state for navigation component
 	let hinagiku = $state(deploymentConfig.siteTitle || 'Hinagiku');
 	let highlight = $state(0);
 	let hydrated = $state(false);
 
-	// Define available languages for better type safety and scalability
+	/**
+	 * Available languages for the platform.
+	 * Configured for type safety and easy expansion to additional languages.
+	 */
 	const availableLanguages = [
 		{ code: 'en' as const, name: 'English' },
 		{ code: 'zh' as const, name: '中文' }

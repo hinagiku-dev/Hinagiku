@@ -1,3 +1,33 @@
+<!--
+	Chatroom Component
+	
+	This component provides the core chat interface for student-AI interactions in the Hinagiku
+	educational platform. It supports both text and voice input, real-time conversation display,
+	and adaptive behavior for individual and group learning contexts.
+	
+	Key Features:
+	- Multi-modal input (text typing and voice recording)
+	- Voice Activity Detection (VAD) for hands-free interaction
+	- Markdown rendering for rich text AI responses
+	- Audio playback for voice messages
+	- Automatic scrolling to latest messages
+	- Read-only mode for conversation review
+	- Responsive design for various screen sizes
+	
+	Props:
+	- conversations: Array of conversation messages to display
+	- record: Function to initiate voice recording (optional)
+	- send: Function to send text messages (optional)
+	- readonly: Whether the chatroom is in read-only mode
+	- autoscroll: Whether to automatically scroll to new messages
+	- isIndividual: Whether this is an individual learning session
+	- vadEnabled: Whether Voice Activity Detection is enabled
+	
+	Educational Context:
+	Used in both individual AI tutoring sessions and group collaborative discussions.
+	Adapts its behavior based on the learning phase and user preferences.
+-->
+
 <script lang="ts">
 	import { Button, Card, Textarea, Tooltip } from 'flowbite-svelte';
 	import { Mic, Send, Square } from 'lucide-svelte';

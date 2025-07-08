@@ -1,3 +1,36 @@
+/**
+ * @fileoverview
+ * System prompts and templates for AI interactions in the Hinagiku educational platform.
+ *
+ * This module contains all the carefully crafted prompts that define how the AI assistant
+ * behaves in different educational contexts. Each prompt is designed to:
+ * - Maintain pedagogical best practices (guiding rather than directly answering)
+ * - Ensure consistent Traditional Chinese language use
+ * - Support various learning scenarios (individual chat, group discussions, content analysis)
+ * - Handle content moderation and quality control
+ *
+ * Prompts are organized by function:
+ * - Educational guidance prompts (DOCS_CONTEXT_*, INTRODUCTION_*)
+ * - Content analysis prompts (CHAT_SUMMARY_*, GROUP_OPINION_*)
+ * - Safety and moderation prompts (HARMFUL_CONTENT_*, OFF_TOPIC_*)
+ * - Utility prompts (FOREIGN_LANGUAGE_*, PDF_PARSE_*)
+ */
+
+/**
+ * Main system prompt for educational AI assistant interactions.
+ *
+ * This prompt defines "小菊" (Xiao Ju), the AI teaching assistant's core behavior:
+ * - Acts as a supportive educational guide, not a direct answer provider
+ * - Uses Socratic method to encourage student thinking and discovery
+ * - Maintains focus on assigned tasks and learning objectives
+ * - Ensures all responses are pedagogically sound and age-appropriate
+ *
+ * Variables replaced at runtime:
+ * - {task}: Main learning objective
+ * - {subtasks}: Specific learning goals
+ * - {resources}: Available educational materials
+ * - {response_prompt}: Specific response format instructions
+ */
 export const DOCS_CONTEXT_SYSTEM_PROMPT = `\
 你是一位專門輔導引導學生了解課堂知識的 AI 聊天助教，名叫小菊。你的職責包括：
 1. 確保上傳的文件內容適當，不得包含色情、暴力、仇恨言論或其他不當內容。
@@ -37,6 +70,16 @@ export const DOCS_CONTEXT_SYSTEM_PROMPT = `\
 - 例如，害怕通常是為了應對危險，而開心則 связано з приємними подіями。
 `;
 
+/**
+ * Response format template for structured educational conversations.
+ *
+ * Defines the three-part response structure that follows educational best practices:
+ * 1. Affirmation: Validates and acknowledges student input to build confidence
+ * 2. Elaboration: Provides deeper context using first-person narrative (internalized knowledge)
+ * 3. Question: Guides students toward next learning steps through inquiry
+ *
+ * This format ensures responses are educational rather than simply informational.
+ */
 export const DOCS_CONTEXT_RESPONSE_PROMPT = `
 回覆格式：
 <response>
@@ -47,18 +90,52 @@ export const DOCS_CONTEXT_RESPONSE_PROMPT = `
 </response>
 `;
 
+/**
+ * Prompt for generating introductory messages to start learning sessions.
+ *
+ * Instructs the AI to create welcoming, engaging introductions that:
+ * - Introduce the AI assistant persona
+ * - Present the main learning topic clearly
+ * - Begin guiding students toward specific subtasks
+ * - Avoid revealing the structured subtask approach directly
+ */
 export const INTRODUCTION_PROMPT = `\
 請介紹你自己，說明本次要討論的主題（主要目標），並挑選任一適合的目標開始引導學生進行討論，並且不要告訴學生你正在進行哪個次要目標。
 `;
 
+/**
+ * Template for formatting conversation history in LLM requests.
+ *
+ * Provides consistent formatting for chat history context. The {chatHistory}
+ * placeholder is replaced with formatted conversation messages to give the AI
+ * proper context for generating relevant responses.
+ */
 export const HISTORY_PROMPT = `\
 '以下是對話紀錄：\n\n{chatHistory}'
 `;
 
+/**
+ * Template for formatting individual subtasks in learning objective lists.
+ *
+ * Standardizes how subtasks are presented to the AI for consistent processing.
+ * The {subtask} placeholder is replaced with specific learning goals to help
+ * the AI understand what students should achieve.
+ */
 export const SUBTASK_PREFIX_PROMPT = `\
 讓學生理解並了解「{subtask}」
 `;
 
+/**
+ * Content moderation prompt for detecting inappropriate material.
+ *
+ * Defines strict criteria for identifying harmful content including:
+ * - Sexual or explicit content
+ * - Violence or threats
+ * - Hate speech or discrimination
+ *
+ * Critical for maintaining safe educational environments by automatically
+ * flagging problematic student submissions for review or blocking.
+ */
 export const HARMFUL_CONTENT_DETECTION_PROMPT = `\
 你是一個專門檢測對話內容的 AI，負責識別是否包含色情、暴力、仇恨言論或其他不當內容。  
 請根據以下標準進行判斷：
@@ -71,6 +148,19 @@ export const HARMFUL_CONTENT_DETECTION_PROMPT = `\
 - 若內容安全，請回傳 **false**。
 `;
 
+/**
+ * Off-topic detection prompt for maintaining learning focus.
+ *
+ * Helps identify when students drift away from assigned learning topics.
+ * Uses context from both AI responses and student messages to make nuanced
+ * decisions about whether discussions remain educationally relevant.
+ *
+ * Variables replaced at runtime:
+ * - {llmMessage}: Previous AI assistant response
+ * - {studentMessage}: Current student input
+ * - {topic}: Main learning topic
+ * - {subtopic}: Related subtasks and goals
+ */
 export const OFF_TOPIC_DETECTION_PROMPT = `\
 你是一個專門檢測學生是否偏離討論主題的 AI，請根據以下標準判斷：
 - 若學生的訊息與**主題或子主題**仍有關聯，則允許一定程度的偏離。
@@ -92,6 +182,17 @@ LLM訊息：
 - 若內容仍在合理範圍內，回傳 **false**。
 `;
 
+/**
+ * Subtask completion assessment prompt for tracking learning progress.
+ *
+ * Analyzes conversation history to determine which educational objectives
+ * have been successfully completed by students. Provides objective assessment
+ * of learning advancement for progress tracking and adaptive guidance.
+ *
+ * Variables replaced at runtime:
+ * - {chatHistory}: Complete conversation record
+ * - {subtasks}: List of learning objectives to evaluate
+ */
 export const SUBTASKS_COMPLETED_PROMPT = `\
 你是一個專門檢測學生回答是否包含學習目標的 AI，請根據學生的對話內容，判斷以下**次要目標**是否完美達成。
 
@@ -108,6 +209,17 @@ export const SUBTASKS_COMPLETED_PROMPT = `\
 - 若該目標尚未完成，對應位置回傳 **false**。
 `;
 
+/**
+ * Individual student conversation summarization prompt.
+ *
+ * Creates personalized learning summaries from individual student chat sessions.
+ * Extracts key viewpoints and important concepts while maintaining the student's
+ * voice and perspective. Supports multiple output formats and tones.
+ *
+ * Variables replaced at runtime:
+ * - {textStyle}: Desired tone (default, humor, serious, casual, cute)
+ * - {presentation}: Output format (paragraph or numbered list with 2-5 points)
+ */
 export const CHAT_SUMMARY_PROMPT = `\
 你是一個專門整理我的對話的 AI，請根據我的發言內容，總結其觀點、想法與結論。  
 
@@ -121,6 +233,16 @@ export const CHAT_SUMMARY_PROMPT = `\
 請務必使用 **臺灣繁體中文**，並符合臺灣繁體中文的常見語境。
 `;
 
+/**
+ * Multi-student concept analysis prompt for identifying learning patterns.
+ *
+ * Analyzes multiple student perspectives to identify common understanding,
+ * areas of disagreement, and overall conceptual grasp. Specifically uses
+ * "大家" (everyone) as the collective subject to maintain consistency.
+ *
+ * Critical for understanding class-wide learning effectiveness and identifying
+ * concepts that need additional instruction or clarification.
+ */
 export const CONCEPT_SUMMARY_PROMPT = `\
 你是一個專門整理大家對某個概念理解程度的 AI，請根據對話內容，總結大家的意見並分析其理解程度。
 
@@ -133,6 +255,17 @@ export const CONCEPT_SUMMARY_PROMPT = `\
 請使用 **臺灣繁體中文**，並符合臺灣繁體中文的常見語境。
 `;
 
+/**
+ * Group discussion summarization prompt with keyword extraction.
+ *
+ * Processes group conversation transcripts to create collaborative learning summaries
+ * and extract important keywords with relevance scoring. Uses first-person plural
+ * perspective ("我們" - we/us) to reflect group consensus and shared understanding.
+ *
+ * Variables replaced at runtime:
+ * - {textStyle}: Desired tone for the summary
+ * - {presentation}: Output format (paragraph or numbered list)
+ */
 export const GROUP_OPINION_SUMMARY_PROMPT = `\
 你是一個專門整理我們討論的 AI，請根據對話內容，總結我們的觀點並提取關鍵字。
 
@@ -146,6 +279,19 @@ export const GROUP_OPINION_SUMMARY_PROMPT = `\
 請使用 **臺灣繁體中文**，並符合臺灣繁體中文的常見語境。
 `;
 
+/**
+ * PDF document parsing and structure extraction prompt.
+ *
+ * Specialized prompt for processing uploaded PDF educational materials.
+ * Converts documents into well-structured Markdown format while preserving:
+ * - Hierarchical heading structure
+ * - Table data and formatting
+ * - Lists and bullet points
+ * - Important emphasis and quotations
+ *
+ * Essential for making educational resources accessible to the AI assistant
+ * for contextual learning guidance.
+ */
 export const PDF_PARSE_PROMPT = `\
 任務描述：
 你是一個專業的 PDF 解析 AI，擅長從 PDF 文件中提取結構化數據，並且將所有資料完整的呈現，不得總結任何內容，並以 Markdown 格式返回結果。請從提供的 PDF 文件中提取所有有意義的結構化數據，包括但不限於：
@@ -181,11 +327,33 @@ export const PDF_PARSE_PROMPT = `\
 > **註釋：** 這是一段重要的引述內容...
 `;
 
+/**
+ * Help guidance prompt for students who need direction.
+ *
+ * Provides additional instructions for generating supportive responses when
+ * students explicitly ask for help or seem stuck. Encourages collaborative
+ * thinking and maintains educational focus without directly providing answers.
+ *
+ * Uses third-person perspective ("你們" - you all) to encourage group participation.
+ */
 export const HEY_HELP_PROMPT = `
 \n現在學生不知道該討論什麼，請你引導他們繼續討論，不要反問學生，並協助他們完成學習任務。
 請以"你們"作為主語，並使用第三人稱的方式進行引導。
 `;
 
+/**
+ * Session-wide learning summary prompt for comprehensive analysis.
+ *
+ * Creates high-level summaries of entire learning sessions by synthesizing
+ * individual student progress with group collaboration outcomes. Provides
+ * holistic assessment of educational effectiveness and learning achievements.
+ *
+ * Generates four key analytical components:
+ * 1. Integrated viewpoints: Common understanding across participants
+ * 2. Differences: Areas of divergent thinking or disagreement
+ * 3. Learning progress: Educational advancement through the session
+ * 4. Final conclusions: Overall assessment and outcomes
+ */
 export const SESSION_SUMMARY_PROMPT = `\
 你是一個專門總結整個課堂討論的 AI。請根據以下提供的「個人學習紀錄」和「小組討論紀錄」，綜合分析並總結出這次討論的最終結論。
 
@@ -199,6 +367,23 @@ export const SESSION_SUMMARY_PROMPT = `\
 請務必使用 **臺灣繁體中文**，並符合臺灣繁體中文的常見語境。
 `;
 
+/**
+ * Foreign language detection and cleaning prompt for content standardization.
+ *
+ * Identifies content containing languages other than Traditional Chinese and English,
+ * then provides cleaned versions that maintain educational value while ensuring
+ * language consistency. Also removes conversation format markers that shouldn't
+ * appear in final educational responses.
+ *
+ * Critical for maintaining platform language standards and ensuring all content
+ * is accessible to the target educational audience. Handles various Asian and
+ * European languages that might inadvertently appear in AI responses.
+ *
+ * Special attention to:
+ * - Simplified Chinese vs Traditional Chinese distinction
+ * - Conversation logging format removal
+ * - Preservation of educational content while cleaning format markers
+ */
 export const FOREIGN_LANGUAGE_DETECTION_PROMPT = `\
 你是一個專門檢測文本是否包含英文和繁體中文以外的語言的 AI檢查員。
 請檢查以下文本，並判斷是否包含英文和繁體中文以外的語言（如簡體中文、日文、韓文、法文、德文、烏克蘭語、俄語等）。

@@ -1,3 +1,23 @@
+<!--
+  @fileoverview
+  TranscriptExporter Component - Handles export of learning session transcripts to PDF and DOCX formats.
+  
+  This component provides comprehensive export functionality for educational session data including:
+  - Individual student conversation transcripts
+  - Group discussion records
+  - Session metadata and learning progress
+  - Multi-format support (PDF via html2canvas, DOCX via docx library)
+  - Bulk export capabilities with ZIP packaging
+  - Internationalization support for both English and Traditional Chinese
+  
+  Key Features:
+  - Selective export: Choose specific participants and groups
+  - Format flexibility: PDF (image-based) or DOCX (structured document)
+  - Progress tracking: Shows completion status and warnings
+  - Localized content: Adapts to current language settings
+  - Batch processing: Handles multiple transcripts efficiently
+-->
+
 <script lang="ts">
 	import { Button } from 'flowbite-svelte';
 	import { notifications } from '$lib/stores/notifications';
@@ -13,30 +33,44 @@
 	import { Timestamp } from 'firebase/firestore';
 	import { Document, Packer, Paragraph, TextRun } from 'docx';
 
+	// Type definitions for component data structures
+
+	/**
+	 * Extended Group type that includes Firestore document metadata
+	 * for proper handling of database-sourced group data
+	 */
 	type GroupWithId = Group & {
 		id: string;
 		updatedAt: Timestamp | undefined;
 	};
 
+	/**
+	 * Participant learning progress summary including completion status and warnings
+	 * Used for displaying educational advancement and potential issues
+	 */
 	type ParticipantProgress = {
-		displayName: string;
-		progress: number;
-		completedTasks: boolean[];
+		displayName: string; // Human-readable participant name
+		progress: number; // Overall completion percentage (0-100)
+		completedTasks: boolean[]; // Per-subtask completion status
 		warning: {
-			moderation: boolean;
-			offTopic: number;
+			moderation: boolean; // Flag for inappropriate content
+			offTopic: number; // Count of off-topic instances
 		};
 	};
 
+	/**
+	 * Component props interface defining all required data and callbacks
+	 * for transcript export functionality
+	 */
 	interface TranscriptExporterProps {
-		session: Session | undefined;
-		selectedParticipants: Set<string>;
-		selectedGroups: Set<string>;
-		conversationsMap: SvelteMap<string, Conversation>;
-		groupsMap: SvelteMap<string, GroupWithId>;
-		participantProgress: SvelteMap<string, ParticipantProgress>;
-		onSelectionChange: (participants: Set<string>, groups: Set<string>) => void;
-		exportFormat: 'pdf' | 'docx';
+		session: Session | undefined; // Current learning session data
+		selectedParticipants: Set<string>; // User-selected participants for export
+		selectedGroups: Set<string>; // User-selected groups for export
+		conversationsMap: SvelteMap<string, Conversation>; // Individual chat records
+		groupsMap: SvelteMap<string, GroupWithId>; // Group discussion records
+		participantProgress: SvelteMap<string, ParticipantProgress>; // Learning progress data
+		onSelectionChange: (participants: Set<string>, groups: Set<string>) => void; // Selection update callback
+		exportFormat: 'pdf' | 'docx'; // Desired output format
 	}
 
 	let {
@@ -50,14 +84,32 @@
 		exportFormat
 	}: TranscriptExporterProps = $props();
 
+	// Component state for tracking export operations
 	let isExporting = $state(false);
 
+	/**
+	 * Creates a PDF document from HTML content with proper Chinese font support.
+	 *
+	 * This function addresses the challenge of rendering Chinese text in PDFs by:
+	 * 1. Creating a temporary DOM element with proper Chinese font styling
+	 * 2. Using html2canvas to capture the content as an image
+	 * 3. Converting the image to PDF format with appropriate scaling
+	 * 4. Handling multi-page content by calculating page breaks
+	 *
+	 * @param htmlContent - HTML string containing the transcript content
+	 * @returns Promise resolving to a jsPDF document ready for download
+	 */
 	async function createChinesePDF(htmlContent: string): Promise<jsPDF> {
+		// Create temporary DOM element for rendering with Chinese font support
 		const tempDiv = document.createElement('div');
 		tempDiv.innerHTML = htmlContent;
+
+		// Position element off-screen to avoid visual interference
 		tempDiv.style.position = 'absolute';
 		tempDiv.style.left = '-9999px';
 		tempDiv.style.top = '-9999px';
+
+		// Set fixed width and styling for consistent rendering
 		tempDiv.style.width = '800px';
 		tempDiv.style.padding = '20px';
 		tempDiv.style.fontFamily = 'Arial, "Microsoft YaHei", "Helvetica Neue", sans-serif';
@@ -69,27 +121,31 @@
 		document.body.appendChild(tempDiv);
 
 		try {
+			// Capture content as high-resolution image for quality output
 			const canvas = await html2canvas(tempDiv, {
-				scale: 2,
-				useCORS: true,
-				allowTaint: true,
-				backgroundColor: '#ffffff'
+				scale: 2, // High DPI for crisp text
+				useCORS: true, // Allow cross-origin resources
+				allowTaint: true, // Permit tainted canvas for flexibility
+				backgroundColor: '#ffffff' // Ensure white background
 			});
 
+			// Initialize PDF with A4 dimensions in portrait orientation
 			const pdf = new jsPDF('p', 'mm', 'a4');
-			const imgWidth = 210;
-			const pageHeight = 295;
+			const imgWidth = 210; // A4 width in mm
+			const pageHeight = 295; // A4 height in mm (minus margins)
 			const imgHeight = (canvas.height * imgWidth) / canvas.width;
 			let heightLeft = imgHeight;
 
 			const imgData = canvas.toDataURL('image/png');
 			let position = 0;
 
+			// Add first page with full image
 			pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
 			heightLeft -= pageHeight;
 
+			// Handle content that exceeds single page by adding additional pages
 			while (heightLeft >= 0) {
-				position = heightLeft - imgHeight;
+				position = heightLeft - imgHeight; // Calculate offset for next page
 				pdf.addPage();
 				pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
 				heightLeft -= pageHeight;
@@ -97,10 +153,29 @@
 
 			return pdf;
 		} finally {
+			// Clean up temporary DOM element to prevent memory leaks
 			document.body.removeChild(tempDiv);
 		}
 	}
 
+	/**
+	 * Generates a standardized HTML template for transcript documents.
+	 *
+	 * Creates consistent formatting for all exported transcripts including:
+	 * - Document header with title and session information
+	 * - Metadata section with participant/group details
+	 * - Task description and objectives
+	 * - Main content area for conversations/discussions
+	 * - Footer with generation timestamp
+	 *
+	 * @param title - Document title (e.g., "Individual Transcript", "Group Transcript")
+	 * @param sessionTitle - Name of the learning session
+	 * @param metaInfo - Array of label-value pairs for document metadata
+	 * @param taskContent - Learning task description and objectives
+	 * @param contentSectionTitle - Title for the main content section
+	 * @param contentHTML - HTML content of conversations/discussions
+	 * @returns Complete HTML document string ready for PDF conversion
+	 */
 	function createTranscriptHTMLTemplate(
 		title: string,
 		sessionTitle: string,
@@ -109,10 +184,12 @@
 		contentSectionTitle: string,
 		contentHTML: string
 	): string {
+		// Format metadata as HTML list
 		const metaInfoHTML = metaInfo
 			.map((info) => `<p><strong>${info.label}:</strong> ${info.value}</p>`)
 			.join('');
 
+		// Generate localized timestamp for document footer
 		const currentLang = languageTag();
 		const locale = currentLang === 'zh' ? 'zh-TW' : 'en-US';
 		const generatedTime = new Date().toLocaleString(locale);
