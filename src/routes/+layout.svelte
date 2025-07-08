@@ -1,3 +1,18 @@
+<!--
+@fileoverview
+Main application layout component for the Hinagiku educational platform.
+
+This root layout component provides the foundational structure for all pages, including:
+- Internationalization support through ParaglideJS
+- Global navigation bar with user authentication state
+- Theme management system for deployment-specific styling  
+- Notification system for user feedback and alerts
+- Debug logging infrastructure for development environments
+
+The layout implements a responsive design with smooth transitions and maintains
+consistent spacing and behavior across all application routes.
+-->
+
 <script lang="ts">
 	import { ParaglideJS } from '@inlang/paraglide-sveltekit';
 	import { i18n } from '$lib/i18n';
@@ -9,9 +24,10 @@
 	import { browser, dev } from '$app/environment';
 	import { env } from '$env/dynamic/public';
 
+	// Enable debug logging for all app namespaces
 	debug.enable('app:*');
 
-	// Log environment variables for debugging
+	// Log environment variables for debugging in development mode
 	if (browser && dev) {
 		console.log('Layout initialization - browser environment');
 		console.log(
@@ -20,6 +36,7 @@
 		);
 	}
 
+	// Props interface for child content rendering
 	let { children } = $props();
 </script>
 
